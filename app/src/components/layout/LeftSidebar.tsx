@@ -1,6 +1,6 @@
 import React from 'react';
 import { useStore } from '../../store/useStore';
-import { MousePointer2, Square, Circle, Minus, Star, Type, ArrowRight } from 'lucide-react';
+import { MousePointer2, Square, Circle, Minus, Star, Type, ArrowRight, MessageSquare } from 'lucide-react';
 import clsx from 'clsx';
 import { DualColorPicker } from '../common/DualColorPicker';
 import { ToolSettingsModal } from '../common/ToolSettingsModal';
@@ -19,6 +19,7 @@ export const LeftSidebar: React.FC = () => {
         { id: 'ellipse', icon: Circle, label: 'Ellipse (L)' },
         { id: 'line', icon: Minus, label: 'Line (P)' },
         { id: 'arrow', icon: ArrowRight, label: 'Arrow (A)' },
+        { id: 'callout', icon: MessageSquare, label: 'Text Box + Arrow (C)' },
         { id: 'star', icon: Star, label: 'Star (S)' },
         { id: 'text', icon: Type, label: 'Text (T)' },
     ] as const;

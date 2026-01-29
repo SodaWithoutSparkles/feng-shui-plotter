@@ -1,6 +1,7 @@
-import { useState, useCallback, type RefObject } from 'react';
+import { useState, useCallback, useEffect, useRef, type RefObject } from 'react';
 import type { CanvasItem } from '../../../types';
 import { createShape, updateShapeWhileDrawing, shouldAddShape } from '../utils/shapeHelpers';
+import { useKeyboardModifiers } from './useKeyboardModifiers';
 
 export const useDrawingTools = (
     activeTool: string,
@@ -10,13 +11,55 @@ export const useDrawingTools = (
     setColors: (colors: any) => void,
     setDropperActive: (active: boolean) => void,
     addItem: (item: CanvasItem) => void,
-    stageRef: RefObject<any>,
-    isAltPressed: boolean,
-    isPolylineMode: boolean,
-    setIsPolylineMode: (mode: boolean) => void
+    stageRef: RefObject<any>
 ) => {
     const [isDrawing, setIsDrawing] = useState(false);
-    const [currentShape, setCurrentShape] = useState<CanvasItem | null>(null);
+    const [currentShapes, setCurrentShapes] = useState<CanvasItem[]>([]);
+    const [isPolylineMode, setIsPolylineMode] = useState(false);
+    const [calloutPhase, setCalloutPhase] = useState<'box' | 'arrow'>('box');
+    const lastPointerRef = useRef<{ x: number; y: number } | null>(null);
+    const { isAltPressed } = useKeyboardModifiers();
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key !== ' ') return;
+            if (!isDrawing) return;
+
+            if (activeTool === 'arrow') {
+                e.preventDefault();
+                setIsPolylineMode(true);
+                return;
+            }
+
+            if (activeTool === 'callout') {
+                e.preventDefault();
+                if (calloutPhase === 'box') {
+                    const anchor = lastPointerRef.current;
+                    if (!anchor) return;
+
+                    setCurrentShapes((prev) => {
+                        const textShape = prev.find((shape) => shape.type === 'text');
+                        const updatedText = textShape
+                            ? updateShapeWhileDrawing(textShape, anchor, isAltPressed, false)
+                            : null;
+                        const arrowShape = createShape('arrow', anchor, colors, toolSettings);
+
+                        const nextShapes: CanvasItem[] = [];
+                        if (updatedText) nextShapes.push(updatedText);
+                        if (arrowShape) nextShapes.push(arrowShape);
+                        return nextShapes;
+                    });
+
+                    setCalloutPhase('arrow');
+                } else {
+                    setIsPolylineMode(true);
+                }
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [activeTool, calloutPhase, colors, isAltPressed, isDrawing, toolSettings]);
 
     const handleMouseDown = useCallback((e: any) => {
         // Handle color picker
@@ -38,52 +81,113 @@ export const useDrawingTools = (
         const pos = stage.getPointerPosition();
         const transform = stage.getAbsoluteTransform().copy().invert();
         const localPos = transform.point(pos);
+        lastPointerRef.current = localPos;
 
         setIsDrawing(true);
+
+        if (activeTool === 'callout') {
+            const textShape = createShape('text', localPos, colors, toolSettings);
+            if (textShape) {
+                setCurrentShapes([textShape]);
+                setCalloutPhase('box');
+            }
+            return;
+        }
 
         const newShape = createShape(activeTool, localPos, colors, toolSettings);
 
         if (newShape) {
-            setCurrentShape(newShape);
+            setCurrentShapes([newShape]);
         }
     }, [activeTool, colors, toolSettings, isDropperActive, setColors, setDropperActive, stageRef]);
 
     const handleMouseMove = useCallback(() => {
-        if (!isDrawing || !currentShape) return;
+        if (!isDrawing || currentShapes.length === 0) return;
 
         const stage = stageRef.current;
         const pos = stage.getPointerPosition();
         const transform = stage.getAbsoluteTransform().copy().invert();
         const localPos = transform.point(pos);
+        lastPointerRef.current = localPos;
+
+        if (activeTool === 'callout') {
+            if (calloutPhase === 'box') {
+                const textShape = currentShapes.find((shape) => shape.type === 'text');
+                if (!textShape) return;
+
+                const updatedText = updateShapeWhileDrawing(
+                    textShape,
+                    localPos,
+                    isAltPressed,
+                    false
+                );
+
+                setCurrentShapes([updatedText]);
+                return;
+            }
+
+            const textShape = currentShapes.find((shape) => shape.type === 'text');
+            const arrowShape = currentShapes.find((shape) => shape.type === 'arrow');
+            if (!textShape || !arrowShape) return;
+
+            const updatedArrow = updateShapeWhileDrawing(
+                arrowShape,
+                localPos,
+                isAltPressed,
+                isPolylineMode
+            );
+
+            setCurrentShapes([textShape, updatedArrow]);
+
+            if (isPolylineMode) {
+                setIsPolylineMode(false);
+            }
+            return;
+        }
 
         const updatedShape = updateShapeWhileDrawing(
-            currentShape,
+            currentShapes[0],
             localPos,
             isAltPressed,
             isPolylineMode
         );
 
-        setCurrentShape(updatedShape);
+        setCurrentShapes([updatedShape]);
 
         if (isPolylineMode) {
             setIsPolylineMode(false);
         }
-    }, [isDrawing, currentShape, stageRef, isAltPressed, isPolylineMode, setIsPolylineMode]);
+    }, [activeTool, calloutPhase, currentShapes, isAltPressed, isDrawing, isPolylineMode, stageRef]);
 
     const handleMouseUp = useCallback(() => {
-        if (isDrawing && currentShape) {
-            if (shouldAddShape(currentShape)) {
-                addItem(currentShape);
+        if (isDrawing && currentShapes.length > 0) {
+            if (activeTool === 'callout') {
+                const textShape = currentShapes.find((shape) => shape.type === 'text') as Extract<CanvasItem, { type: 'text' }> | undefined;
+                const arrowShape = currentShapes.find((shape) => shape.type === 'arrow');
+
+                if (textShape && Math.abs(textShape.width) > 5 && Math.abs(textShape.height) > 5) {
+                    addItem(textShape);
+                }
+                if (arrowShape && shouldAddShape(arrowShape)) {
+                    addItem(arrowShape);
+                }
+            } else {
+                const shape = currentShapes[0];
+                if (shape && shouldAddShape(shape)) {
+                    addItem(shape);
+                }
             }
         }
 
         setIsDrawing(false);
-        setCurrentShape(null);
-    }, [isDrawing, currentShape, addItem]);
+        setCurrentShapes([]);
+        setIsPolylineMode(false);
+        setCalloutPhase('box');
+    }, [activeTool, isDrawing, currentShapes, addItem]);
 
     return {
         isDrawing,
-        currentShape,
+        currentShapes,
         handleMouseDown,
         handleMouseMove,
         handleMouseUp

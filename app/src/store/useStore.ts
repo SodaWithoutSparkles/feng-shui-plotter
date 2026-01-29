@@ -51,7 +51,7 @@ interface AppState {
     setCompassRotation: (deg: number) => void;
 
     // Tool State
-    activeTool: 'select' | 'rectangle' | 'ellipse' | 'line' | 'star' | 'arrow' | 'text';
+    activeTool: 'select' | 'rectangle' | 'ellipse' | 'line' | 'star' | 'arrow' | 'text' | 'callout';
     setActiveTool: (tool: AppState['activeTool']) => void;
     toolSettings: {
         lineWidth: number;

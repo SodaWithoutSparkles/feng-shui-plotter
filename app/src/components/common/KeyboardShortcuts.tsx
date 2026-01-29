@@ -92,6 +92,11 @@ export const KeyboardShortcuts = () => {
                         setActiveTool('arrow');
                         setDropperActive(false);
                         break;
+                    case 'c':
+                        e.preventDefault();
+                        setActiveTool('callout');
+                        setDropperActive(false);
+                        break;
                     case 's':
                         e.preventDefault();
                         setActiveTool('star');

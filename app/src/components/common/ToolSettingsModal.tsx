@@ -16,8 +16,8 @@ export const ToolSettingsModal: React.FC = () => {
 
     if (!showToolSettings) return null;
 
-    const isTextTool = activeTool === 'text';
-    const isShapeTool = ['rectangle', 'ellipse', 'line', 'arrow', 'star'].includes(activeTool);
+    const isTextTool = activeTool === 'text' || activeTool === 'callout';
+    const isShapeTool = ['rectangle', 'ellipse', 'line', 'arrow', 'star', 'callout'].includes(activeTool);
 
     return (
         <div

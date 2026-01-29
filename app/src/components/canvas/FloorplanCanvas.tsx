@@ -7,7 +7,6 @@ import { TextEditorOverlay } from './TextEditorOverlay';
 import { useCanvasExport } from './hooks/useCanvasExport';
 import { useCanvasNavigation } from './hooks/useCanvasNavigation';
 import { useCanvasDimensions } from './hooks/useCanvasDimensions';
-import { useKeyboardModifiers } from './hooks/useKeyboardModifiers';
 import { useDrawingTools } from './hooks/useDrawingTools';
 import { useTextEditor } from './hooks/useTextEditor';
 import { useFloorplanImage } from './hooks/useFloorplanImage';
@@ -39,10 +38,8 @@ export const FloorplanCanvas: React.FC = () => {
     // Custom hooks
     const dimensions = useCanvasDimensions(containerRef);
     const { stagePos, setStagePos, handleWheel } = useCanvasNavigation(stageRef);
-    const { isAltPressed, isPolylineMode, setIsPolylineMode } = useKeyboardModifiers(activeTool, false);
-
     const {
-        currentShape,
+        currentShapes,
         handleMouseDown,
         handleMouseMove,
         handleMouseUp
@@ -54,10 +51,7 @@ export const FloorplanCanvas: React.FC = () => {
         setColors,
         setDropperActive,
         addItem,
-        stageRef,
-        isAltPressed,
-        isPolylineMode,
-        setIsPolylineMode
+        stageRef
     );
 
     const {
@@ -145,14 +139,15 @@ export const FloorplanCanvas: React.FC = () => {
                     )}
 
                     {/* Current Shape Being Drawn */}
-                    {currentShape && (
+                    {currentShapes.map((shape) => (
                         <ShapeRenderer
-                            item={currentShape}
+                            key={shape.id}
+                            item={shape}
                             isSelected={false}
                             onSelect={() => { }}
                             onChange={() => { }}
                         />
-                    )}
+                    ))}
                 </Layer>
             </Stage>
 
