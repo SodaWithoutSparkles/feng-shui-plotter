@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { X, Upload, RotateCw } from 'lucide-react';
 import { FlystarVisualization } from './FlystarVisualization';
 import { genFengShui } from '../utils/FengShui';
@@ -12,18 +12,32 @@ interface ProjectConfigModalProps {
         rotation: number;
         fengShui: FengShuiData;
     }) => void;
+    initialData?: {
+        floorplanImage: string;
+        rotation: number;
+        fengShui: FengShuiData;
+    };
 }
 
 export const ProjectConfigModal: React.FC<ProjectConfigModalProps> = ({
     isOpen,
     onClose,
-    onComplete
+    onComplete,
+    initialData
 }) => {
     const [floorplanImage, setFloorplanImage] = useState<string | null>(null);
     const [rotation, setRotation] = useState(0);
     const [fengShui, setFengShui] = useState<FengShuiData>(
         genFengShui(1, 1, false, 1, false, 1)
     );
+
+    useEffect(() => {
+        if (isOpen && initialData) {
+            setFloorplanImage(initialData.floorplanImage || null);
+            setRotation(initialData.rotation);
+            setFengShui(initialData.fengShui);
+        }
+    }, [isOpen, initialData]);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 

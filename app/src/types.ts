@@ -45,6 +45,8 @@ export interface LineShape extends BaseShape {
 export interface TextShape extends BaseShape {
     type: 'text';
     text: string;
+    width: number;
+    height: number;
     fontSize: number;
     fontFamily: string;
     fontStyle?: 'normal' | 'italic';

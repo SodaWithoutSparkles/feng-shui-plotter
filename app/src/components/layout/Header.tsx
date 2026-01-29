@@ -19,6 +19,7 @@ export const Header: React.FC = () => {
     const addItem = useStore(state => state.addItem);
     const autoSave = useStore(state => state.autoSave);
     const toggleAutoSave = useStore(state => state.toggleAutoSave);
+    const setShowProjectConfig = useStore(state => state.setShowProjectConfig);
 
     // Store state getters for save - fetch individually to prevent re-render loops
     const floorplan = useStore(state => state.floorplan);
@@ -165,7 +166,7 @@ export const Header: React.FC = () => {
                             checked={autoSave}
                         />
                         <div className="h-px bg-gray-700 my-1" />
-                        <MenuItem label="Configure Project" onClick={() => { toggleFlyStar(); }} />
+                        <MenuItem label="Configure Project" onClick={() => { setShowProjectConfig(true); }} />
                     </div>
                 )}
             </div>

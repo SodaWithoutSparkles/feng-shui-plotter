@@ -33,6 +33,23 @@ export const FloorplanCanvas: React.FC = () => {
     const [isAltPressed, setIsAltPressed] = useState(false);
     const [isPolylineMode, setIsPolylineMode] = useState(false);
 
+    // Text editing state
+    const [editingText, setEditingText] = useState<{
+        id?: string;
+        x: number;
+        y: number;
+        stageX: number;
+        stageY: number;
+        width: number;
+        height: number;
+        text: string;
+        rotation: number;
+        fontSize: number;
+        fontFamily: string;
+        fill: string;
+        stroke: string;
+    } | null>(null);
+
     // Load floorplan image
     useEffect(() => {
         if (floorplan.imageSrc) {
@@ -40,6 +57,16 @@ export const FloorplanCanvas: React.FC = () => {
             img.src = floorplan.imageSrc;
             img.onload = () => {
                 setFloorplanImg(img);
+                // Initial placement: Center the floorplan
+                if (containerRef.current) {
+                    const stageW = containerRef.current.offsetWidth;
+                    const stageH = containerRef.current.offsetHeight;
+                    // Reset scale to 1 for new project/image load
+                    // Center the image in the view
+                    const x = (stageW - img.width) / 2;
+                    const y = (stageH - img.height) / 2;
+                    setStagePos({ x, y, scale: 1 });
+                }
             };
         } else {
             setFloorplanImg(null);
@@ -127,37 +154,7 @@ export const FloorplanCanvas: React.FC = () => {
 
         if (activeTool === 'select') return;
 
-        // Handle text tool
-        if (activeTool === 'text') {
-            const stage = stageRef.current;
-            const pos = stage.getPointerPosition();
-            const transform = stage.getAbsoluteTransform().copy().invert();
-            const localPos = transform.point(pos);
-
-            const text = prompt('Enter text:');
-            if (text) {
-                const id = Math.random().toString(36).substr(2, 9);
-                const newText: CanvasItem = {
-                    id,
-                    type: 'text',
-                    x: localPos.x,
-                    y: localPos.y,
-                    text,
-                    fontSize: toolSettings.fontSize,
-                    fontFamily: toolSettings.fontFamily,
-                    fontStyle: toolSettings.fontStyle,
-                    fontWeight: toolSettings.fontWeight,
-                    align: toolSettings.textAlign,
-                    rotation: 0,
-                    fill: colors.stroke,
-                    opacity: 1,
-                    draggable: true
-                };
-                addItem(newText);
-            }
-            return;
-        }
-
+        // Start drawing for all shape tools INCLUDING text
         const stage = stageRef.current;
         const pos = stage.getPointerPosition();
         const transform = stage.getAbsoluteTransform().copy().invert();
@@ -182,6 +179,29 @@ export const FloorplanCanvas: React.FC = () => {
                     stroke: colors.stroke,
                     strokeWidth: toolSettings.lineWidth,
                     fill: colors.fill,
+                    opacity: 1,
+                    draggable: true
+                };
+                break;
+
+            case 'text':
+                newShape = {
+                    id,
+                    type: 'text',
+                    x: localPos.x,
+                    y: localPos.y,
+                    width: 0,
+                    height: 0,
+                    text: '',
+                    fontSize: toolSettings.fontSize,
+                    fontFamily: toolSettings.fontFamily,
+                    fontStyle: toolSettings.fontStyle,
+                    fontWeight: toolSettings.fontWeight,
+                    align: toolSettings.textAlign,
+                    rotation: 0,
+                    fill: colors.fill,
+                    stroke: colors.stroke,
+                    strokeWidth: toolSettings.lineWidth,
                     opacity: 1,
                     draggable: true
                 };
@@ -272,8 +292,9 @@ export const FloorplanCanvas: React.FC = () => {
         const localPos = transform.point(pos);
 
         switch (currentShape.type) {
-            case 'rectangle': {
-                const rectShape = currentShape as Extract<CanvasItem, { type: 'rectangle' }>;
+            case 'rectangle':
+            case 'text': {
+                const rectShape = currentShape as Extract<CanvasItem, { type: 'rectangle' | 'text' }>;
                 let width = localPos.x - currentShape.x;
                 let height = localPos.y - currentShape.y;
 
@@ -388,6 +409,75 @@ export const FloorplanCanvas: React.FC = () => {
         }
     };
 
+    const handleTextComplete = () => {
+        if (editingText) {
+            if (editingText.text.trim()) {
+                if (editingText.id) {
+                    // Update existing text
+                    updateItem(editingText.id, {
+                        text: editingText.text
+                    });
+                } else {
+                    // Add new text
+                    const id = Math.random().toString(36).substr(2, 9);
+                    const newText: CanvasItem = {
+                        id,
+                        type: 'text',
+                        x: editingText.stageX,
+                        y: editingText.stageY,
+                        width: editingText.width,
+                        height: editingText.height,
+                        text: editingText.text,
+                        fontSize: editingText.fontSize,
+                        fontFamily: editingText.fontFamily,
+                        fontStyle: toolSettings.fontStyle,
+                        fontWeight: toolSettings.fontWeight,
+                        align: toolSettings.textAlign,
+                        rotation: editingText.rotation,
+                        fill: editingText.fill,
+                        stroke: editingText.stroke,
+                        strokeWidth: toolSettings.lineWidth,
+                        opacity: 1,
+                        draggable: true
+                    };
+                    addItem(newText);
+                }
+            } else if (editingText.id) {
+                // Empty string on existing text -> maybe delete? or just keep empty?
+                // Let's keep empty or user can delete manually.
+                updateItem(editingText.id, { text: '' });
+            }
+            setEditingText(null);
+        }
+    };
+
+    const handleShapeDblClick = (item: CanvasItem) => {
+        if (item.type === 'text') {
+            const stage = stageRef.current;
+            const textItem = item as any; // Cast for TS
+
+            // Calculate screen position
+            const tr = stage.getAbsoluteTransform();
+            const absPos = tr.point({ x: item.x, y: item.y });
+
+            setEditingText({
+                id: item.id,
+                x: absPos.x,
+                y: absPos.y,
+                stageX: item.x,
+                stageY: item.y,
+                width: textItem.width,
+                height: textItem.height,
+                text: textItem.text,
+                rotation: item.rotation,
+                fontSize: textItem.fontSize,
+                fontFamily: textItem.fontFamily,
+                fill: textItem.fill,
+                stroke: textItem.stroke
+            });
+        }
+    };
+
     const handleMouseUp = () => {
         if (isDrawing && currentShape) {
             // Only add shape if it has reasonable dimensions
@@ -413,6 +503,37 @@ export const FloorplanCanvas: React.FC = () => {
                 case 'arrow': {
                     const lineShape = currentShape as Extract<CanvasItem, { type: 'line' | 'arrow' }>;
                     shouldAdd = lineShape.points.length >= 2;
+                    break;
+                }
+                case 'text': {
+                    const textShape = currentShape as any;
+                    if (Math.abs(textShape.width) > 10 && Math.abs(textShape.height) > 10) {
+                        const stage = stageRef.current;
+                        // We need the absolute position for the HTML element overlay
+                        // currentShape x,y is in Stage coordinates (local)
+                        // We need to project that to screen coordinates
+                        const pos = { x: textShape.x, y: textShape.y };
+                        const tr = stage.getAbsoluteTransform();
+                        const absPos = tr.point(pos);
+
+                        setEditingText({
+                            x: absPos.x,
+                            y: absPos.y,
+                            stageX: textShape.x,
+                            stageY: textShape.y,
+                            // Keep width/height in stage coordinates and apply scaling when rendering the overlay
+                            width: textShape.width,
+                            height: textShape.height,
+                            text: '',
+                            // Provide defaults so the editing state matches the expected shape
+                            rotation: textShape.rotation ?? 0,
+                            fontSize: textShape.fontSize ?? toolSettings.fontSize,
+                            fontFamily: textShape.fontFamily ?? toolSettings.fontFamily,
+                            fill: textShape.fill ?? colors.fill,
+                            stroke: textShape.stroke ?? colors.stroke
+                        });
+                    }
+                    shouldAdd = false;
                     break;
                 }
             }
@@ -468,13 +589,17 @@ export const FloorplanCanvas: React.FC = () => {
 
                     {/* Objects Layer */}
                     {objects.map((item) => (
-                        <ShapeRenderer
-                            key={item.id}
-                            item={item}
-                            isSelected={selectedIds.includes(item.id)}
-                            onSelect={() => selectItem(item.id)}
-                            onChange={(updates) => updateItem(item.id, updates)}
-                        />
+                        // Hide text item when editing to avoid duplication
+                        (editingText && editingText.id === item.id) ? null : (
+                            <ShapeRenderer
+                                onDblClick={() => handleShapeDblClick(item)}
+                                key={item.id}
+                                item={item}
+                                isSelected={selectedIds.includes(item.id)}
+                                onSelect={() => selectItem(item.id)}
+                                onChange={(updates) => updateItem(item.id, updates)}
+                            />
+                        )
                     ))}
 
                     {/* Current Drawing Shape */}
@@ -488,6 +613,42 @@ export const FloorplanCanvas: React.FC = () => {
                     )}
                 </Layer>
             </Stage>
+
+            {editingText && (
+                <textarea
+                    value={editingText.text}
+                    onChange={(e) => setEditingText({ ...editingText, text: e.target.value })}
+                    onBlur={handleTextComplete}
+                    autoFocus
+                    placeholder="Type..."
+                    style={{
+                        position: 'absolute',
+                        left: editingText.x,
+                        top: editingText.y,
+                        width: `${Math.abs(editingText.width * stagePos.scale)}px`,
+                        height: `${Math.abs(editingText.height * stagePos.scale)}px`,
+                        fontSize: `${editingText.fontSize * stagePos.scale}px`,
+                        fontFamily: editingText.fontFamily,
+                        fontWeight: toolSettings.fontWeight,
+                        fontStyle: toolSettings.fontStyle,
+                        lineHeight: 1.2,
+                        color: editingText.stroke,
+                        backgroundColor: editingText.fill === 'transparent' ? 'transparent' : editingText.fill,
+                        border: 'none',
+                        outline: '2px solid blue',
+                        padding: '5px',
+                        zIndex: 1000,
+                        resize: 'none',
+                        overflow: 'hidden',
+                        transform: `rotate(${editingText.rotation}deg)`,
+                        transformOrigin: 'top left',
+                        textAlign: 'left',
+                        verticalAlign: 'middle',
+                        display: 'flex',
+                        alignItems: 'center'
+                    }}
+                />
+            )}
 
             {compass.visible && (
                 <div className="absolute top-4 right-4 pointer-events-none">

@@ -1,12 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { Pipette } from 'lucide-react';
 
 interface ColorPickerProps {
     color: string;
     onChange: (color: string) => void;
     supportsAlpha?: boolean;
+    onPick?: () => void;
 }
 
-export const ColorPicker: React.FC<ColorPickerProps> = ({ color, onChange, supportsAlpha = false }) => {
+export const ColorPicker: React.FC<ColorPickerProps> = ({ color, onChange, supportsAlpha = false, onPick }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [localColor, setLocalColor] = useState(color === 'transparent' ? '#000000' : color);
     const [alpha, setAlpha] = useState(color === 'transparent' ? 0 : 1);
@@ -106,7 +108,21 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({ color, onChange, suppo
                 <div className="absolute top-full mt-1 left-0 bg-gray-800 border border-gray-600 rounded-md shadow-xl p-3 z-50 min-w-[200px]">
                     <div className="space-y-3">
                         <div>
-                            <label className="text-xs text-gray-400 block mb-1">Color</label>
+                            <div className="flex justify-between items-center mb-1">
+                                <label className="text-xs text-gray-400 block">Color</label>
+                                {onPick && (
+                                    <button
+                                        onClick={() => {
+                                            onPick();
+                                            setIsOpen(false);
+                                        }}
+                                        className="text-gray-400 hover:text-blue-400 p-1 rounded hover:bg-gray-700 transition-colors"
+                                        title="Pick color from canvas"
+                                    >
+                                        <Pipette size={14} />
+                                    </button>
+                                )}
+                            </div>
                             <div className="flex items-center space-x-2">
                                 <input
                                     type="color"

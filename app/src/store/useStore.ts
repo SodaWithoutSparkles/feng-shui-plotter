@@ -1,8 +1,11 @@
-// src/store/useStore.ts
-
 import { create } from 'zustand';
 import type { CanvasItem, FengShuiData, SaveFile } from '../types';
 import { CURRENT_VERSION } from '../types';
+
+interface ColorPreset {
+    stroke: string;
+    fill: string;
+}
 
 interface AppState {
     // Application Mode
@@ -61,9 +64,20 @@ interface AppState {
     showToolSettings: boolean;
     setShowToolSettings: (show: boolean) => void;
 
+    // Project Config Modal
+    showProjectConfig: boolean;
+    setShowProjectConfig: (show: boolean) => void;
+
     // Color State
     colors: { stroke: string; fill: string; active: 'stroke' | 'fill' };
     setColors: (colors: Partial<AppState['colors']>) => void;
+    // Saved Color Presets (Max 8) - stores both stroke and fill
+    colorPresets: ColorPreset[];
+    addColorPreset: (preset: ColorPreset) => void;
+    selectColorPreset: (index: number) => void;
+    removeColorPreset: (index: number) => void;
+    selectedPresetIndex: number | null;
+
     isDropperActive: boolean;
     setDropperActive: (active: boolean) => void;
     pickedColor: string | null;
@@ -179,7 +193,8 @@ export const useStore = create<AppState>((set) => ({
             objects: [...state.objects, ...newItems],
             past: [...state.past, state.objects],
             future: [],
-            selectedIds: newItems.map(i => i.id)
+            selectedIds: newItems.map(i => i.id),
+            activeTool: 'select'
         };
     }),
 
@@ -243,8 +258,40 @@ export const useStore = create<AppState>((set) => ({
     showToolSettings: false,
     setShowToolSettings: (show) => set({ showToolSettings: show }),
 
+    showProjectConfig: false,
+    setShowProjectConfig: (show) => set({ showProjectConfig: show }),
+
     colors: { stroke: '#000000', fill: 'transparent', active: 'stroke' },
-    setColors: (colors) => set((state) => ({ colors: { ...state.colors, ...colors } })),
+    setColors: (colors) => set((state) => ({ colors: { ...state.colors, ...colors }, selectedPresetIndex: null })),
+
+    colorPresets: [
+        { stroke: '#000000', fill: 'transparent' },
+        { stroke: '#FF0000', fill: 'transparent' },
+        { stroke: '#0000FF', fill: 'transparent' },
+        { stroke: '#00FF00', fill: 'transparent' }
+    ],
+    addColorPreset: (preset) => set((state) => {
+        if (state.colorPresets.length >= 8) return {};
+        return { colorPresets: [...state.colorPresets, preset] };
+    }),
+    selectColorPreset: (index) => set((state) => {
+        if (index < 0 || index >= state.colorPresets.length) return {};
+        const preset = state.colorPresets[index];
+        return {
+            colors: { ...state.colors, stroke: preset.stroke, fill: preset.fill },
+            selectedPresetIndex: index
+        };
+    }),
+    removeColorPreset: (index) => set((state) => {
+        if (index < 0 || index >= state.colorPresets.length) return {};
+        const newPresets = state.colorPresets.filter((_, i) => i !== index);
+        return {
+            colorPresets: newPresets,
+            selectedPresetIndex: state.selectedPresetIndex === index ? null : state.selectedPresetIndex
+        };
+    }),
+    selectedPresetIndex: null,
+
     isDropperActive: false,
     setDropperActive: (active) => set({ isDropperActive: active }),
     pickedColor: null,

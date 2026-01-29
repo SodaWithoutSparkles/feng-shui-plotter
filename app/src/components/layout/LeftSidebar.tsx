@@ -1,8 +1,9 @@
 import React from 'react';
 import { useStore } from '../../store/useStore';
-import { MousePointer2, Square, Circle, Minus, Star, Type, ArrowRight, Pipette } from 'lucide-react';
+import { MousePointer2, Square, Circle, Minus, Star, Type, ArrowRight } from 'lucide-react';
 import clsx from 'clsx';
-import { ColorPicker } from '../common/ColorPicker';
+import { DualColorPicker } from '../common/DualColorPicker';
+import { ToolSettingsModal } from '../common/ToolSettingsModal';
 
 export const LeftSidebar: React.FC = () => {
     const activeTool = useStore((state) => state.activeTool);
@@ -23,55 +24,38 @@ export const LeftSidebar: React.FC = () => {
     ] as const;
 
     return (
-        <div className="w-12 bg-gray-800 border-r border-gray-700 flex flex-col items-center py-2 space-y-1 z-20">
+        <div className="w-12 bg-gray-800 border-r border-gray-700 flex flex-col items-center py-2 space-y-1 z-20 overflow-visible">
             {tools.map((tool) => (
-                <button
-                    key={tool.id}
-                    onClick={() => {
-                        setActiveTool(tool.id);
-                        setDropperActive(false);
-                    }}
-                    className={clsx(
-                        "p-2 rounded hover:bg-gray-700 transition-colors relative group",
-                        activeTool === tool.id && !isDropperActive ? "bg-gray-700 text-blue-400" : "text-gray-400"
-                    )}
-                    title={tool.label}
-                >
-                    <tool.icon size={20} />
-                </button>
+                <div key={tool.id} className="relative w-full flex justify-center">
+                    <button
+                        onClick={() => {
+                            setActiveTool(tool.id);
+                            setDropperActive(false);
+                        }}
+                        className={clsx(
+                            "p-2 rounded hover:bg-gray-700 transition-colors relative group",
+                            activeTool === tool.id && !isDropperActive ? "bg-gray-700 text-blue-400" : "text-gray-400"
+                        )}
+                        title={tool.label}
+                    >
+                        <tool.icon size={20} />
+                    </button>
+                    {activeTool === tool.id && <ToolSettingsModal />}
+                </div>
             ))}
 
             <div className="w-8 h-px bg-gray-600 my-2" />
 
-            <button
-                className={clsx(
-                    "p-2 rounded hover:bg-gray-700 transition-colors relative group",
-                    isDropperActive ? "bg-gray-700 text-blue-400" : "text-gray-400"
-                )}
-                title="Color Picker (I)"
-                onClick={() => setDropperActive(!isDropperActive)}
-            >
-                <Pipette size={20} />
-            </button>
-
             <div className="mt-4 flex flex-col items-center space-y-3">
-                {/* Stroke Color */}
-                <div className="relative group">
-                    <ColorPicker
-                        color={colors.stroke}
-                        onChange={(newColor) => setColors({ stroke: newColor, active: 'stroke' })}
-                        supportsAlpha={false}
-                    />
-                </div>
-
-                {/* Fill Color */}
-                <div className="relative group">
-                    <ColorPicker
-                        color={colors.fill}
-                        onChange={(newColor) => setColors({ fill: newColor, active: 'fill' })}
-                        supportsAlpha={true}
-                    />
-                </div>
+                <DualColorPicker
+                    strokeColor={colors.stroke}
+                    fillColor={colors.fill}
+                    onColorChange={(type, color) => setColors({ [type]: color, active: type })}
+                    onActiveTypeChange={(type) => setColors({ active: type })}
+                    onPick={() => {
+                        setDropperActive(true);
+                    }}
+                />
             </div>
         </div>
     );

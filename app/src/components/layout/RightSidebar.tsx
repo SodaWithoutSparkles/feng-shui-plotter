@@ -25,7 +25,7 @@ export const RightSidebar: React.FC = () => {
                         <FlystarVisualization
                             fengShui={fengShui}
                             updateFengShui={updateFengShui}
-                            showControls={true}
+                            showControls={false}
                         />
                     ) : (
                         <ul className="space-y-1">

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Rect, Circle, Line, Star, Arrow, Text as KonvaText, Image as KonvaImage, Transformer } from 'react-konva';
+import { Rect, Circle, Line, Star, Arrow, Text as KonvaText, Image as KonvaImage, Transformer, Group } from 'react-konva';
 import type { CanvasItem } from '../../types';
 
 interface ShapeRendererProps {
@@ -7,13 +7,15 @@ interface ShapeRendererProps {
     isSelected: boolean;
     onSelect: () => void;
     onChange: (updates: Partial<CanvasItem>) => void;
+    onDblClick?: () => void;
 }
 
 export const ShapeRenderer: React.FC<ShapeRendererProps> = ({
     item,
     isSelected,
     onSelect,
-    onChange
+    onChange,
+    onDblClick
 }) => {
     const shapeRef = React.useRef<any>(null);
     const trRef = React.useRef<any>(null);
@@ -80,13 +82,15 @@ export const ShapeRenderer: React.FC<ShapeRendererProps> = ({
                 outerRadius: Math.max(5, item.outerRadius * scaleX),
                 rotation: node.rotation()
             });
-        } else if (item.type === 'image') {
+        } else if (item.type === 'text') {
+            // For text, only scale the bounding box, not the font size
             onChange({
                 x: node.x(),
                 y: node.y(),
-                width: Math.max(5, item.width * scaleX),
-                height: Math.max(5, item.height * scaleY),
-                rotation: node.rotation()
+                rotation: node.rotation(),
+                width: Math.max(20, item.width * scaleX),
+                height: Math.max(20, item.height * scaleY)
+                // fontSize stays the same - don't scale it
             });
         } else {
             onChange({
@@ -110,7 +114,8 @@ export const ShapeRenderer: React.FC<ShapeRendererProps> = ({
         onClick: onSelect,
         onTap: onSelect,
         onDragEnd: handleDragEnd,
-        onTransformEnd: handleTransformEnd
+        onTransformEnd: handleTransformEnd,
+        onDblClick: onDblClick
     };
 
     let shape = null;
@@ -172,15 +177,35 @@ export const ShapeRenderer: React.FC<ShapeRendererProps> = ({
 
         case 'text':
             shape = (
-                <KonvaText
+                <Group
                     {...commonProps}
-                    text={item.text}
-                    fontSize={item.fontSize}
-                    fontFamily={item.fontFamily}
-                    fontStyle={item.fontStyle || 'normal'}
-                    fontVariant={item.fontWeight || 'normal'}
-                    align={item.align}
-                />
+                >
+                    {/* Background Box */}
+                    <Rect
+                        width={item.width}
+                        height={item.height}
+                        fill={item.fill}
+                        stroke={item.stroke}
+                        strokeWidth={item.strokeWidth}
+                        shadowBlur={0}
+                    />
+                    {/* Text Content */}
+                    <KonvaText
+                        x={0}
+                        y={0}
+                        width={item.width}
+                        height={item.height}
+                        text={item.text}
+                        fontSize={item.fontSize}
+                        fontFamily={item.fontFamily}
+                        fontStyle={item.fontStyle || 'normal'}
+                        fontVariant={item.fontWeight || 'normal'}
+                        align={item.align}
+                        verticalAlign="top"
+                        fill={item.stroke} // Use stroke color for text color
+                        padding={5}
+                    />
+                </Group>
             );
             break;
 

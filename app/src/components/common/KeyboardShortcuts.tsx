@@ -14,7 +14,11 @@ export const KeyboardShortcuts = () => {
         const handleKeyDown = (e: KeyboardEvent) => {
             // Ignore if typing in an input field
             const target = e.target as HTMLElement;
-            if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+            if (
+                target.tagName === 'INPUT' ||
+                target.tagName === 'TEXTAREA' ||
+                target.isContentEditable
+            ) {
                 return;
             }
 
