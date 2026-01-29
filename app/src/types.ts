@@ -118,6 +118,7 @@ export interface SaveFile {
         rotation: number;
         opacity: number;
     };
+    timestamp?: Date | string;
 }
 
 export const CURRENT_VERSION = '1.0.0';

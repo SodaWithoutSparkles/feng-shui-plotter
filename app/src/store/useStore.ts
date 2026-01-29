@@ -17,12 +17,22 @@ interface AppState {
     updateFloorplan: (updates: Partial<SaveFile['floorplan']>) => void;
 
     // Canvas Objects
-    items: CanvasItem[];
+    objects: CanvasItem[];
     addItem: (item: CanvasItem) => void;
     updateItem: (id: string, updates: Partial<CanvasItem>) => void;
     removeItem: (id: string) => void;
     selectedIds: string[];
     selectItem: (id: string | null) => void;
+
+    // History (Undo/Redo)
+    past: CanvasItem[][];
+    future: CanvasItem[][];
+    undo: () => void;
+    redo: () => void;
+
+    // Edit Operations
+    cloneSelected: () => void;
+    moveSelectedLayer: (direction: 'up' | 'down') => void;
 
     // Feng Shui Data
     fengShui: FengShuiData;
@@ -39,20 +49,30 @@ interface AppState {
     activeTool: 'select' | 'rectangle' | 'ellipse' | 'line' | 'star' | 'arrow' | 'text';
     setActiveTool: (tool: AppState['activeTool']) => void;
 
-    // History State
-    history: string[]; // Placeholder for action descriptions
+    // Color State
+    colors: { stroke: string; fill: string; active: 'stroke' | 'fill' };
+    setColors: (colors: Partial<AppState['colors']>) => void;
+    isDropperActive: boolean;
+    setDropperActive: (active: boolean) => void;
+
+    // Log History
+    history: string[];
     addToHistory: (action: string) => void;
 
     // Actions
     loadProject: (data: SaveFile) => void;
     resetProject: () => void;
+
+    // AutoSave
+    autoSave: boolean;
+    toggleAutoSave: () => void;
 }
 
 const defaultFengShui: FengShuiData = {
     blacks: { start: 0 },
     reds: { start: 0, reversed: false },
     blues: { start: 0, reversed: false },
-    purples: { start: 0, calculated_at: new Date },
+    purples: { start: 0, calculated_at: new Date() },
 };
 
 export const useStore = create<AppState>((set) => ({
@@ -73,16 +93,95 @@ export const useStore = create<AppState>((set) => ({
     setFloorplanImage: (src) => set((state) => ({ floorplan: { ...state.floorplan, imageSrc: src } })),
     updateFloorplan: (updates) => set((state) => ({ floorplan: { ...state.floorplan, ...updates } })),
 
-    items: [],
+    objects: [],
+    past: [],
+    future: [],
+
     addItem: (item) => set((state) => {
         const newHistory = [`Added ${item.type}`, ...state.history].slice(0, 50);
-        return { items: [...state.items, item], history: newHistory };
+        return {
+            objects: [...state.objects, item],
+            history: newHistory,
+            past: [...state.past, state.objects],
+            future: []
+        };
     }),
-    updateItem: (id, updates) => set((state) => ({
-        // @ts-ignore: Complex union type spread issues
-        items: state.items.map((item) => (item.id === id ? { ...item, ...updates } : item)) as CanvasItem[],
+    updateItem: (id, updates) => set((state) => {
+        return {
+            objects: state.objects.map((item) => (item.id === id ? { ...item, ...updates } : item)) as CanvasItem[],
+            past: [...state.past, state.objects],
+            future: []
+        };
+    }),
+    removeItem: (id) => set((state) => ({
+        objects: state.objects.filter((item) => item.id !== id),
+        past: [...state.past, state.objects],
+        future: []
     })),
-    removeItem: (id) => set((state) => ({ items: state.items.filter((item) => item.id !== id) })),
+
+    undo: () => set((state) => {
+        if (state.past.length === 0) return {};
+        const newPast = [...state.past];
+        const previous = newPast.pop();
+        if (!previous) return {};
+        return {
+            objects: previous,
+            past: newPast,
+            future: [state.objects, ...state.future]
+        };
+    }),
+    redo: () => set((state) => {
+        if (state.future.length === 0) return {};
+        const newFuture = [...state.future];
+        const next = newFuture.shift();
+        if (!next) return {};
+        return {
+            objects: next,
+            past: [...state.past, state.objects],
+            future: newFuture
+        };
+    }),
+
+    cloneSelected: () => set((state) => {
+        if (state.selectedIds.length === 0) return {};
+        const toClone = state.objects.filter(i => state.selectedIds.includes(i.id));
+        const newItems = toClone.map(item => ({
+            ...item,
+            id: Math.random().toString(36).substr(2, 9),
+            x: item.x + 20,
+            y: item.y + 20
+        }));
+        return {
+            objects: [...state.objects, ...newItems],
+            past: [...state.past, state.objects],
+            future: [],
+            selectedIds: newItems.map(i => i.id)
+        };
+    }),
+
+    moveSelectedLayer: (direction) => set((state) => {
+        if (state.selectedIds.length === 0) return {};
+        const newItems = [...state.objects];
+        const id = state.selectedIds[0];
+        const idx = newItems.findIndex(i => i.id === id);
+        if (idx === -1) return {};
+
+        if (direction === 'up' && idx < newItems.length - 1) {
+            const temp = newItems[idx];
+            newItems[idx] = newItems[idx + 1];
+            newItems[idx + 1] = temp;
+        } else if (direction === 'down' && idx > 0) {
+            const temp = newItems[idx];
+            newItems[idx] = newItems[idx - 1];
+            newItems[idx - 1] = temp;
+        }
+
+        return {
+            objects: newItems,
+            past: [...state.past, state.objects],
+            future: []
+        };
+    }),
 
     selectedIds: [],
     selectItem: (id) => set({ selectedIds: id ? [id] : [] }),
@@ -103,6 +202,11 @@ export const useStore = create<AppState>((set) => ({
     activeTool: 'select',
     setActiveTool: (tool) => set({ activeTool: tool }),
 
+    colors: { stroke: '#000000', fill: 'transparent', active: 'stroke' },
+    setColors: (colors) => set((state) => ({ colors: { ...state.colors, ...colors } })),
+    isDropperActive: false,
+    setDropperActive: (active) => set({ isDropperActive: active }),
+
     history: [],
     addToHistory: (action) => set((state) => ({ history: [action, ...state.history].slice(0, 50) })),
 
@@ -110,19 +214,26 @@ export const useStore = create<AppState>((set) => ({
         set({
             mode: 'edit',
             floorplan: data.floorplan,
-            items: data.objects,
+            objects: data.objects,
             fengShui: data.fengShui,
             compass: data.compass,
             history: ['Loaded Project'],
+            past: [],
+            future: []
         });
     },
 
     resetProject: () => set({
         mode: 'edit',
         floorplan: { imageSrc: null, rotation: 0, scale: 1, opacity: 1, x: 0, y: 0 },
-        items: [],
+        objects: [],
         fengShui: defaultFengShui,
         history: ['New Project'],
         showFlyStar: false,
+        past: [],
+        future: []
     }),
+
+    autoSave: false,
+    toggleAutoSave: () => set((state) => ({ autoSave: !state.autoSave })),
 }));

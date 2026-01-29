@@ -47,14 +47,23 @@ function genFlyStarSeq(
     reversed: boolean = false,
 ): Number[] {
     let out, offset;
+    let center;
+
     if (!reversed) {
-        offset = FLY_STAR[4] - start;
+        center = FLY_STAR[4];
         out = [...FLY_STAR];
+    } else {
+        center = REV_FLY_STAR[4];
+        out = [...REV_FLY_STAR];
     }
-    offset = REV_FLY_STAR[4] - start;
-    out = [...REV_FLY_STAR];
+
+    offset = start - center;
+
     for (let i = 0; i < out.length; i++) {
-        out[i] = (out[i] - 1 + offset) % 9 + 1;
+        // (x - 1 + offset) % 9 + 1, handling negative modulo
+        let val = (out[i] - 1 + offset) % 9;
+        if (val < 0) val += 9;
+        out[i] = val + 1;
     }
     return out;
 }
@@ -63,7 +72,14 @@ export function genFullFlyStarSeq(
     fengShuiData: FengShuiData,
     currYear: number
 ): FlyStarData {
-    let offset = currYear - fengShuiData.purples.calculated_at.getFullYear();
+    // Handle date string serialization issue
+    const calcDate = fengShuiData.purples.calculated_at instanceof Date
+        ? fengShuiData.purples.calculated_at
+        : new Date(fengShuiData.purples.calculated_at);
+
+    let offset = currYear - calcDate.getFullYear();
+    if (isNaN(offset)) offset = 0; // Fallback
+
     return {
         blacks: genFlyStarSeq(fengShuiData.blacks.start),
         reds: genFlyStarSeq(fengShuiData.reds.start, fengShuiData.reds.reversed),

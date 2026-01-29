@@ -1,18 +1,33 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Stage, Layer } from 'react-konva';
 import { useStore } from '../../store/useStore';
 import { CompassOverlay } from '../overlay/CompassOverlay';
 
 export const FloorplanCanvas: React.FC = () => {
     // const floorplan = useStore((state) => state.floorplan);
-    const items = useStore((state) => state.items);
+    const objects = useStore((state) => state.objects);
     const compass = useStore((state) => state.compass);
 
-    // Canvas dimensions - should be responsive to parent container
-    const width = 1200;
-    const height = 800;
-
     const stageRef = useRef<any>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    // Canvas dimensions - responsive to parent container
+    const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
+
+    useEffect(() => {
+        const updateSize = () => {
+            if (containerRef.current) {
+                setDimensions({
+                    width: containerRef.current.offsetWidth,
+                    height: containerRef.current.offsetHeight
+                });
+            }
+        };
+
+        updateSize();
+        window.addEventListener('resize', updateSize);
+        return () => window.removeEventListener('resize', updateSize);
+    }, []);
 
     // Initial scale/position for the "camera"
     const [stagePos, setStagePos] = useState({ x: 0, y: 0, scale: 1 });
@@ -39,10 +54,10 @@ export const FloorplanCanvas: React.FC = () => {
     };
 
     return (
-        <div className="w-full h-full relative object-contain bg-gray-200 overflow-hidden">
+        <div ref={containerRef} className="w-full h-full relative object-contain bg-gray-200 overflow-hidden">
             <Stage
-                width={width}
-                height={height}
+                width={dimensions.width}
+                height={dimensions.height}
                 onWheel={handleWheel}
                 scaleX={stagePos.scale}
                 scaleY={stagePos.scale}
@@ -54,7 +69,7 @@ export const FloorplanCanvas: React.FC = () => {
                 <Layer>
                     {/* Floorplan Layer */}
                     {/* Objects Layer */}
-                    {items.map((item) => (
+                    {objects.map((item) => (
                         // Placeholder for debugging, avoiding unused var warning needs key usage
                         // <ShapeRenderer key={item.id} item={item} />
                         <React.Fragment key={item.id}></React.Fragment>
