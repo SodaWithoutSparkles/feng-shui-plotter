@@ -288,10 +288,16 @@ export const useStore = create<AppState>((set) => ({
     setColors: (colors) => set((state) => ({ colors: { ...state.colors, ...colors }, selectedPresetIndex: null })),
 
     colorPresets: [
-        { stroke: '#000000', fill: 'transparent' },
-        { stroke: '#FF0000', fill: 'transparent' },
-        { stroke: '#0000FF', fill: 'transparent' },
-        { stroke: '#00FF00', fill: 'transparent' }
+        // stroke in RGB, fill in RGBA
+        { stroke: '#000000', fill: '#FFFFFFB2' },
+        { stroke: '#FF0000', fill: '#FFFFFFB2' },
+        { stroke: '#FF0000', fill: '#FFFF00B2' },
+        { stroke: '#0000FF', fill: '#FFFFFFB2' },
+        { stroke: '#00FF00', fill: '#FFFFFFB2' },
+        { stroke: '#FF00FF', fill: '#FFFFFFB2' },
+        { stroke: '#00FFFF', fill: '#FFFFFFB2' },
+
+
     ],
     addColorPreset: (preset) => set((state) => {
         if (state.colorPresets.length >= 8) return {};
