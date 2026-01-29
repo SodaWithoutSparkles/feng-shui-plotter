@@ -144,10 +144,13 @@ interface CompassShapeProps {
     opacity: number;
     mode: 'hidden' | 'visible' | 'interactive' | 'projections';
     onChange: (attrs: { x: number; y: number; radius?: number }) => void;
+    onTransformStart?: () => void;
+    onTransform?: () => void;
+    onTransformEnd?: () => void;
 }
 
 export const CompassShape = React.forwardRef<any, CompassShapeProps>(({
-    x, y, radius, rotation, opacity, mode, onChange
+    x, y, radius, rotation, opacity, mode, onChange, onTransformStart, onTransform, onTransformEnd
 }, ref) => {
     // Load static image
     const [image, setImage] = useState<HTMLImageElement | null>(null);
@@ -192,6 +195,9 @@ export const CompassShape = React.forwardRef<any, CompassShapeProps>(({
             opacity={opacity}
             draggable={isDraggable}
             onDragEnd={handleDragEnd}
+            onTransformStart={onTransformStart}
+            onTransform={onTransform}
+            onTransformEnd={onTransformEnd}
         >
             <Group name="compass-inner-visual">
                 {/* Optimized Compass Face */}
