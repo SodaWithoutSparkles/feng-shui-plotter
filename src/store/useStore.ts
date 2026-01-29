@@ -239,7 +239,7 @@ export const useStore = create<AppState>((set) => ({
         visible: true,
         mode: 'visible',
         rotation: 0,
-        opacity: 0.7,
+        opacity: 1.0,
         x: 400,
         y: 300,
         radius: 200,
