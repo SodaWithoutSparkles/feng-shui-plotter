@@ -79,7 +79,7 @@ export const ProjectConfigModal: React.FC<ProjectConfigModalProps> = ({
                         return;
                     }
                 }
-                
+
                 // No resize needed or context failed
                 setFloorplanDimensions({ width, height });
                 setFloorplanImage(result);
