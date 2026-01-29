@@ -50,6 +50,7 @@ export const LeftSidebar: React.FC = () => {
                 <DualColorPicker
                     strokeColor={colors.stroke}
                     fillColor={colors.fill}
+                    activeType={colors.active}
                     onColorChange={(type, color) => setColors({ [type]: color, active: type })}
                     onActiveTypeChange={(type) => setColors({ active: type })}
                     onPick={() => {

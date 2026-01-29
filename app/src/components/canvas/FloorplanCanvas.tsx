@@ -1,14 +1,16 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Stage, Layer, Image as KonvaImage } from 'react-konva';
+import { Stage, Layer, Image as KonvaImage, Transformer } from 'react-konva';
 import { useStore } from '../../store/useStore';
-import { CompassOverlay } from '../overlay/CompassOverlay';
+import { CompassShape } from './CompassShape';
 import { ShapeRenderer } from './ShapeRenderer';
 import type { CanvasItem } from '../../types';
 
 export const FloorplanCanvas: React.FC = () => {
     const floorplan = useStore((state) => state.floorplan);
+    const updateFloorplan = useStore((state) => state.updateFloorplan);
     const objects = useStore((state) => state.objects);
     const compass = useStore((state) => state.compass);
+    const updateCompass = useStore((state) => state.updateCompass);
     const selectedIds = useStore((state) => state.selectedIds);
     const selectItem = useStore((state) => state.selectItem);
     const updateItem = useStore((state) => state.updateItem);
@@ -19,10 +21,182 @@ export const FloorplanCanvas: React.FC = () => {
     const isDropperActive = useStore((state) => state.isDropperActive);
     const setDropperActive = useStore((state) => state.setDropperActive);
     const toolSettings = useStore((state) => state.toolSettings);
+    const exportTrigger = useStore((state) => state.exportTrigger);
+
 
     const stageRef = useRef<any>(null);
     const containerRef = useRef<HTMLDivElement>(null);
+    const compassRef = useRef<any>(null);
+    const floorplanRef = useRef<any>(null);
+    const lastCompassRotation = useRef(0);
+    const lastCompassCenter = useRef({ x: 0, y: 0 });
+    const lastCompassRadius = useRef(0);
+    const trRef = useRef<any>(null);
     const [floorplanImg, setFloorplanImg] = useState<HTMLImageElement | null>(null);
+
+    useEffect(() => {
+        if (exportTrigger > 0 && stageRef.current) {
+            // Find transformer and detach it temporarily for clean export
+            const transformerConfig = trRef.current?.nodes();
+            trRef.current?.nodes([]);
+
+            // Capture stage as a data URL
+            const dataUri = stageRef.current.toDataURL({ pixelRatio: 2 });
+
+            // Create an image from the captured data URL so we can add
+            // a white background and a 20px margin/border before saving
+            const img = new window.Image();
+            img.src = dataUri;
+
+            img.onload = () => {
+                const margin = 20; // px margin around the exported image
+
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width + margin * 2;
+                canvas.height = img.height + margin * 2;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) return;
+
+                // Fill white background
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Draw the captured image centered with margin
+                ctx.drawImage(img, margin, margin);
+
+                // Draw a subtle black border around the image
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(margin - 1, margin - 1, img.width + 2, img.height + 2);
+
+                const finalUri = canvas.toDataURL('image/png');
+
+                // Restore transformer
+                if (transformerConfig) {
+                    trRef.current?.nodes(transformerConfig);
+                }
+
+                const link = document.createElement('a');
+                link.download = `feng-shui-export-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.png`;
+                link.href = finalUri;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            };
+
+            // Fallback: if the image fails to load, restore transformer and save original capture
+            img.onerror = () => {
+                if (transformerConfig) {
+                    trRef.current?.nodes(transformerConfig);
+                }
+
+                const link = document.createElement('a');
+                link.download = `feng-shui-export-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.png`;
+                link.href = dataUri;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            };
+        }
+    }, [exportTrigger]);
+
+    useEffect(() => {
+        if (compass.mode === 'interactive' && trRef.current && compassRef.current) {
+            trRef.current.nodes([compassRef.current]);
+            trRef.current.getLayer().batchDraw();
+        }
+    }, [compass.mode, compass.visible]);
+
+    const handleCompassTransformStart = () => {
+        if (compassRef.current) {
+            lastCompassRotation.current = compassRef.current.rotation();
+            // Keep the original center & radius so we can restore center after a scale
+            lastCompassCenter.current = { x: compassRef.current.x(), y: compassRef.current.y() };
+            lastCompassRadius.current = compass.radius;
+        }
+    };
+
+    const handleCompassTransform = () => {
+        const node = compassRef.current;
+        if (!node) return;
+
+        if (compass.locked) {
+            const currentRot = node.rotation();
+            const delta = currentRot - lastCompassRotation.current;
+            lastCompassRotation.current = currentRot;
+
+            if (floorplanRef.current) {
+                // Rotate floorplan around compass center
+                const cx = node.x();
+                const cy = node.y();
+                const fx = floorplanRef.current.x();
+                const fy = floorplanRef.current.y();
+
+                const rad = (delta * Math.PI) / 180;
+                const cos = Math.cos(rad);
+                const sin = Math.sin(rad);
+
+                const dx = fx - cx;
+                const dy = fy - cy;
+
+                const newX = cx + (dx * cos - dy * sin);
+                const newY = cy + (dx * sin + dy * cos);
+
+                floorplanRef.current.x(newX);
+                floorplanRef.current.y(newY);
+                floorplanRef.current.rotation(floorplanRef.current.rotation() + delta);
+            }
+
+            // Counter-rotate visual
+            const visual = node.findOne('.compass-inner-visual');
+            if (visual) {
+                visual.rotation(-currentRot);
+            }
+        }
+    };
+
+    const handleCompassTransformEnd = () => {
+        const node = compassRef.current;
+        if (!node) return;
+
+        const scaleX = node.scaleX();
+        node.scaleX(1);
+        node.scaleY(1);
+
+        // Keep the center fixed when resizing: restore stored center
+        node.x(lastCompassCenter.current.x);
+        node.y(lastCompassCenter.current.y);
+
+        const newRadius = Math.max(50, lastCompassRadius.current * scaleX);
+
+        if (compass.locked) {
+            if (floorplanRef.current) {
+                updateFloorplan({
+                    rotation: floorplanRef.current.rotation(),
+                    x: floorplanRef.current.x(),
+                    y: floorplanRef.current.y()
+                });
+            }
+
+            node.rotation(0);
+            const visual = node.findOne('.compass-inner-visual');
+            if (visual) visual.rotation(0);
+
+            updateCompass({
+                x: lastCompassCenter.current.x,
+                y: lastCompassCenter.current.y,
+                rotation: 0,
+                radius: newRadius
+            });
+        } else {
+            updateCompass({
+                x: lastCompassCenter.current.x,
+                y: lastCompassCenter.current.y,
+                rotation: node.rotation(),
+                radius: newRadius
+            });
+        }
+    };
 
     // Canvas dimensions - responsive to parent container
     const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
@@ -576,6 +750,7 @@ export const FloorplanCanvas: React.FC = () => {
                     {/* Floorplan Image Layer */}
                     {floorplanImg && (
                         <KonvaImage
+                            ref={floorplanRef}
                             image={floorplanImg}
                             x={floorplan.x}
                             y={floorplan.y}
@@ -585,6 +760,31 @@ export const FloorplanCanvas: React.FC = () => {
                             opacity={floorplan.opacity}
                             listening={false}
                         />
+                    )}
+
+                    {/* Compass */}
+                    {compass.mode !== 'hidden' && (
+                        <>
+                            <CompassShape
+                                ref={compassRef}
+                                x={compass.x}
+                                y={compass.y}
+                                radius={compass.radius}
+                                rotation={compass.rotation}
+                                opacity={compass.opacity}
+                                mode={compass.mode}
+                                onChange={(attrs) => updateCompass(attrs)}
+                            />
+                            {compass.mode === 'interactive' && (
+                                <Transformer
+                                    ref={trRef}
+                                    onTransformStart={handleCompassTransformStart}
+                                    onTransform={handleCompassTransform}
+                                    onTransformEnd={handleCompassTransformEnd}
+                                    enabledAnchors={['top-left', 'top-right', 'bottom-left', 'bottom-right']}
+                                />
+                            )}
+                        </>
                     )}
 
                     {/* Objects Layer */}
@@ -650,11 +850,6 @@ export const FloorplanCanvas: React.FC = () => {
                 />
             )}
 
-            {compass.visible && (
-                <div className="absolute top-4 right-4 pointer-events-none">
-                    <CompassOverlay rotation={compass.rotation} />
-                </div>
-            )}
         </div>
     );
 };

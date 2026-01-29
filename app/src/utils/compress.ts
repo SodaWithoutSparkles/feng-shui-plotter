@@ -35,3 +35,41 @@ export const decompress = async (
     return decompressedBlob.text();
 };
 
+// Helpers for storing compressed data as base64 strings (useful for localStorage)
+const arrayBufferToBase64 = (buffer: ArrayBuffer) => {
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    const chunkSize = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+        const chunk = bytes.subarray(i, i + chunkSize);
+        binary += String.fromCharCode.apply(null, Array.from(chunk));
+    }
+    return btoa(binary);
+};
+
+const base64ToArrayBuffer = (base64: string) => {
+    const binary = atob(base64);
+    const len = binary.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+        bytes[i] = binary.charCodeAt(i);
+    }
+    return bytes.buffer;
+};
+
+export const compressToBase64 = async (
+    str: string,
+    encoding: CompressionFormat = 'gzip'
+): Promise<string> => {
+    const compressed = await compress(str, encoding);
+    return arrayBufferToBase64(compressed);
+};
+
+export const decompressFromBase64 = async (
+    base64: string,
+    encoding: CompressionFormat = 'gzip'
+): Promise<string> => {
+    const buffer = base64ToArrayBuffer(base64);
+    return decompress(buffer, encoding);
+};
+

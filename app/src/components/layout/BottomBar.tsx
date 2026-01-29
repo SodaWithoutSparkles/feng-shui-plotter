@@ -24,11 +24,18 @@ export const BottomBar: React.FC = () => {
                     onClick={toggleCompass}
                     className={clsx(
                         "px-3 h-full flex items-center rounded transition-colors space-x-2",
-                        compass.visible ? "bg-blue-600 text-white" : "bg-gray-800 hover:bg-gray-700"
+                        compass.mode !== 'hidden' ? "bg-blue-600 text-white" : "bg-gray-800 hover:bg-gray-700"
                     )}
+                    title="Click to cycle modes: Hidden -> Visible -> Edit -> Projections"
                 >
                     <Compass size={14} />
-                    <span>Compass</span>
+                    <span>
+                        {compass.mode === 'hidden' && 'Compass'}
+                        {compass.mode === 'visible' && 'Compass (View)'}
+                        {compass.mode === 'interactive' && 'Compass (Edit)'}
+                        {compass.mode === 'projections' && 'Compass (Proj)'}
+                        {!compass.mode && (compass.visible ? 'Compass (View)' : 'Compass')}
+                    </span>
                 </button>
 
                 <button

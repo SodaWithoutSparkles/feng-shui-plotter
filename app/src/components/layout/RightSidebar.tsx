@@ -26,6 +26,7 @@ export const RightSidebar: React.FC = () => {
                             fengShui={fengShui}
                             updateFengShui={updateFengShui}
                             showControls={false}
+                            showYear={true}
                         />
                     ) : (
                         <ul className="space-y-1">

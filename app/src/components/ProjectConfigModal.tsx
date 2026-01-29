@@ -11,6 +11,7 @@ interface ProjectConfigModalProps {
         floorplanImage: string;
         rotation: number;
         fengShui: FengShuiData;
+        compassPosition?: { x: number, y: number };
     }) => void;
     initialData?: {
         floorplanImage: string;
@@ -26,6 +27,7 @@ export const ProjectConfigModal: React.FC<ProjectConfigModalProps> = ({
     initialData
 }) => {
     const [floorplanImage, setFloorplanImage] = useState<string | null>(null);
+    const [floorplanDimensions, setFloorplanDimensions] = useState<{ width: number, height: number } | null>(null);
     const [rotation, setRotation] = useState(0);
     const [fengShui, setFengShui] = useState<FengShuiData>(
         genFengShui(1, 1, false, 1, false, 1)
@@ -47,7 +49,42 @@ export const ProjectConfigModal: React.FC<ProjectConfigModalProps> = ({
 
         const reader = new FileReader();
         reader.onload = (event) => {
-            setFloorplanImage(event.target?.result as string);
+            const result = event.target?.result as string;
+            const img = new Image();
+            img.onload = () => {
+                let width = img.width;
+                let height = img.height;
+                const maxSize = 1080;
+
+                if (width > maxSize || height > maxSize) {
+                    if (width > height) {
+                        height = Math.round((height * maxSize) / width);
+                        width = maxSize;
+                    } else {
+                        width = Math.round((width * maxSize) / height);
+                        height = maxSize;
+                    }
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    if (ctx) {
+                        ctx.drawImage(img, 0, 0, width, height);
+                        // Use png for better quality on floorplans usually, or match file type if possible
+                        // Assuming png/jpeg.
+                        const resized = canvas.toDataURL(file.type === 'image/jpeg' ? 'image/jpeg' : 'image/png');
+                        setFloorplanDimensions({ width, height });
+                        setFloorplanImage(resized);
+                        return;
+                    }
+                }
+                
+                // No resize needed or context failed
+                setFloorplanDimensions({ width, height });
+                setFloorplanImage(result);
+            };
+            img.src = result;
         };
         reader.readAsDataURL(file);
     };
@@ -61,7 +98,11 @@ export const ProjectConfigModal: React.FC<ProjectConfigModalProps> = ({
         onComplete({
             floorplanImage,
             rotation,
-            fengShui
+            fengShui,
+            compassPosition: floorplanDimensions ? {
+                x: floorplanDimensions.width / 2,
+                y: floorplanDimensions.height / 2
+            } : undefined
         });
         onClose();
     };

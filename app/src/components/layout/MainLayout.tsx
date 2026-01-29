@@ -6,7 +6,6 @@ import { RightSidebar } from './RightSidebar';
 import { BottomBar } from './BottomBar';
 import { FloorplanCanvas } from '../canvas/FloorplanCanvas';
 import { KeyboardShortcuts } from '../common/KeyboardShortcuts';
-import { ToolSettingsModal } from '../common/ToolSettingsModal';
 import { ProjectConfigModal } from '../ProjectConfigModal';
 
 export const MainLayout: React.FC = () => {

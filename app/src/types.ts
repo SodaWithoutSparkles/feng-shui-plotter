@@ -94,6 +94,7 @@ export interface FengShuiData {
     purples: {
         start: number;
         calculated_at: Date;
+        offset?: number;
     };
 }
 
@@ -118,9 +119,14 @@ export interface SaveFile {
     objects: CanvasItem[];
     fengShui: FengShuiData;
     compass: {
-        visible: boolean;
+        visible: boolean; // Deprecated, use mode
+        mode: 'hidden' | 'visible' | 'interactive' | 'projections';
         rotation: number;
         opacity: number;
+        x: number;
+        y: number;
+        radius: number;
+        locked: boolean;
     };
     timestamp?: Date | string;
 }

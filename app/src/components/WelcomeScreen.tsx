@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
-import { Upload, FilePlus } from 'lucide-react';
+import { Upload, FilePlus, RefreshCcw } from 'lucide-react';
+import { decompress, decompressFromBase64 } from '../utils/compress';
 import { ProjectConfigModal } from './ProjectConfigModal';
+import type { SaveFile } from '../types';
 
 export const WelcomeScreen: React.FC = () => {
     const setMode = useStore((state) => state.setMode);
@@ -9,25 +11,72 @@ export const WelcomeScreen: React.FC = () => {
     const setFloorplanImage = useStore((state) => state.setFloorplanImage);
     const updateFloorplan = useStore((state) => state.updateFloorplan);
     const updateFengShui = useStore((state) => state.updateFengShui);
+    const updateCompass = useStore((state) => state.updateCompass);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [hasAutoSave, setHasAutoSave] = useState(false);
+
+    React.useEffect(() => {
+        const checkAutoSave = () => {
+            const saved = localStorage.getItem('autosave_project');
+            if (saved) setHasAutoSave(true);
+        };
+        checkAutoSave();
+    }, []);
+
+    const handleRecover = async () => {
+        try {
+            const saved = localStorage.getItem('autosave_project');
+            if (saved) {
+                const jsonStr = await decompressFromBase64(saved);
+                const project = JSON.parse(jsonStr) as SaveFile;
+                loadProject(project);
+            }
+        } catch (e) {
+            console.error('Failed to recover project', e);
+            alert('Failed to recover project. The autosave file found might be corrupted.');
+        }
+    };
 
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
         const reader = new FileReader();
-        reader.onload = (event) => {
+        reader.onload = async (event) => {
+            const result = event.target?.result;
             try {
-                const json = JSON.parse(event.target?.result as string);
-                // TODO: Validate JSON schema here
-                loadProject(json);
+                // Try as UTF-8 text first (legacy .json saves)
+                if (result instanceof ArrayBuffer) {
+                    try {
+                        const text = new TextDecoder().decode(new Uint8Array(result));
+                        const json = JSON.parse(text);
+                        loadProject(json);
+                        return;
+                    } catch (err) {
+                        // Not plain text, try decompress
+                    }
+
+                    try {
+                        const decompressed = await decompress(result as ArrayBuffer);
+                        const json = JSON.parse(decompressed);
+                        loadProject(json);
+                        return;
+                    } catch (err) {
+                        console.error("Failed to parse save file", err);
+                        alert("Invalid save file format");
+                    }
+                } else if (typeof result === 'string') {
+                    const json = JSON.parse(result as string);
+                    loadProject(json);
+                    return;
+                }
             } catch (err) {
                 console.error("Failed to parse save file", err);
                 alert("Invalid save file format");
             }
         };
-        reader.readAsText(file);
+        reader.readAsArrayBuffer(file);
     };
 
     return (
@@ -53,10 +102,10 @@ export const WelcomeScreen: React.FC = () => {
                         <Upload size={48} className="text-green-600" />
                     </div>
                     <h2 className="text-2xl font-semibold text-gray-800 mb-2">Load Save File</h2>
-                    <p className="text-gray-500 text-center">Continue working on an existing .json save file.</p>
+                    <p className="text-gray-500 text-center">Continue working on an existing save file (.json or compressed .fsp).</p>
                     <input
                         type="file"
-                        accept=".json"
+                        accept=".json,.fsp"
                         className="hidden"
                         onChange={handleFileUpload}
                     />
@@ -70,9 +119,27 @@ export const WelcomeScreen: React.FC = () => {
                     setFloorplanImage(config.floorplanImage);
                     updateFloorplan({ rotation: config.rotation });
                     updateFengShui(config.fengShui);
+                    if (config.compassPosition) {
+                        updateCompass({ x: config.compassPosition.x, y: config.compassPosition.y });
+                    }
                     setMode('edit');
                 }}
             />
+
+            {/* Recover Card */}
+            {hasAutoSave && (
+                <button
+                    onClick={handleRecover}
+                    className="flex flex-col items-center p-8 bg-white rounded-xl shadow-md hover:shadow-lg transition-all border border-transparent hover:border-orange-500 group md:col-span-2 lg:col-span-1"
+                >
+                    <div className="bg-orange-100 p-4 rounded-full mb-4 group-hover:bg-orange-200 transition-colors">
+                        <RefreshCcw size={48} className="text-orange-600" />
+                    </div>
+                    <h2 className="text-2xl font-semibold text-gray-800 mb-2">Recover Auto-save</h2>
+                    <p className="text-gray-500 text-center">Restore the last auto-saved session.</p>
+                </button>
+            )}
+
         </div>
     );
 };

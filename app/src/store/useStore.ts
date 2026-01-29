@@ -47,6 +47,7 @@ interface AppState {
     // UI State
     compass: SaveFile['compass'];
     toggleCompass: () => void;
+    updateCompass: (updates: Partial<SaveFile['compass']>) => void;
     setCompassRotation: (deg: number) => void;
 
     // Tool State
@@ -94,6 +95,10 @@ interface AppState {
     // AutoSave
     autoSave: boolean;
     toggleAutoSave: () => void;
+
+    // Export
+    exportTrigger: number;
+    triggerExport: () => void;
 }
 
 const defaultFengShui: FengShuiData = {
@@ -232,10 +237,28 @@ export const useStore = create<AppState>((set) => ({
 
     compass: {
         visible: true,
+        mode: 'visible',
         rotation: 0,
-        opacity: 0.5,
+        opacity: 0.7,
+        x: 400,
+        y: 300,
+        radius: 200,
+        locked: true
     },
-    toggleCompass: () => set((state) => ({ compass: { ...state.compass, visible: !state.compass.visible } })),
+    toggleCompass: () => set((state) => {
+        const modes = ['hidden', 'visible', 'interactive', 'projections'] as const;
+        const currentMode = state.compass.mode || (state.compass.visible ? 'visible' : 'hidden');
+        const nextMode = modes[(modes.indexOf(currentMode) + 1) % modes.length];
+
+        return {
+            compass: {
+                ...state.compass,
+                visible: nextMode !== 'hidden',
+                mode: nextMode
+            }
+        };
+    }),
+    updateCompass: (updates) => set((state) => ({ compass: { ...state.compass, ...updates } })),
     setCompassRotation: (rotation) => set((state) => ({ compass: { ...state.compass, rotation } })),
 
     activeTool: 'select',
@@ -306,7 +329,10 @@ export const useStore = create<AppState>((set) => ({
             floorplan: data.floorplan,
             objects: data.objects,
             fengShui: data.fengShui,
-            compass: data.compass,
+            compass: {
+                ...data.compass,
+                locked: (data.compass as any).locked ?? true
+            },
             history: ['Loaded Project'],
             past: [],
             future: []
@@ -326,4 +352,7 @@ export const useStore = create<AppState>((set) => ({
 
     autoSave: false,
     toggleAutoSave: () => set((state) => ({ autoSave: !state.autoSave })),
+
+    exportTrigger: 0,
+    triggerExport: () => set((state) => ({ exportTrigger: state.exportTrigger + 1 })),
 }));

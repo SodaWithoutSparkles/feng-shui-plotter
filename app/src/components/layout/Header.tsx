@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useStore } from '../../store/useStore';
 import type { SaveFile } from '../../types';
+import { compress, decompress, compressToBase64 } from '../../utils/compress';
 
 export const Header: React.FC = () => {
     const [activeMenu, setActiveMenu] = useState<string | null>(null);
@@ -15,11 +16,12 @@ export const Header: React.FC = () => {
     const cloneSelected = useStore(state => state.cloneSelected);
     const deleteSelected = useStore(state => state.deleteSelected);
     const moveSelectedLayer = useStore(state => state.moveSelectedLayer);
-    const toggleFlyStar = useStore(state => state.toggleFlyStar);
+    const updateCompass = useStore(state => state.updateCompass);
     const addItem = useStore(state => state.addItem);
     const autoSave = useStore(state => state.autoSave);
     const toggleAutoSave = useStore(state => state.toggleAutoSave);
     const setShowProjectConfig = useStore(state => state.setShowProjectConfig);
+    const triggerExport = useStore(state => state.triggerExport);
 
     // Store state getters for save - fetch individually to prevent re-render loops
     const floorplan = useStore(state => state.floorplan);
@@ -31,7 +33,7 @@ export const Header: React.FC = () => {
     // Auto-save effect
     useEffect(() => {
         if (autoSave) {
-            const timer = setTimeout(() => {
+            const timer = setTimeout(async () => {
                 const saveData: SaveFile = {
                     floorplan,
                     objects,
@@ -40,14 +42,19 @@ export const Header: React.FC = () => {
                     version,
                     timestamp: new Date()
                 };
-                localStorage.setItem('autosave_project', JSON.stringify(saveData));
-                console.log('Auto-saved'); // Optional confirmation
+                try {
+                    const base64 = await compressToBase64(JSON.stringify(saveData, null, 2));
+                    localStorage.setItem('autosave_project', base64);
+                    console.log('Auto-saved (compressed)'); // Optional confirmation
+                } catch (err) {
+                    console.error('Failed to compress autosave', err);
+                }
             }, 3000); // 3 sec debounce
             return () => clearTimeout(timer);
         }
     }, [floorplan, objects, fengShui, compass, version, autoSave]);
 
-    const handleSave = () => {
+    const handleSave = async () => {
         const saveFile: SaveFile = {
             version,
             timestamp: new Date(),
@@ -57,16 +64,23 @@ export const Header: React.FC = () => {
             compass
         };
 
-        const blob = new Blob([JSON.stringify(saveFile, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `project-${new Date().toISOString().slice(0, 10)}.fsp`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        setActiveMenu(null);
+        try {
+            const json = JSON.stringify(saveFile, null, 2);
+            const compressed = await compress(json);
+            const blob = new Blob([compressed], { type: 'application/gzip' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `project-${new Date().toISOString().slice(0, 10)}.fsp`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            setActiveMenu(null);
+        } catch (err) {
+            console.error('Failed to compress save file', err);
+            alert('Failed to save project');
+        }
     };
 
     const handleLoad = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -74,15 +88,40 @@ export const Header: React.FC = () => {
         if (!file) return;
 
         const reader = new FileReader();
-        reader.onload = (event) => {
+        reader.onload = async (event) => {
+            const result = event.target?.result;
             try {
-                const data = JSON.parse(event.target?.result as string) as SaveFile;
-                loadProject(data);
+                // First try to read as UTF-8 text (legacy .json saves)
+                if (result instanceof ArrayBuffer) {
+                    try {
+                        const text = new TextDecoder().decode(new Uint8Array(result));
+                        const parsed = JSON.parse(text) as SaveFile;
+                        loadProject(parsed);
+                        return;
+                    } catch (err) {
+                        // Not plain text, try decompressing
+                    }
+
+                    try {
+                        const decompressed = await decompress(result as ArrayBuffer);
+                        const parsed = JSON.parse(decompressed) as SaveFile;
+                        loadProject(parsed);
+                        return;
+                    } catch (err) {
+                        console.error('Failed to decompress/load file', err);
+                        alert('Failed to load project file');
+                    }
+                } else if (typeof result === 'string') {
+                    const parsed = JSON.parse(result as string) as SaveFile;
+                    loadProject(parsed);
+                    return;
+                }
             } catch (err) {
+                console.error('Failed to load project file', err);
                 alert('Failed to load project file');
             }
         };
-        reader.readAsText(file);
+        reader.readAsArrayBuffer(file);
         setActiveMenu(null);
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
@@ -167,6 +206,7 @@ export const Header: React.FC = () => {
                         />
                         <div className="h-px bg-gray-700 my-1" />
                         <MenuItem label="Configure Project" onClick={() => { setShowProjectConfig(true); }} />
+                        <MenuItem label="Export as Image..." onClick={() => triggerExport()} />
                     </div>
                 )}
             </div>
@@ -201,8 +241,52 @@ export const Header: React.FC = () => {
                     Options
                 </div>
                 {activeMenu === 'option' && (
-                    <div className="absolute top-full left-0 bg-gray-800 border border-gray-600 shadow-xl py-1 rounded-b-md">
+                    <div className="absolute top-full left-0 bg-gray-800 border border-gray-600 shadow-xl py-1 rounded-b-md min-w-[220px]">
                         <MenuItem label="About" onClick={() => alert('Feng Shui Plotter v0.1.0\nBuilt with React & Vite')} />
+
+                        <div className="h-px bg-gray-700 my-1" />
+                        <div className="px-4 py-1 text-xs font-bold text-gray-500 uppercase tracking-wider">Compass</div>
+
+                        <div
+                            className="px-4 py-2 hover:bg-gray-700 cursor-pointer flex justify-between items-center"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                updateCompass({ locked: !compass.locked });
+                            }}
+                        >
+                            <div className="flex items-center">
+                                <span className={`w-4 mr-2 text-blue-400 font-bold`}>{compass.locked ? '✓' : ''}</span>
+                                <span>Lock to South</span>
+                            </div>
+                        </div>
+
+                        <div className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex justify-between text-xs text-text-gray-300 mb-1">
+                                <span>Opacity</span>
+                                <span>{Math.round(compass.opacity * 100)}%</span>
+                            </div>
+                            <input
+                                type="range"
+                                min="0.1" max="1" step="0.05"
+                                value={compass.opacity}
+                                onChange={(e) => updateCompass({ opacity: parseFloat(e.target.value) })}
+                                className="w-full accent-blue-500 h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer"
+                            />
+                        </div>
+
+                        <div className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex justify-between text-xs text-gray-300 mb-1">
+                                <span>Radius</span>
+                                <span>{Math.round(compass.radius)}px</span>
+                            </div>
+                            <input
+                                type="range"
+                                min="50" max="600" step="10"
+                                value={compass.radius}
+                                onChange={(e) => updateCompass({ radius: parseFloat(e.target.value) })}
+                                className="w-full accent-blue-500 h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer"
+                            />
+                        </div>
                     </div>
                 )}
             </div>
