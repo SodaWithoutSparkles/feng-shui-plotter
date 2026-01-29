@@ -26,8 +26,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Change to app directory
-        run: cd app
 
       - name: Set up Node
         uses: actions/setup-node@v4
