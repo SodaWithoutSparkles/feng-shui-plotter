@@ -47,6 +47,8 @@ export interface TextShape extends BaseShape {
     text: string;
     fontSize: number;
     fontFamily: string;
+    fontStyle?: 'normal' | 'italic';
+    fontWeight?: 'normal' | 'bold';
     align: 'left' | 'center' | 'right';
 }
 

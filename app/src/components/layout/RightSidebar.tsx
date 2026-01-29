@@ -1,18 +1,16 @@
 import React from 'react';
 import { useStore } from '../../store/useStore';
 import { Layers, History, Settings } from 'lucide-react';
-import { genFullFlyStarSeq, DIGIT_TO_CHINESE } from '../../utils/FengShui';
+import { FlystarVisualization } from '../FlystarVisualization';
 
 export const RightSidebar: React.FC = () => {
     const history = useStore((state) => state.history);
     const objects = useStore((state) => state.objects);
+    const selectedIds = useStore((state) => state.selectedIds);
+    const selectItem = useStore((state) => state.selectItem);
     const showFlyStar = useStore((state) => state.showFlyStar);
     const fengShui = useStore((state) => state.fengShui);
     const updateFengShui = useStore((state) => state.updateFengShui);
-
-    // Safety check for fengShui data before calculation
-    const canCalculate = fengShui && fengShui.purples;
-    const flyStarData = (showFlyStar && canCalculate) ? genFullFlyStarSeq(fengShui, new Date().getFullYear()) : null;
 
     return (
         <div className="w-64 bg-gray-800 border-l border-gray-700 flex flex-col text-gray-300 z-20">
@@ -23,49 +21,12 @@ export const RightSidebar: React.FC = () => {
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-2">
-                    {showFlyStar && flyStarData ? (
-                        <div className="space-y-4">
-                            {/* 3x3 Grid */}
-                            <div className="grid grid-cols-3 aspect-square border-2 border-gray-600 bg-white text-black text-xs">
-                                {[0, 1, 2, 3, 4, 5, 6, 7, 8].map(i => (
-                                    <div key={i} className="border border-gray-400 relative">
-                                        <div className="grid grid-cols-2 grid-rows-2 w-full h-full">
-                                            {/* Top Left: Blue */}
-                                            <div className="flex items-center justify-center font-bold text-blue-600">
-                                                {flyStarData.blues[i].toString()}
-                                            </div>
-                                            {/* Top Right: Red */}
-                                            <div className="flex items-center justify-center font-bold text-red-600">
-                                                {flyStarData.reds[i].toString()}
-                                            </div>
-                                            {/* Bottom Left: Black (Chinese) */}
-                                            <div className="flex items-center justify-center font-bold text-black text-sm">
-                                                {DIGIT_TO_CHINESE[Number(flyStarData.blacks[i])]}
-                                            </div>
-                                            {/* Bottom Right: Purple (Yellow BG) */}
-                                            <div className="flex items-center justify-center font-bold text-purple-600 bg-yellow-100 relative">
-                                                {flyStarData.purples[i].toString()}
-                                                {/* "Inner grid lines... except bottom right cell" - Adding borders to define the BR cell? */}
-                                                <div className="absolute top-0 left-0 w-full h-[1px] bg-gray-300 opacity-50" />
-                                                <div className="absolute top-0 left-0 w-[1px] h-full bg-gray-300 opacity-50" />
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-
-                            <div className="space-y-4 p-2 text-sm bg-gray-800 rounded">
-                                <div>
-                                    <label className="block text-xs text-gray-400 mb-1">Purples Start</label>
-                                    <input
-                                        type="number"
-                                        className="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1 text-white"
-                                        value={fengShui.purples.start}
-                                        onChange={(e) => updateFengShui({ purples: { ...fengShui.purples, start: parseInt(e.target.value) || 0 } })}
-                                    />
-                                </div>
-                            </div>
-                        </div>
+                    {showFlyStar ? (
+                        <FlystarVisualization
+                            fengShui={fengShui}
+                            updateFengShui={updateFengShui}
+                            showControls={true}
+                        />
                     ) : (
                         <ul className="space-y-1">
                             {history.map((action, i) => (

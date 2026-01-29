@@ -2,6 +2,7 @@ import React from 'react';
 import { useStore } from '../../store/useStore';
 import { MousePointer2, Square, Circle, Minus, Star, Type, ArrowRight, Pipette } from 'lucide-react';
 import clsx from 'clsx';
+import { ColorPicker } from '../common/ColorPicker';
 
 export const LeftSidebar: React.FC = () => {
     const activeTool = useStore((state) => state.activeTool);
@@ -55,45 +56,20 @@ export const LeftSidebar: React.FC = () => {
 
             <div className="mt-4 flex flex-col items-center space-y-3">
                 {/* Stroke Color */}
-                <div className="relative group w-6 h-6">
-                    <div
-                        className={clsx(
-                            "w-full h-full border-2 rounded-sm cursor-pointer",
-                            colors.active === 'stroke' ? "border-blue-400 z-10" : "border-gray-500"
-                        )}
-                        style={{ backgroundColor: colors.stroke }}
-                        title="Stroke Color"
-                    />
-                    <input
-                        type="color"
-                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                        value={colors.stroke}
-                        onChange={(e) => setColors({ stroke: e.target.value, active: 'stroke' })}
+                <div className="relative group">
+                    <ColorPicker
+                        color={colors.stroke}
+                        onChange={(newColor) => setColors({ stroke: newColor, active: 'stroke' })}
+                        supportsAlpha={false}
                     />
                 </div>
 
                 {/* Fill Color */}
-                <div className="relative group w-6 h-6">
-                    <div
-                        className={clsx(
-                            "w-full h-full border-2 rounded-sm cursor-pointer overflow-hidden relative",
-                            colors.active === 'fill' ? "border-blue-400 z-10" : "border-gray-500"
-                        )}
-                        title="Fill Color"
-                    >
-                        {colors.fill === 'transparent' ? (
-                            <div className="absolute inset-0 bg-white opacity-10 flex items-center justify-center">
-                                <div className="w-[1px] h-[150%] bg-red-500 rotate-45 transform origin-center" />
-                            </div>
-                        ) : (
-                            <div className="absolute inset-0" style={{ backgroundColor: colors.fill }} />
-                        )}
-                    </div>
-                    <input
-                        type="color"
-                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                        value={colors.fill === 'transparent' ? '#ffffff' : colors.fill}
-                        onChange={(e) => setColors({ fill: e.target.value, active: 'fill' })}
+                <div className="relative group">
+                    <ColorPicker
+                        color={colors.fill}
+                        onChange={(newColor) => setColors({ fill: newColor, active: 'fill' })}
+                        supportsAlpha={true}
                     />
                 </div>
             </div>

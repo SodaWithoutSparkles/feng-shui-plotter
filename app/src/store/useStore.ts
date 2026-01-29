@@ -21,6 +21,7 @@ interface AppState {
     addItem: (item: CanvasItem) => void;
     updateItem: (id: string, updates: Partial<CanvasItem>) => void;
     removeItem: (id: string) => void;
+    deleteSelected: () => void;
     selectedIds: string[];
     selectItem: (id: string | null) => void;
 
@@ -48,12 +49,25 @@ interface AppState {
     // Tool State
     activeTool: 'select' | 'rectangle' | 'ellipse' | 'line' | 'star' | 'arrow' | 'text';
     setActiveTool: (tool: AppState['activeTool']) => void;
+    toolSettings: {
+        lineWidth: number;
+        fontSize: number;
+        fontFamily: string;
+        fontWeight: 'normal' | 'bold';
+        fontStyle: 'normal' | 'italic';
+        textAlign: 'left' | 'center' | 'right';
+    };
+    setToolSettings: (settings: Partial<AppState['toolSettings']>) => void;
+    showToolSettings: boolean;
+    setShowToolSettings: (show: boolean) => void;
 
     // Color State
     colors: { stroke: string; fill: string; active: 'stroke' | 'fill' };
     setColors: (colors: Partial<AppState['colors']>) => void;
     isDropperActive: boolean;
     setDropperActive: (active: boolean) => void;
+    pickedColor: string | null;
+    setPickedColor: (color: string | null) => void;
 
     // Log History
     history: string[];
@@ -118,6 +132,16 @@ export const useStore = create<AppState>((set) => ({
         past: [...state.past, state.objects],
         future: []
     })),
+
+    deleteSelected: () => set((state) => {
+        if (state.selectedIds.length === 0) return {};
+        return {
+            objects: state.objects.filter((item) => !state.selectedIds.includes(item.id)),
+            selectedIds: [],
+            past: [...state.past, state.objects],
+            future: []
+        };
+    }),
 
     undo: () => set((state) => {
         if (state.past.length === 0) return {};
@@ -200,12 +224,31 @@ export const useStore = create<AppState>((set) => ({
     setCompassRotation: (rotation) => set((state) => ({ compass: { ...state.compass, rotation } })),
 
     activeTool: 'select',
-    setActiveTool: (tool) => set({ activeTool: tool }),
+    setActiveTool: (tool) => set((state) => {
+        // Show settings popup if clicking the same tool
+        if (state.activeTool === tool && tool !== 'select') {
+            return { showToolSettings: true };
+        }
+        return { activeTool: tool, showToolSettings: false };
+    }),
+    toolSettings: {
+        lineWidth: 2,
+        fontSize: 16,
+        fontFamily: 'Arial',
+        fontWeight: 'normal',
+        fontStyle: 'normal',
+        textAlign: 'left',
+    },
+    setToolSettings: (settings) => set((state) => ({ toolSettings: { ...state.toolSettings, ...settings } })),
+    showToolSettings: false,
+    setShowToolSettings: (show) => set({ showToolSettings: show }),
 
     colors: { stroke: '#000000', fill: 'transparent', active: 'stroke' },
     setColors: (colors) => set((state) => ({ colors: { ...state.colors, ...colors } })),
     isDropperActive: false,
     setDropperActive: (active) => set({ isDropperActive: active }),
+    pickedColor: null,
+    setPickedColor: (color) => set({ pickedColor: color }),
 
     history: [],
     addToHistory: (action) => set((state) => ({ history: [action, ...state.history].slice(0, 50) })),

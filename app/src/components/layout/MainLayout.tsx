@@ -4,10 +4,14 @@ import { LeftSidebar } from './LeftSidebar';
 import { RightSidebar } from './RightSidebar';
 import { BottomBar } from './BottomBar';
 import { FloorplanCanvas } from '../canvas/FloorplanCanvas';
+import { KeyboardShortcuts } from '../common/KeyboardShortcuts';
+import { ToolSettingsModal } from '../common/ToolSettingsModal';
 
 export const MainLayout: React.FC = () => {
     return (
         <div className="flex flex-col h-screen w-screen overflow-hidden bg-gray-900">
+            <KeyboardShortcuts />
+            <ToolSettingsModal />
             {/* 1. Top Header */}
             <Header />
 

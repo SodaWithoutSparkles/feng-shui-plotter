@@ -1,10 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
 import { Upload, FilePlus } from 'lucide-react';
+import { ProjectConfigModal } from './ProjectConfigModal';
 
 export const WelcomeScreen: React.FC = () => {
     const setMode = useStore((state) => state.setMode);
     const loadProject = useStore((state) => state.loadProject);
+    const setFloorplanImage = useStore((state) => state.setFloorplanImage);
+    const updateFloorplan = useStore((state) => state.updateFloorplan);
+    const updateFengShui = useStore((state) => state.updateFengShui);
+
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -31,7 +37,7 @@ export const WelcomeScreen: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl w-full px-4">
                 {/* New Project Card */}
                 <button
-                    onClick={() => setMode('edit')}
+                    onClick={() => setIsModalOpen(true)}
                     className="flex flex-col items-center p-8 bg-white rounded-xl shadow-md hover:shadow-lg transition-all border border-transparent hover:border-blue-500 group"
                 >
                     <div className="bg-blue-100 p-4 rounded-full mb-4 group-hover:bg-blue-200 transition-colors">
@@ -56,6 +62,17 @@ export const WelcomeScreen: React.FC = () => {
                     />
                 </label>
             </div>
+
+            <ProjectConfigModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onComplete={(config) => {
+                    setFloorplanImage(config.floorplanImage);
+                    updateFloorplan({ rotation: config.rotation });
+                    updateFengShui(config.fengShui);
+                    setMode('edit');
+                }}
+            />
         </div>
     );
 };

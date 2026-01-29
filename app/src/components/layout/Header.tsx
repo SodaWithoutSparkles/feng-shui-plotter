@@ -13,6 +13,7 @@ export const Header: React.FC = () => {
     const undo = useStore(state => state.undo);
     const redo = useStore(state => state.redo);
     const cloneSelected = useStore(state => state.cloneSelected);
+    const deleteSelected = useStore(state => state.deleteSelected);
     const moveSelectedLayer = useStore(state => state.moveSelectedLayer);
     const toggleFlyStar = useStore(state => state.toggleFlyStar);
     const addItem = useStore(state => state.addItem);
@@ -182,6 +183,7 @@ export const Header: React.FC = () => {
                         <MenuItem label="Redo" onClick={redo} shortcut="Ctrl+Y" />
                         <div className="h-px bg-gray-700 my-1" />
                         <MenuItem label="Clone Object" onClick={cloneSelected} shortcut="Ctrl+D" />
+                        <MenuItem label="Delete Selected" onClick={deleteSelected} shortcut="Del" />
                         <MenuItem label="Move Up" onClick={() => moveSelectedLayer('up')} shortcut="]" />
                         <MenuItem label="Move Down" onClick={() => moveSelectedLayer('down')} shortcut="[" />
                         <div className="h-px bg-gray-700 my-1" />
