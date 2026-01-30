@@ -30,6 +30,7 @@ export const FloorplanCanvas: React.FC = () => {
     const setDropperActive = useStore((state) => state.setDropperActive);
     const toolSettings = useStore((state) => state.toolSettings);
     const exportTrigger = useStore((state) => state.exportTrigger);
+    const keyboardShortcuts = useStore((state) => state.keyboardShortcuts);
 
     // Refs
     const stageRef = useRef<any>(null);
@@ -41,6 +42,21 @@ export const FloorplanCanvas: React.FC = () => {
     // Custom hooks
     const dimensions = useCanvasDimensions(containerRef);
     const { stagePos, setStagePos, handleWheel } = useCanvasNavigation(stageRef);
+    const {
+        editingText,
+        setEditingText,
+        handleShapeDblClick,
+        handleTextComplete,
+        handleTextCancel,
+        startTextEditing
+    } = useTextEditor(
+        stageRef,
+        stagePos.scale,
+        toolSettings,
+        updateItem,
+        addItem
+    );
+
     const {
         currentShapes,
         handleMouseDown,
@@ -54,20 +70,24 @@ export const FloorplanCanvas: React.FC = () => {
         setColors,
         setDropperActive,
         addItem,
-        stageRef
-    );
-
-    const {
-        editingText,
-        setEditingText,
-        handleShapeDblClick,
-        handleTextComplete
-    } = useTextEditor(
         stageRef,
-        stagePos.scale,
-        toolSettings,
-        updateItem,
-        addItem
+        (shape) => {
+            startTextEditing(
+                shape.x,
+                shape.y,
+                shape.width,
+                shape.height,
+                shape.text,
+                shape.fontSize,
+                shape.fontFamily,
+                shape.fill,
+                shape.stroke,
+                shape.rotation,
+                shape.id
+            );
+        },
+        keyboardShortcuts.modifyKey,
+        keyboardShortcuts.cancelKey
     );
 
     const floorplanImg = useFloorplanImage(floorplan.imageSrc, containerRef, setStagePos);
@@ -189,6 +209,10 @@ export const FloorplanCanvas: React.FC = () => {
                     fontWeight={toolSettings.fontWeight}
                     onTextChange={(text) => setEditingText({ ...editingText, text })}
                     onComplete={handleTextComplete}
+                    onCancel={handleTextCancel}
+                    cancelKey={keyboardShortcuts.cancelKey}
+                    saveKey={keyboardShortcuts.textSave.key}
+                    saveModifier={keyboardShortcuts.textSave.modifier}
                 />
             )}
         </div>

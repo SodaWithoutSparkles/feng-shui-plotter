@@ -9,6 +9,7 @@ export const KeyboardShortcuts = () => {
     const moveSelectedLayer = useStore((state) => state.moveSelectedLayer);
     const setActiveTool = useStore((state) => state.setActiveTool);
     const setDropperActive = useStore((state) => state.setDropperActive);
+    const keyboardShortcuts = useStore((state) => state.keyboardShortcuts);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -66,58 +67,31 @@ export const KeyboardShortcuts = () => {
 
             // Tool shortcuts (only when no modifier keys are pressed)
             if (!e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey) {
-                switch (e.key.toLowerCase()) {
-                    case 'v':
-                        e.preventDefault();
-                        setActiveTool('select');
-                        setDropperActive(false);
-                        break;
-                    case 'm':
-                        e.preventDefault();
-                        setActiveTool('rectangle');
-                        setDropperActive(false);
-                        break;
-                    case 'l':
-                        e.preventDefault();
-                        setActiveTool('ellipse');
-                        setDropperActive(false);
-                        break;
-                    case 'p':
-                        e.preventDefault();
-                        setActiveTool('line');
-                        setDropperActive(false);
-                        break;
-                    case 'a':
-                        e.preventDefault();
-                        setActiveTool('arrow');
-                        setDropperActive(false);
-                        break;
-                    case 'c':
-                        e.preventDefault();
-                        setActiveTool('callout');
-                        setDropperActive(false);
-                        break;
-                    case 's':
-                        e.preventDefault();
-                        setActiveTool('star');
-                        setDropperActive(false);
-                        break;
-                    case 't':
-                        e.preventDefault();
-                        setActiveTool('text');
-                        setDropperActive(false);
-                        break;
-                    case 'i':
-                        e.preventDefault();
-                        setDropperActive(true);
-                        break;
+                const key = e.key.toLowerCase();
+                const toolByKey = new Map<string, Exclude<keyof typeof keyboardShortcuts.tools, 'dropper'>>(
+                    Object.entries(keyboardShortcuts.tools)
+                        .filter(([tool]) => tool !== 'dropper')
+                        .map(([tool, shortcut]) => [shortcut.toLowerCase(), tool as Exclude<keyof typeof keyboardShortcuts.tools, 'dropper'>])
+                );
+
+                const tool = toolByKey.get(key);
+                if (tool) {
+                    e.preventDefault();
+                    setActiveTool(tool);
+                    setDropperActive(false);
+                    return;
+                }
+
+                if (key === keyboardShortcuts.tools.dropper.toLowerCase()) {
+                    e.preventDefault();
+                    setDropperActive(true);
                 }
             }
         };
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [undo, redo, cloneSelected, deleteSelected, moveSelectedLayer, setActiveTool, setDropperActive]);
+    }, [undo, redo, cloneSelected, deleteSelected, moveSelectedLayer, setActiveTool, setDropperActive, keyboardShortcuts]);
 
     return null;
 };

@@ -2,9 +2,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useStore } from '../../store/useStore';
 import type { SaveFile } from '../../types';
 import { compress, decompress, compressToBase64 } from '../../utils/compress';
+import { ShortcutConfigModal } from '../common/ShortcutConfigModal';
 
 export const Header: React.FC = () => {
     const [activeMenu, setActiveMenu] = useState<string | null>(null);
+    const [showShortcutConfig, setShowShortcutConfig] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const imageInputRef = useRef<HTMLInputElement>(null);
 
@@ -287,6 +289,13 @@ export const Header: React.FC = () => {
                                 className="w-full accent-blue-500 h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer"
                             />
                         </div>
+                        <div className="h-px bg-gray-700 my-1" />
+                        <MenuItem
+                            label="Keyboard Shortcuts..."
+                            onClick={() => {
+                                setShowShortcutConfig(true);
+                            }}
+                        />
                     </div>
                 )}
             </div>
@@ -295,6 +304,10 @@ export const Header: React.FC = () => {
             {activeMenu && (
                 <div className="fixed inset-0 z-[-1]" onClick={() => setActiveMenu(null)} />
             )}
+            <ShortcutConfigModal
+                isOpen={showShortcutConfig}
+                onClose={() => setShowShortcutConfig(false)}
+            />
         </div>
     );
 };

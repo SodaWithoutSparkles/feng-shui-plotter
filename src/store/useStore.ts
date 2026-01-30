@@ -7,6 +7,29 @@ interface ColorPreset {
     fill: string;
 }
 
+type ModifierKey = 'ctrl' | 'alt' | 'shift';
+type TextSaveModifier = ModifierKey | 'none';
+
+interface KeyboardShortcutConfig {
+    modifyKey: ModifierKey;
+    cancelKey: string;
+    textSave: {
+        modifier: TextSaveModifier;
+        key: string;
+    };
+    tools: {
+        select: string;
+        rectangle: string;
+        ellipse: string;
+        line: string;
+        arrow: string;
+        callout: string;
+        star: string;
+        text: string;
+        dropper: string;
+    };
+}
+
 interface AppState {
     // Application Mode
     mode: 'welcome' | 'edit';
@@ -99,6 +122,13 @@ interface AppState {
     // Export
     exportTrigger: number;
     triggerExport: () => void;
+
+    // Keyboard Shortcuts
+    keyboardShortcuts: KeyboardShortcutConfig;
+    setModifyKey: (key: ModifierKey) => void;
+    setCancelKey: (key: string) => void;
+    setTextSaveShortcut: (modifier: TextSaveModifier, key: string) => void;
+    setToolShortcut: (tool: keyof KeyboardShortcutConfig['tools'], key: string) => void;
 }
 
 const defaultFengShui: FengShuiData = {
@@ -361,4 +391,45 @@ export const useStore = create<AppState>((set) => ({
 
     exportTrigger: 0,
     triggerExport: () => set((state) => ({ exportTrigger: state.exportTrigger + 1 })),
+
+    keyboardShortcuts: {
+        modifyKey: 'ctrl',
+        cancelKey: 'Escape',
+        textSave: {
+            modifier: 'ctrl',
+            key: 'Enter'
+        },
+        tools: {
+            select: 'v',
+            rectangle: 'm',
+            ellipse: 'l',
+            line: 'p',
+            arrow: 'a',
+            callout: 'c',
+            star: 's',
+            text: 't',
+            dropper: 'i'
+        }
+    },
+    setModifyKey: (key) => set((state) => ({
+        keyboardShortcuts: { ...state.keyboardShortcuts, modifyKey: key }
+    })),
+    setCancelKey: (key) => set((state) => ({
+        keyboardShortcuts: { ...state.keyboardShortcuts, cancelKey: key }
+    })),
+    setTextSaveShortcut: (modifier, key) => set((state) => ({
+        keyboardShortcuts: {
+            ...state.keyboardShortcuts,
+            textSave: { modifier, key }
+        }
+    })),
+    setToolShortcut: (tool, key) => set((state) => ({
+        keyboardShortcuts: {
+            ...state.keyboardShortcuts,
+            tools: {
+                ...state.keyboardShortcuts.tools,
+                [tool]: key
+            }
+        }
+    })),
 }));

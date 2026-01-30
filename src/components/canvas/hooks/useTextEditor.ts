@@ -31,17 +31,32 @@ export const useTextEditor = (
             const stage = stageRef.current;
             const textItem = item as any;
 
+            let stageX = item.x;
+            let stageY = item.y;
+            let width = textItem.width;
+            let height = textItem.height;
+
+            if (width < 0) {
+                stageX += width;
+                width = Math.abs(width);
+            }
+
+            if (height < 0) {
+                stageY += height;
+                height = Math.abs(height);
+            }
+
             const tr = stage.getAbsoluteTransform();
-            const absPos = tr.point({ x: item.x, y: item.y });
+            const absPos = tr.point({ x: stageX, y: stageY });
 
             setEditingText({
                 id: item.id,
                 x: absPos.x,
                 y: absPos.y,
-                stageX: item.x,
-                stageY: item.y,
-                width: textItem.width,
-                height: textItem.height,
+                stageX,
+                stageY,
+                width,
+                height,
                 text: textItem.text,
                 rotation: item.rotation,
                 fontSize: textItem.fontSize,
@@ -90,6 +105,12 @@ export const useTextEditor = (
         }
     }, [editingText, toolSettings, updateItem, addItem]);
 
+    const handleTextCancel = useCallback(() => {
+        if (editingText) {
+            setEditingText(null);
+        }
+    }, [editingText]);
+
     const startTextEditing = useCallback((
         stageX: number,
         stageY: number,
@@ -100,13 +121,15 @@ export const useTextEditor = (
         fontFamily: string,
         fill: string,
         stroke: string,
-        rotation: number
+        rotation: number,
+        id?: string
     ) => {
         const stage = stageRef.current;
         const tr = stage.getAbsoluteTransform();
         const absPos = tr.point({ x: stageX, y: stageY });
 
         setEditingText({
+            id,
             x: absPos.x,
             y: absPos.y,
             stageX,
@@ -127,6 +150,7 @@ export const useTextEditor = (
         setEditingText,
         handleShapeDblClick,
         handleTextComplete,
+        handleTextCancel,
         startTextEditing,
         stageScale
     };

@@ -1,18 +1,28 @@
 import { useState, useEffect } from 'react';
 
-export const useKeyboardModifiers = () => {
-    const [isAltPressed, setIsAltPressed] = useState(false);
+type ModifierKey = 'ctrl' | 'alt' | 'shift';
+
+const modifierKeyMap: Record<ModifierKey, string> = {
+    ctrl: 'Control',
+    alt: 'Alt',
+    shift: 'Shift'
+};
+
+export const useKeyboardModifiers = (modifierKey: ModifierKey) => {
+    const [isModifierPressed, setIsModifierPressed] = useState(false);
 
     useEffect(() => {
+        const expectedKey = modifierKeyMap[modifierKey];
+
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Alt') {
-                setIsAltPressed(true);
+            if (e.key === expectedKey) {
+                setIsModifierPressed(true);
             }
         };
 
         const handleKeyUp = (e: KeyboardEvent) => {
-            if (e.key === 'Alt') {
-                setIsAltPressed(false);
+            if (e.key === expectedKey) {
+                setIsModifierPressed(false);
             }
         };
 
@@ -22,7 +32,7 @@ export const useKeyboardModifiers = () => {
             window.removeEventListener('keydown', handleKeyDown);
             window.removeEventListener('keyup', handleKeyUp);
         };
-    }, []);
+    }, [modifierKey]);
 
-    return { isAltPressed };
+    return { isModifierPressed };
 };

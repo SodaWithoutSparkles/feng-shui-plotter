@@ -18,6 +18,10 @@ interface TextEditorOverlayProps {
     fontWeight: string;
     onTextChange: (text: string) => void;
     onComplete: () => void;
+    onCancel: () => void;
+    cancelKey: string;
+    saveKey: string;
+    saveModifier: 'ctrl' | 'alt' | 'shift' | 'none';
 }
 
 export const TextEditorOverlay: React.FC<TextEditorOverlayProps> = ({
@@ -26,13 +30,44 @@ export const TextEditorOverlay: React.FC<TextEditorOverlayProps> = ({
     fontStyle,
     fontWeight,
     onTextChange,
-    onComplete
+    onComplete,
+    onCancel,
+    cancelKey,
+    saveKey,
+    saveModifier
 }) => {
+    const isSaveModifierPressed = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        switch (saveModifier) {
+            case 'ctrl':
+                return e.ctrlKey || e.metaKey;
+            case 'alt':
+                return e.altKey;
+            case 'shift':
+                return e.shiftKey;
+            case 'none':
+                return true;
+            default:
+                return false;
+        }
+    };
+
     return (
         <textarea
             value={editingText.text}
             onChange={(e) => onTextChange(e.target.value)}
             onBlur={onComplete}
+            onKeyDown={(e) => {
+                if (e.key === cancelKey) {
+                    e.preventDefault();
+                    onCancel();
+                    return;
+                }
+
+                if (e.key === saveKey && isSaveModifierPressed(e)) {
+                    e.preventDefault();
+                    onComplete();
+                }
+            }}
             autoFocus
             placeholder="Type..."
             style={{

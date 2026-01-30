@@ -1,5 +1,23 @@
 import type { CanvasItem } from '../../../types';
 
+export const normalizeTextShape = (
+    shape: Extract<CanvasItem, { type: 'text' }>
+): Extract<CanvasItem, { type: 'text' }> => {
+    let { x, y, width, height } = shape;
+
+    if (width < 0) {
+        x += width;
+        width = Math.abs(width);
+    }
+
+    if (height < 0) {
+        y += height;
+        height = Math.abs(height);
+    }
+
+    return { ...shape, x, y, width, height };
+};
+
 export const createShape = (
     activeTool: string,
     localPos: { x: number; y: number },
@@ -121,7 +139,7 @@ export const createShape = (
 export const updateShapeWhileDrawing = (
     currentShape: CanvasItem,
     localPos: { x: number; y: number },
-    isAltPressed: boolean,
+    isModifierPressed: boolean,
     isPolylineMode: boolean
 ): CanvasItem => {
     switch (currentShape.type) {
@@ -131,7 +149,7 @@ export const updateShapeWhileDrawing = (
             let width = localPos.x - currentShape.x;
             let height = localPos.y - currentShape.y;
 
-            if (isAltPressed) {
+            if (isModifierPressed) {
                 const size = Math.max(Math.abs(width), Math.abs(height));
                 width = width >= 0 ? size : -size;
                 height = height >= 0 ? size : -size;
@@ -145,7 +163,7 @@ export const updateShapeWhileDrawing = (
             let radiusX = Math.abs(localPos.x - currentShape.x);
             let radiusY = Math.abs(localPos.y - currentShape.y);
 
-            if (isAltPressed) {
+            if (isModifierPressed) {
                 const radius = Math.max(radiusX, radiusY);
                 radiusX = radius;
                 radiusY = radius;
@@ -159,7 +177,7 @@ export const updateShapeWhileDrawing = (
             let endX = localPos.x;
             let endY = localPos.y;
 
-            if (isAltPressed && lineShape.points.length > 0) {
+            if (isModifierPressed && lineShape.points.length > 0) {
                 const startPoint = lineShape.points[0];
                 const dx = Math.abs(endX - startPoint.x);
                 const dy = Math.abs(endY - startPoint.y);
@@ -182,7 +200,7 @@ export const updateShapeWhileDrawing = (
             let endX = localPos.x;
             let endY = localPos.y;
 
-            if (isAltPressed && arrowShape.points.length > 0) {
+            if (isModifierPressed && arrowShape.points.length > 0) {
                 const startPoint = arrowShape.points[0];
                 const dx = Math.abs(endX - startPoint.x);
                 const dy = Math.abs(endY - startPoint.y);
@@ -245,8 +263,10 @@ export const shouldAddShape = (shape: CanvasItem): boolean => {
             const lineShape = shape as Extract<CanvasItem, { type: 'line' | 'arrow' }>;
             return lineShape.points.length >= 2;
         }
-        case 'text':
-            return false;
+        case 'text': {
+            const textShape = shape as Extract<CanvasItem, { type: 'text' }>;
+            return Math.abs(textShape.width) > 5 && Math.abs(textShape.height) > 5;
+        }
         default:
             return false;
     }
