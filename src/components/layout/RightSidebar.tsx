@@ -8,6 +8,7 @@ export const RightSidebar: React.FC = () => {
     const objects = useStore((state) => state.objects);
     const selectedIds = useStore((state) => state.selectedIds);
     const selectItem = useStore((state) => state.selectItem);
+    const toggleSelectItem = useStore((state) => state.toggleSelectItem);
     const showFlyStar = useStore((state) => state.showFlyStar);
     const fengShui = useStore((state) => state.fengShui);
     const updateFengShui = useStore((state) => state.updateFengShui);
@@ -53,7 +54,13 @@ export const RightSidebar: React.FC = () => {
                             <li
                                 key={item.id}
                                 className={`text-sm px-2 py-1 rounded cursor-pointer flex items-center ${selectedIds.includes(item.id) ? 'bg-blue-900 text-white' : 'hover:bg-gray-700'}`}
-                                onClick={() => selectItem(item.id)}
+                                onClick={(e) => {
+                                    if (e.ctrlKey) {
+                                        toggleSelectItem(item.id);
+                                        return;
+                                    }
+                                    selectItem(item.id);
+                                }}
                             >
                                 <span className="opacity-50 mr-2 text-xs">#{objects.length - 1 - i}</span>
                                 <span className="capitalize">{item.type}</span>

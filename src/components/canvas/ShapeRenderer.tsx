@@ -202,7 +202,7 @@ export const ShapeRenderer: React.FC<ShapeRendererProps> = ({
                         fontVariant={item.fontWeight || 'normal'}
                         align={item.align}
                         verticalAlign="top"
-                        fill={item.stroke} // Use stroke color for text color
+                        fill={item.textColor ?? item.stroke}
                         padding={5}
                     />
                 </Group>

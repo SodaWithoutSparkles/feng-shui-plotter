@@ -83,6 +83,7 @@ export const FloorplanCanvas: React.FC = () => {
                 shape.fill,
                 shape.stroke,
                 shape.rotation,
+                shape.textColor ?? shape.stroke,
                 shape.id
             );
         },

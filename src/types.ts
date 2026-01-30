@@ -52,6 +52,7 @@ export interface TextShape extends BaseShape {
     fontStyle?: 'normal' | 'italic';
     fontWeight?: 'normal' | 'bold';
     align: 'left' | 'center' | 'right';
+    textColor?: string;
 }
 
 export interface ImageShape extends BaseShape {

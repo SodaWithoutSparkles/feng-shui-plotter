@@ -57,6 +57,7 @@ export const createShape = (
                 fontStyle: toolSettings.fontStyle,
                 fontWeight: toolSettings.fontWeight,
                 align: toolSettings.textAlign,
+                textColor: toolSettings.textColor,
                 rotation: 0,
                 fill: colors.fill,
                 stroke: colors.stroke,

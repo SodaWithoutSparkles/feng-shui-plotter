@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useStore } from '../../store/useStore';
 import { X } from 'lucide-react';
+import { ColorPicker } from './ColorPicker';
 
 export const ToolSettingsModal: React.FC = () => {
     const showToolSettings = useStore((state) => state.showToolSettings);
@@ -179,6 +180,19 @@ export const ToolSettingsModal: React.FC = () => {
                                 >
                                     Right
                                 </button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="text-sm text-gray-300 block mb-2">
+                                Font Color
+                            </label>
+                            <div className="flex items-center space-x-3">
+                                <ColorPicker
+                                    color={toolSettings.textColor}
+                                    onChange={(color) => setToolSettings({ textColor: color })}
+                                />
+                                <span className="text-xs text-gray-400">{toolSettings.textColor.toUpperCase()}</span>
                             </div>
                         </div>
                     </>

@@ -12,6 +12,7 @@ interface TextEditorOverlayProps {
         fontFamily: string;
         fill: string;
         stroke: string;
+        textColor: string;
     };
     stageScale: number;
     fontStyle: string;
@@ -81,7 +82,7 @@ export const TextEditorOverlay: React.FC<TextEditorOverlayProps> = ({
                 fontWeight: fontWeight,
                 fontStyle: fontStyle,
                 lineHeight: 1.2,
-                color: editingText.stroke,
+                color: editingText.textColor ?? editingText.stroke,
                 backgroundColor: editingText.fill === 'transparent' ? 'transparent' : editingText.fill,
                 border: 'none',
                 outline: '2px solid blue',

@@ -46,10 +46,13 @@ interface AppState {
     objects: CanvasItem[];
     addItem: (item: CanvasItem) => void;
     updateItem: (id: string, updates: Partial<CanvasItem>) => void;
+    updateItems: (ids: string[], updates: Partial<CanvasItem>) => void;
     removeItem: (id: string) => void;
     deleteSelected: () => void;
     selectedIds: string[];
     selectItem: (id: string | null) => void;
+    toggleSelectItem: (id: string) => void;
+    clearSelection: () => void;
 
     // History (Undo/Redo)
     past: CanvasItem[][];
@@ -83,6 +86,7 @@ interface AppState {
         fontWeight: 'normal' | 'bold';
         fontStyle: 'normal' | 'italic';
         textAlign: 'left' | 'center' | 'right';
+        textColor: string;
     };
     setToolSettings: (settings: Partial<AppState['toolSettings']>) => void;
     showToolSettings: boolean;
@@ -95,6 +99,7 @@ interface AppState {
     // Color State
     colors: { stroke: string; fill: string; active: 'stroke' | 'fill' };
     setColors: (colors: Partial<AppState['colors']>) => void;
+    selectionColorSnapshot: { stroke: string; fill: string; active: 'stroke' | 'fill' } | null;
     // Saved Color Presets (Max 8) - stores both stroke and fill
     colorPresets: ColorPreset[];
     addColorPreset: (preset: ColorPreset) => void;
@@ -176,6 +181,15 @@ export const useStore = create<AppState>((set) => ({
             future: []
         };
     }),
+    updateItems: (ids, updates) => set((state) => {
+        if (ids.length === 0) return {};
+        const idSet = new Set(ids);
+        return {
+            objects: state.objects.map((item) => (idSet.has(item.id) ? { ...item, ...updates } : item)) as CanvasItem[],
+            past: [...state.past, state.objects],
+            future: []
+        };
+    }),
     removeItem: (id) => set((state) => ({
         objects: state.objects.filter((item) => item.id !== id),
         past: [...state.past, state.objects],
@@ -187,6 +201,8 @@ export const useStore = create<AppState>((set) => ({
         return {
             objects: state.objects.filter((item) => !state.selectedIds.includes(item.id)),
             selectedIds: [],
+            colors: state.selectionColorSnapshot ?? state.colors,
+            selectionColorSnapshot: null,
             past: [...state.past, state.objects],
             future: []
         };
@@ -258,7 +274,60 @@ export const useStore = create<AppState>((set) => ({
     }),
 
     selectedIds: [],
-    selectItem: (id) => set({ selectedIds: id ? [id] : [] }),
+    selectionColorSnapshot: null,
+    selectItem: (id) => set((state) => {
+        if (!id) {
+            return {
+                selectedIds: [],
+                colors: state.selectionColorSnapshot ?? state.colors,
+                selectionColorSnapshot: null
+            };
+        }
+
+        const selectedItem = state.objects.find((item) => item.id === id);
+        const snapshot = state.selectionColorSnapshot ?? state.colors;
+        const nextColors = selectedItem
+            ? { ...state.colors, stroke: selectedItem.stroke, fill: selectedItem.fill }
+            : state.colors;
+
+        return {
+            selectedIds: [id],
+            selectionColorSnapshot: snapshot,
+            colors: nextColors
+        };
+    }),
+    toggleSelectItem: (id) => set((state) => {
+        const isSelected = state.selectedIds.includes(id);
+        const nextSelectedIds = isSelected
+            ? state.selectedIds.filter((selectedId) => selectedId !== id)
+            : [...state.selectedIds, id];
+
+        if (nextSelectedIds.length === 0) {
+            return {
+                selectedIds: [],
+                colors: state.selectionColorSnapshot ?? state.colors,
+                selectionColorSnapshot: null
+            };
+        }
+
+        const anchorId = isSelected ? nextSelectedIds[nextSelectedIds.length - 1] : id;
+        const anchorItem = state.objects.find((item) => item.id === anchorId);
+        const snapshot = state.selectionColorSnapshot ?? state.colors;
+        const nextColors = anchorItem
+            ? { ...state.colors, stroke: anchorItem.stroke, fill: anchorItem.fill }
+            : state.colors;
+
+        return {
+            selectedIds: nextSelectedIds,
+            selectionColorSnapshot: snapshot,
+            colors: nextColors
+        };
+    }),
+    clearSelection: () => set((state) => ({
+        selectedIds: [],
+        colors: state.selectionColorSnapshot ?? state.colors,
+        selectionColorSnapshot: null
+    })),
 
     fengShui: defaultFengShui,
     updateFengShui: (updates) => set((state) => ({ fengShui: { ...state.fengShui, ...updates } })),
@@ -306,6 +375,7 @@ export const useStore = create<AppState>((set) => ({
         fontWeight: 'normal',
         fontStyle: 'normal',
         textAlign: 'left',
+        textColor: '#000000',
     },
     setToolSettings: (settings) => set((state) => ({ toolSettings: { ...state.toolSettings, ...settings } })),
     showToolSettings: false,
@@ -315,7 +385,36 @@ export const useStore = create<AppState>((set) => ({
     setShowProjectConfig: (show) => set({ showProjectConfig: show }),
 
     colors: { stroke: '#000000', fill: 'transparent', active: 'stroke' },
-    setColors: (colors) => set((state) => ({ colors: { ...state.colors, ...colors }, selectedPresetIndex: null })),
+    setColors: (colors) => set((state) => {
+        const nextColors = { ...state.colors, ...colors };
+        const shouldUpdateSelection =
+            state.selectedIds.length > 0 &&
+            (Object.prototype.hasOwnProperty.call(colors, 'stroke') || Object.prototype.hasOwnProperty.call(colors, 'fill'));
+
+        if (!shouldUpdateSelection) {
+            return {
+                colors: nextColors,
+                selectedPresetIndex: null
+            };
+        }
+
+        const idSet = new Set(state.selectedIds);
+        return {
+            colors: nextColors,
+            selectedPresetIndex: null,
+            objects: state.objects.map((item) => (
+                idSet.has(item.id)
+                    ? {
+                        ...item,
+                        stroke: nextColors.stroke,
+                        fill: nextColors.fill
+                    }
+                    : item
+            )) as CanvasItem[],
+            past: [...state.past, state.objects],
+            future: []
+        };
+    }),
 
     colorPresets: [
         // stroke in RGB, fill in RGBA
@@ -336,9 +435,31 @@ export const useStore = create<AppState>((set) => ({
     selectColorPreset: (index) => set((state) => {
         if (index < 0 || index >= state.colorPresets.length) return {};
         const preset = state.colorPresets[index];
+        const nextColors = { ...state.colors, stroke: preset.stroke, fill: preset.fill };
+        const shouldUpdateSelection = state.selectedIds.length > 0;
+
+        if (!shouldUpdateSelection) {
+            return {
+                colors: nextColors,
+                selectedPresetIndex: index
+            };
+        }
+
+        const idSet = new Set(state.selectedIds);
         return {
-            colors: { ...state.colors, stroke: preset.stroke, fill: preset.fill },
-            selectedPresetIndex: index
+            colors: nextColors,
+            selectedPresetIndex: index,
+            objects: state.objects.map((item) => (
+                idSet.has(item.id)
+                    ? {
+                        ...item,
+                        stroke: nextColors.stroke,
+                        fill: nextColors.fill
+                    }
+                    : item
+            )) as CanvasItem[],
+            past: [...state.past, state.objects],
+            future: []
         };
     }),
     removeColorPreset: (index) => set((state) => {
@@ -371,7 +492,9 @@ export const useStore = create<AppState>((set) => ({
             },
             history: ['Loaded Project'],
             past: [],
-            future: []
+            future: [],
+            selectedIds: [],
+            selectionColorSnapshot: null
         });
     },
 
@@ -383,7 +506,9 @@ export const useStore = create<AppState>((set) => ({
         history: ['New Project'],
         showFlyStar: false,
         past: [],
-        future: []
+        future: [],
+        selectedIds: [],
+        selectionColorSnapshot: null
     }),
 
     autoSave: false,

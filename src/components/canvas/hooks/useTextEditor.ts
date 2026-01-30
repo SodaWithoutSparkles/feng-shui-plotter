@@ -15,6 +15,7 @@ interface EditingTextState {
     fontFamily: string;
     fill: string;
     stroke: string;
+    textColor: string;
 }
 
 export const useTextEditor = (
@@ -62,7 +63,8 @@ export const useTextEditor = (
                 fontSize: textItem.fontSize,
                 fontFamily: textItem.fontFamily,
                 fill: textItem.fill,
-                stroke: textItem.stroke
+                stroke: textItem.stroke,
+                textColor: textItem.textColor ?? textItem.stroke
             });
         }
     }, [stageRef]);
@@ -92,6 +94,7 @@ export const useTextEditor = (
                         rotation: editingText.rotation,
                         fill: editingText.fill,
                         stroke: editingText.stroke,
+                        textColor: editingText.textColor,
                         strokeWidth: toolSettings.lineWidth,
                         opacity: 1,
                         draggable: true
@@ -122,6 +125,7 @@ export const useTextEditor = (
         fill: string,
         stroke: string,
         rotation: number,
+        textColor: string,
         id?: string
     ) => {
         const stage = stageRef.current;
@@ -141,7 +145,8 @@ export const useTextEditor = (
             fontSize,
             fontFamily,
             fill,
-            stroke
+            stroke,
+            textColor
         });
     }, [stageRef]);
 
