@@ -98,11 +98,11 @@ export const FlystarVisualization: React.FC<FlystarVisualizationProps> = ({
                         <div key={i} className="border border-gray-400 relative">
                             <div className="grid grid-cols-2 grid-rows-2 w-full h-full">
                                 {/* Top Left: Blue */}
-                                <div className="flex items-center justify-center font-bold text-blue-600 text-lg sm:text-xl">
+                                <div className="flex items-center justify-center font-bold text-blue-600 text-base sm:text-base">
                                     {flyStarData.blues[i].toString()}
                                 </div>
                                 {/* Top Right: Red */}
-                                <div className="flex items-center justify-center font-bold text-red-600 text-lg sm:text-xl">
+                                <div className="flex items-center justify-center font-bold text-red-600 text-base sm:text-base">
                                     {flyStarData.reds[i].toString()}
                                 </div>
                                 {/* Bottom Left: Black (Chinese) */}

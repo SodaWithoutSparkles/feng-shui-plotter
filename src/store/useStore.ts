@@ -47,6 +47,9 @@ interface AppState {
     addItem: (item: CanvasItem) => void;
     updateItem: (id: string, updates: Partial<CanvasItem>) => void;
     updateItems: (ids: string[], updates: Partial<CanvasItem>) => void;
+    moveItemsByDelta: (ids: string[], delta: { x: number; y: number }) => void;
+    moveItemsByDeltaTransient: (ids: string[], delta: { x: number; y: number }) => void;
+    commitHistory: (snapshot: CanvasItem[]) => void;
     removeItem: (id: string) => void;
     deleteSelected: () => void;
     selectedIds: string[];
@@ -190,6 +193,36 @@ export const useStore = create<AppState>((set) => ({
             future: []
         };
     }),
+    moveItemsByDelta: (ids, delta) => set((state) => {
+        if (ids.length === 0) return {};
+        if (delta.x === 0 && delta.y === 0) return {};
+        const idSet = new Set(ids);
+        return {
+            objects: state.objects.map((item) => (
+                idSet.has(item.id)
+                    ? { ...item, x: item.x + delta.x, y: item.y + delta.y }
+                    : item
+            )) as CanvasItem[],
+            past: [...state.past, state.objects],
+            future: []
+        };
+    }),
+    moveItemsByDeltaTransient: (ids, delta) => set((state) => {
+        if (ids.length === 0) return {};
+        if (delta.x === 0 && delta.y === 0) return {};
+        const idSet = new Set(ids);
+        return {
+            objects: state.objects.map((item) => (
+                idSet.has(item.id)
+                    ? { ...item, x: item.x + delta.x, y: item.y + delta.y }
+                    : item
+            )) as CanvasItem[]
+        };
+    }),
+    commitHistory: (snapshot) => set((state) => ({
+        past: [...state.past, snapshot],
+        future: []
+    })),
     removeItem: (id) => set((state) => ({
         objects: state.objects.filter((item) => item.id !== id),
         past: [...state.past, state.objects],

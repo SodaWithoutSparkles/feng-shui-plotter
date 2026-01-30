@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useStore } from '../../store/useStore';
 import { X } from 'lucide-react';
 import { ColorPicker } from './ColorPicker';
@@ -10,10 +10,36 @@ export const ToolSettingsModal: React.FC = () => {
     const toolSettings = useStore((state) => state.toolSettings);
     const setToolSettings = useStore((state) => state.setToolSettings);
     const modalRef = useRef<HTMLDivElement>(null);
+    const [offsetY, setOffsetY] = useState(0);
 
     useEffect(() => {
         // Removed click outside listener to make it non-blocking/modeless
     }, [showToolSettings, setShowToolSettings]);
+
+    useEffect(() => {
+        if (!showToolSettings) return;
+
+        const updatePosition = () => {
+            if (!modalRef.current) return;
+            const rect = modalRef.current.getBoundingClientRect();
+            const padding = 8;
+            let nextOffset = 0;
+
+            if (rect.bottom > window.innerHeight - padding) {
+                nextOffset = (window.innerHeight - padding) - rect.bottom;
+            }
+
+            if (rect.top + nextOffset < padding) {
+                nextOffset += padding - (rect.top + nextOffset);
+            }
+
+            setOffsetY(nextOffset);
+        };
+
+        updatePosition();
+        window.addEventListener('resize', updatePosition);
+        return () => window.removeEventListener('resize', updatePosition);
+    }, [showToolSettings, activeTool, toolSettings]);
 
     if (!showToolSettings) return null;
 
@@ -23,7 +49,8 @@ export const ToolSettingsModal: React.FC = () => {
     return (
         <div
             ref={modalRef}
-            className="absolute left-full top-0 ml-4 bg-gray-800 border border-gray-600 rounded-lg shadow-xl p-4 min-w-[250px] z-50 pointer-events-auto"
+            className="absolute left-full top-0 ml-4 bg-gray-800 border border-gray-600 rounded-lg shadow-xl p-4 min-w-[320px] max-w-[380px] z-50 pointer-events-auto"
+            style={{ transform: `translateY(${offsetY}px)` }}
         >
             <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-gray-100 capitalize">
@@ -40,10 +67,11 @@ export const ToolSettingsModal: React.FC = () => {
             <div className="space-y-4">
                 {/* Line Width for shape tools */}
                 {isShapeTool && (
-                    <div>
-                        <label className="text-sm text-gray-300 block mb-2">
-                            Line Width: {toolSettings.lineWidth}px
-                        </label>
+                    <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                            <label className="text-sm text-gray-300">Line Width</label>
+                            <span className="text-xs text-gray-400">{toolSettings.lineWidth}px</span>
+                        </div>
                         <input
                             type="range"
                             min="1"
@@ -61,10 +89,11 @@ export const ToolSettingsModal: React.FC = () => {
                 {/* Font settings for text tool */}
                 {isTextTool && (
                     <>
-                        <div>
-                            <label className="text-sm text-gray-300 block mb-2">
-                                Font Size: {toolSettings.fontSize}px
-                            </label>
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                                <label className="text-sm text-gray-300">Font Size</label>
+                                <span className="text-xs text-gray-400">{toolSettings.fontSize}px</span>
+                            </div>
                             <input
                                 type="range"
                                 min="8"
@@ -78,14 +107,12 @@ export const ToolSettingsModal: React.FC = () => {
                             />
                         </div>
 
-                        <div>
-                            <label className="text-sm text-gray-300 block mb-2">
-                                Font Family
-                            </label>
+                        <div className="flex items-center justify-between gap-4">
+                            <label className="text-sm text-gray-300">Font Family</label>
                             <select
                                 value={toolSettings.fontFamily}
                                 onChange={(e) => setToolSettings({ fontFamily: e.target.value })}
-                                className="w-full px-3 py-2 bg-gray-700 text-gray-300 rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
+                                className="w-44 px-3 py-2 bg-gray-700 text-gray-300 rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
                             >
                                 <option value="Arial">Arial</option>
                                 <option value="Times New Roman">Times New Roman</option>
@@ -96,97 +123,45 @@ export const ToolSettingsModal: React.FC = () => {
                             </select>
                         </div>
 
-                        <div>
-                            <label className="text-sm text-gray-300 block mb-2">
-                                Font Weight
-                            </label>
-                            <div className="flex space-x-2">
-                                <button
-                                    onClick={() => setToolSettings({ fontWeight: 'normal' })}
-                                    className={`flex-1 px-3 py-2 rounded border ${toolSettings.fontWeight === 'normal'
-                                        ? 'bg-blue-600 border-blue-500 text-white'
-                                        : 'bg-gray-700 border-gray-600 text-gray-300 hover:border-gray-500'
-                                        }`}
-                                >
-                                    Normal
-                                </button>
-                                <button
-                                    onClick={() => setToolSettings({ fontWeight: 'bold' })}
-                                    className={`flex-1 px-3 py-2 rounded border font-bold ${toolSettings.fontWeight === 'bold'
-                                        ? 'bg-blue-600 border-blue-500 text-white'
-                                        : 'bg-gray-700 border-gray-600 text-gray-300 hover:border-gray-500'
-                                        }`}
-                                >
-                                    Bold
-                                </button>
-                            </div>
+                        <div className="flex items-center justify-between gap-4">
+                            <label className="text-sm text-gray-300">Font Weight</label>
+                            <select
+                                value={toolSettings.fontWeight}
+                                onChange={(e) => setToolSettings({ fontWeight: e.target.value as 'normal' | 'bold' })}
+                                className="w-44 px-3 py-2 bg-gray-700 text-gray-300 rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
+                            >
+                                <option value="normal">Normal</option>
+                                <option value="bold">Bold</option>
+                            </select>
                         </div>
 
-                        <div>
-                            <label className="text-sm text-gray-300 block mb-2">
-                                Font Style
-                            </label>
-                            <div className="flex space-x-2">
-                                <button
-                                    onClick={() => setToolSettings({ fontStyle: 'normal' })}
-                                    className={`flex-1 px-3 py-2 rounded border ${toolSettings.fontStyle === 'normal'
-                                        ? 'bg-blue-600 border-blue-500 text-white'
-                                        : 'bg-gray-700 border-gray-600 text-gray-300 hover:border-gray-500'
-                                        }`}
-                                >
-                                    Normal
-                                </button>
-                                <button
-                                    onClick={() => setToolSettings({ fontStyle: 'italic' })}
-                                    className={`flex-1 px-3 py-2 rounded border italic ${toolSettings.fontStyle === 'italic'
-                                        ? 'bg-blue-600 border-blue-500 text-white'
-                                        : 'bg-gray-700 border-gray-600 text-gray-300 hover:border-gray-500'
-                                        }`}
-                                >
-                                    Italic
-                                </button>
-                            </div>
+                        <div className="flex items-center justify-between gap-4">
+                            <label className="text-sm text-gray-300">Font Style</label>
+                            <select
+                                value={toolSettings.fontStyle}
+                                onChange={(e) => setToolSettings({ fontStyle: e.target.value as 'normal' | 'italic' })}
+                                className="w-44 px-3 py-2 bg-gray-700 text-gray-300 rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
+                            >
+                                <option value="normal">Normal</option>
+                                <option value="italic">Italic</option>
+                            </select>
                         </div>
 
-                        <div>
-                            <label className="text-sm text-gray-300 block mb-2">
-                                Text Align
-                            </label>
-                            <div className="flex space-x-2">
-                                <button
-                                    onClick={() => setToolSettings({ textAlign: 'left' })}
-                                    className={`flex-1 px-3 py-2 rounded border ${toolSettings.textAlign === 'left'
-                                        ? 'bg-blue-600 border-blue-500 text-white'
-                                        : 'bg-gray-700 border-gray-600 text-gray-300 hover:border-gray-500'
-                                        }`}
-                                >
-                                    Left
-                                </button>
-                                <button
-                                    onClick={() => setToolSettings({ textAlign: 'center' })}
-                                    className={`flex-1 px-3 py-2 rounded border ${toolSettings.textAlign === 'center'
-                                        ? 'bg-blue-600 border-blue-500 text-white'
-                                        : 'bg-gray-700 border-gray-600 text-gray-300 hover:border-gray-500'
-                                        }`}
-                                >
-                                    Center
-                                </button>
-                                <button
-                                    onClick={() => setToolSettings({ textAlign: 'right' })}
-                                    className={`flex-1 px-3 py-2 rounded border ${toolSettings.textAlign === 'right'
-                                        ? 'bg-blue-600 border-blue-500 text-white'
-                                        : 'bg-gray-700 border-gray-600 text-gray-300 hover:border-gray-500'
-                                        }`}
-                                >
-                                    Right
-                                </button>
-                            </div>
+                        <div className="flex items-center justify-between gap-4">
+                            <label className="text-sm text-gray-300">Text Align</label>
+                            <select
+                                value={toolSettings.textAlign}
+                                onChange={(e) => setToolSettings({ textAlign: e.target.value as 'left' | 'center' | 'right' })}
+                                className="w-44 px-3 py-2 bg-gray-700 text-gray-300 rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
+                            >
+                                <option value="left">Left</option>
+                                <option value="center">Center</option>
+                                <option value="right">Right</option>
+                            </select>
                         </div>
 
-                        <div>
-                            <label className="text-sm text-gray-300 block mb-2">
-                                Font Color
-                            </label>
+                        <div className="flex items-center justify-between gap-4">
+                            <label className="text-sm text-gray-300">Color</label>
                             <div className="flex items-center space-x-3">
                                 <ColorPicker
                                     color={toolSettings.textColor}
@@ -197,15 +172,6 @@ export const ToolSettingsModal: React.FC = () => {
                         </div>
                     </>
                 )}
-            </div>
-
-            <div className="mt-6 flex justify-end">
-                <button
-                    onClick={() => setShowToolSettings(false)}
-                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-                >
-                    done
-                </button>
             </div>
         </div>
     );

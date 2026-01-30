@@ -21,7 +21,10 @@ export const FloorplanCanvas: React.FC = () => {
     const updateFloorplan = useStore((state) => state.updateFloorplan);
     const selectedIds = useStore((state) => state.selectedIds);
     const selectItem = useStore((state) => state.selectItem);
+    const toggleSelectItem = useStore((state) => state.toggleSelectItem);
     const updateItem = useStore((state) => state.updateItem);
+    const moveItemsByDeltaTransient = useStore((state) => state.moveItemsByDeltaTransient);
+    const commitHistory = useStore((state) => state.commitHistory);
     const addItem = useStore((state) => state.addItem);
     const activeTool = useStore((state) => state.activeTool);
     const colors = useStore((state) => state.colors);
@@ -38,6 +41,7 @@ export const FloorplanCanvas: React.FC = () => {
     const floorplanRef = useRef<any>(null);
     const compassRef = useRef<any>(null);
     const trRef = useRef<any>(null);
+    const groupDragSnapshotRef = useRef<typeof objects | null>(null);
 
     // Custom hooks
     const dimensions = useCanvasDimensions(containerRef);
@@ -182,8 +186,39 @@ export const FloorplanCanvas: React.FC = () => {
                                 key={item.id}
                                 item={item}
                                 isSelected={selectedIds.includes(item.id)}
-                                onSelect={() => selectItem(item.id)}
+                                onSelect={(e) => {
+                                    const isCtrl = !!e?.evt?.ctrlKey;
+                                    if (isCtrl) {
+                                        toggleSelectItem(item.id);
+                                        return;
+                                    }
+                                    selectItem(item.id);
+                                }}
                                 onChange={(updates) => updateItem(item.id, updates)}
+                                onGroupDragStart={
+                                    activeTool === 'select' && selectedIds.length > 1 && selectedIds.includes(item.id)
+                                        ? () => {
+                                            if (!groupDragSnapshotRef.current) {
+                                                groupDragSnapshotRef.current = objects;
+                                            }
+                                        }
+                                        : undefined
+                                }
+                                onGroupDragMove={
+                                    activeTool === 'select' && selectedIds.length > 1 && selectedIds.includes(item.id)
+                                        ? (delta) => moveItemsByDeltaTransient(selectedIds, delta)
+                                        : undefined
+                                }
+                                onGroupDragEnd={
+                                    activeTool === 'select' && selectedIds.length > 1 && selectedIds.includes(item.id)
+                                        ? () => {
+                                            if (groupDragSnapshotRef.current) {
+                                                commitHistory(groupDragSnapshotRef.current);
+                                                groupDragSnapshotRef.current = null;
+                                            }
+                                        }
+                                        : undefined
+                                }
                             />
                         )
                     )}

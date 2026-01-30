@@ -5,9 +5,12 @@ import type { CanvasItem } from '../../types';
 interface ShapeRendererProps {
     item: CanvasItem;
     isSelected: boolean;
-    onSelect: () => void;
+    onSelect: (e?: any) => void;
     onChange: (updates: Partial<CanvasItem>) => void;
     onDblClick?: () => void;
+    onGroupDragStart?: () => void;
+    onGroupDragMove?: (delta: { x: number; y: number }) => void;
+    onGroupDragEnd?: () => void;
 }
 
 export const ShapeRenderer: React.FC<ShapeRendererProps> = ({
@@ -15,11 +18,15 @@ export const ShapeRenderer: React.FC<ShapeRendererProps> = ({
     isSelected,
     onSelect,
     onChange,
-    onDblClick
+    onDblClick,
+    onGroupDragStart,
+    onGroupDragMove,
+    onGroupDragEnd
 }) => {
     const shapeRef = React.useRef<any>(null);
     const trRef = React.useRef<any>(null);
     const [image, setImage] = React.useState<HTMLImageElement | null>(null);
+    const dragPosRef = React.useRef<{ x: number; y: number } | null>(null);
 
     // Load image if item type is 'image'
     React.useEffect(() => {
@@ -39,10 +46,34 @@ export const ShapeRenderer: React.FC<ShapeRendererProps> = ({
         }
     }, [isSelected]);
 
+    const handleDragStart = (e: any) => {
+        if (!onGroupDragMove) return;
+        dragPosRef.current = { x: e.target.x(), y: e.target.y() };
+        onGroupDragStart?.();
+    };
+
+    const handleDragMove = (e: any) => {
+        if (!onGroupDragMove) return;
+        const prev = dragPosRef.current ?? { x: item.x, y: item.y };
+        const next = { x: e.target.x(), y: e.target.y() };
+        const delta = { x: next.x - prev.x, y: next.y - prev.y };
+        dragPosRef.current = next;
+        onGroupDragMove(delta);
+    };
+
     const handleDragEnd = (e: any) => {
+        const nextX = e.target.x();
+        const nextY = e.target.y();
+
+        if (onGroupDragMove) {
+            dragPosRef.current = null;
+            onGroupDragEnd?.();
+            return;
+        }
+
         onChange({
-            x: e.target.x(),
-            y: e.target.y()
+            x: nextX,
+            y: nextY
         });
     };
 
@@ -114,6 +145,8 @@ export const ShapeRenderer: React.FC<ShapeRendererProps> = ({
         onClick: onSelect,
         onTap: onSelect,
         onDragEnd: handleDragEnd,
+        onDragStart: handleDragStart,
+        onDragMove: handleDragMove,
         onTransformEnd: handleTransformEnd,
         onDblClick: onDblClick
     };
