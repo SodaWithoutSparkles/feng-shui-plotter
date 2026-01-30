@@ -249,7 +249,7 @@ export const CompassShape = React.forwardRef<any, CompassShapeProps>(({
                         const angle = (bearing + 90) % 360;
                         const sepAngle = angle - 7.5;
 
-                        const start = p2c(innerRadius, sepAngle);
+                        const start = p2c(innerRadius * 0.5, sepAngle);
                         const end = p2c(radius * 3, sepAngle);
 
                         return (

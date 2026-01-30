@@ -65,6 +65,7 @@ export const RightSidebar: React.FC = () => {
                                         <ColorPicker
                                             color={colors.stroke}
                                             onChange={(color) => updateSelected({ stroke: color })}
+                                            menuAlign="right"
                                         />
                                     </div>
                                     <div className="flex items-center justify-between gap-3">
@@ -72,6 +73,8 @@ export const RightSidebar: React.FC = () => {
                                         <ColorPicker
                                             color={colors.fill}
                                             onChange={(color) => updateSelected({ fill: color })}
+                                            supportsAlpha
+                                            menuAlign="right"
                                         />
                                     </div>
                                 </>
@@ -138,6 +141,7 @@ export const RightSidebar: React.FC = () => {
                                         <ColorPicker
                                             color={selectedItem.stroke}
                                             onChange={(color) => updateSelected({ stroke: color })}
+                                            menuAlign="right"
                                         />
                                     </div>
 
@@ -146,6 +150,8 @@ export const RightSidebar: React.FC = () => {
                                         <ColorPicker
                                             color={selectedItem.fill}
                                             onChange={(color) => updateSelected({ fill: color })}
+                                            supportsAlpha
+                                            menuAlign="right"
                                         />
                                     </div>
 
@@ -322,6 +328,7 @@ export const RightSidebar: React.FC = () => {
                                                 <ColorPicker
                                                     color={selectedItem.textColor ?? selectedItem.stroke}
                                                     onChange={(color) => updateSelected({ textColor: color })}
+                                                    menuAlign="right"
                                                 />
                                             </div>
                                         </div>

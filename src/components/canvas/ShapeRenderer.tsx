@@ -5,6 +5,7 @@ import type { CanvasItem } from '../../types';
 interface ShapeRendererProps {
     item: CanvasItem;
     isSelected: boolean;
+    dragEnabled?: boolean;
     onSelect: (e?: any) => void;
     onChange: (updates: Partial<CanvasItem>) => void;
     onDblClick?: () => void;
@@ -16,6 +17,7 @@ interface ShapeRendererProps {
 export const ShapeRenderer: React.FC<ShapeRendererProps> = ({
     item,
     isSelected,
+    dragEnabled = true,
     onSelect,
     onChange,
     onDblClick,
@@ -47,12 +49,14 @@ export const ShapeRenderer: React.FC<ShapeRendererProps> = ({
     }, [isSelected]);
 
     const handleDragStart = (e: any) => {
+        if (!dragEnabled) return;
         if (!onGroupDragMove) return;
         dragPosRef.current = { x: e.target.x(), y: e.target.y() };
         onGroupDragStart?.();
     };
 
     const handleDragMove = (e: any) => {
+        if (!dragEnabled) return;
         if (!onGroupDragMove) return;
         const prev = dragPosRef.current ?? { x: item.x, y: item.y };
         const next = { x: e.target.x(), y: e.target.y() };
@@ -62,6 +66,7 @@ export const ShapeRenderer: React.FC<ShapeRendererProps> = ({
     };
 
     const handleDragEnd = (e: any) => {
+        if (!dragEnabled) return;
         const nextX = e.target.x();
         const nextY = e.target.y();
 
@@ -142,7 +147,7 @@ export const ShapeRenderer: React.FC<ShapeRendererProps> = ({
 
     const commonProps = {
         ref: shapeRef,
-        draggable: item.draggable,
+        draggable: item.draggable && dragEnabled,
         x: item.x,
         y: item.y,
         rotation: item.rotation,

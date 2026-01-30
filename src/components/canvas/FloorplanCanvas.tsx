@@ -353,6 +353,7 @@ export const FloorplanCanvas: React.FC = () => {
                                 key={item.id}
                                 item={item}
                                 isSelected={selectedIds.includes(item.id)}
+                                dragEnabled={activeTool === 'select' && !isDropperActive}
                                 onSelect={(e) => {
                                     const isCtrl = !!e?.evt?.ctrlKey;
                                     if (isCtrl) {
@@ -396,6 +397,7 @@ export const FloorplanCanvas: React.FC = () => {
                             key={shape.id}
                             item={shape}
                             isSelected={false}
+                            dragEnabled={false}
                             onSelect={() => { }}
                             onChange={() => { }}
                         />

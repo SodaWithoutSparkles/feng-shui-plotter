@@ -2,6 +2,53 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Pipette, Plus } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 
+const clampAlpha = (value: number) => Math.max(0, Math.min(1, value));
+
+const formatHexWithAlpha = (hex: string, alpha: number) => {
+    const a = Math.round(clampAlpha(alpha) * 255)
+        .toString(16)
+        .padStart(2, '0')
+        .toUpperCase();
+    return `${hex.toUpperCase()}${a}`;
+};
+
+const parseColorString = (value: string) => {
+    if (value === 'transparent') {
+        return { hex: '#000000', alpha: 0 };
+    }
+
+    if (value.startsWith('#')) {
+        let hex = value.slice(1);
+        if (hex.length === 3 || hex.length === 4) {
+            hex = hex
+                .split('')
+                .map((c) => c + c)
+                .join('');
+        }
+
+        if (hex.length === 6) {
+            return { hex: `#${hex}`, alpha: 1 };
+        }
+
+        if (hex.length === 8) {
+            const base = `#${hex.slice(0, 6)}`;
+            const alpha = parseInt(hex.slice(6, 8), 16) / 255;
+            return { hex: base, alpha: clampAlpha(alpha) };
+        }
+    }
+
+    if (value.startsWith('rgb')) {
+        const match = value.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+        if (match) {
+            const [, r, g, b, a] = match;
+            const hex = `#${parseInt(r, 10).toString(16).padStart(2, '0')}${parseInt(g, 10).toString(16).padStart(2, '0')}${parseInt(b, 10).toString(16).padStart(2, '0')}`;
+            return { hex, alpha: clampAlpha(parseFloat(a ?? '1')) };
+        }
+    }
+
+    return { hex: '#000000', alpha: 1 };
+};
+
 interface DualColorPickerProps {
     strokeColor: string;
     fillColor: string;
@@ -26,25 +73,23 @@ const ColorSection: React.FC<ColorSectionProps> = ({
     onPick,
     supportsAlpha = false
 }) => {
-    const [localColor, setLocalColor] = useState('#000000');
-    const [alpha, setAlpha] = useState(1);
+    const initial = parseColorString(color);
+    const [localColor, setLocalColor] = useState(initial.hex);
+    const [alpha, setAlpha] = useState(initial.alpha);
+    const [inputValue, setInputValue] = useState('');
 
     useEffect(() => {
-        if (color.startsWith('rgba')) {
-            const match = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
-            if (match) {
-                const [, r, g, b, a] = match;
-                setLocalColor(`#${parseInt(r).toString(16).padStart(2, '0')}${parseInt(g).toString(16).padStart(2, '0')}${parseInt(b).toString(16).padStart(2, '0')}`);
-                setAlpha(parseFloat(a || '1'));
-            }
-        } else if (color === 'transparent') {
-            setLocalColor('#000000');
-            setAlpha(0);
-        } else if (color.startsWith('#')) {
-            setLocalColor(color);
-            setAlpha(1);
-        }
+        const parsed = parseColorString(color);
+        setLocalColor(parsed.hex);
+        setAlpha(parsed.alpha);
     }, [color]);
+
+    useEffect(() => {
+        const next = supportsAlpha && alpha < 1
+            ? formatHexWithAlpha(localColor, alpha)
+            : localColor.toUpperCase();
+        setInputValue(next);
+    }, [localColor, alpha, supportsAlpha]);
 
     const handleColorChange = (newColor: string) => {
         setLocalColor(newColor);
@@ -64,14 +109,13 @@ const ColorSection: React.FC<ColorSectionProps> = ({
             } else if (alphaValue === 1) {
                 finalColor = hexColor;
             } else {
-                const r = parseInt(hexColor.slice(1, 3), 16);
-                const g = parseInt(hexColor.slice(3, 5), 16);
-                const b = parseInt(hexColor.slice(5, 7), 16);
-                finalColor = `rgba(${r}, ${g}, ${b}, ${alphaValue})`;
+                finalColor = formatHexWithAlpha(hexColor, alphaValue);
             }
         }
         onChange(finalColor);
     };
+
+    const displayHex = inputValue;
 
     return (
         <div className="mb-4 last:mb-0">
@@ -95,14 +139,29 @@ const ColorSection: React.FC<ColorSectionProps> = ({
                     />
                     <input
                         type="text"
-                        value={localColor.toUpperCase()}
+                        value={displayHex}
                         onChange={(e) => {
                             const val = e.target.value;
-                            if (/^#[0-9A-Fa-f]{0,6}$/.test(val)) {
+                            setInputValue(val);
+                            if (val.startsWith('rgb')) {
+                                const parsed = parseColorString(val);
+                                setLocalColor(parsed.hex);
+                                setAlpha(parsed.alpha);
+                                applyColor(parsed.hex, parsed.alpha);
+                                return;
+                            }
+
+                            const hexPattern = supportsAlpha ? /^#[0-9A-Fa-f]{0,8}$/ : /^#[0-9A-Fa-f]{0,6}$/;
+                            if (!hexPattern.test(val)) return;
+
+                            if (val.length === 7) {
                                 setLocalColor(val);
-                                if (val.length === 7) {
-                                    handleColorChange(val);
-                                }
+                                handleColorChange(val);
+                            } else if (supportsAlpha && val.length === 9) {
+                                const parsed = parseColorString(val);
+                                setLocalColor(parsed.hex);
+                                setAlpha(parsed.alpha);
+                                applyColor(parsed.hex, parsed.alpha);
                             }
                         }}
                         className="w-20 px-2 py-1 bg-gray-700 text-gray-300 text-xs rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
