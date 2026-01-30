@@ -117,6 +117,7 @@ export interface AppState {
 
     // Log History
     history: string[];
+    historyUndoCount: number;
     addToHistory: (action: string) => void;
 
     // Actions

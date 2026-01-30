@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { Suspense, lazy, useState } from 'react';
 import { useStore } from '../store/useStore';
 import { Upload, FilePlus, RefreshCcw } from 'lucide-react';
 import { decompress, decompressFromBase64 } from '../utils/compress';
-import { ProjectConfigModal } from './ProjectConfigModal';
 import type { SaveFile } from '../types';
+
+const ProjectConfigModal = lazy(() => import('./ProjectConfigModal').then((m) => ({ default: m.ProjectConfigModal })));
 
 export const WelcomeScreen: React.FC = () => {
     const setMode = useStore((state) => state.setMode);
@@ -151,19 +152,23 @@ export const WelcomeScreen: React.FC = () => {
                 </label>
             </div>
 
-            <ProjectConfigModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                onComplete={(config) => {
-                    setFloorplanImage(config.floorplanImage);
-                    updateFloorplan({ rotation: config.rotation });
-                    updateFengShui(config.fengShui);
-                    if (config.compassPosition) {
-                        updateCompass({ x: config.compassPosition.x, y: config.compassPosition.y });
-                    }
-                    setMode('edit');
-                }}
-            />
+            {isModalOpen && (
+                <Suspense fallback={null}>
+                    <ProjectConfigModal
+                        isOpen={isModalOpen}
+                        onClose={() => setIsModalOpen(false)}
+                        onComplete={(config) => {
+                            setFloorplanImage(config.floorplanImage);
+                            updateFloorplan({ rotation: config.rotation });
+                            updateFengShui(config.fengShui);
+                            if (config.compassPosition) {
+                                updateCompass({ x: config.compassPosition.x, y: config.compassPosition.y });
+                            }
+                            setMode('edit');
+                        }}
+                    />
+                </Suspense>
+            )}
 
             {/* Recover Card */}
             {hasAutoSave && (

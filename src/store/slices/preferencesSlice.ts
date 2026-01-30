@@ -4,7 +4,16 @@ import { readBoolean, readJSON, STORAGE_KEYS, writeBoolean, writeJSON } from '..
 
 export const createPreferencesSlice: StoreSlice = (set) => ({
     history: [],
-    addToHistory: (action) => set((state) => ({ history: [action, ...state.history].slice(0, 50) })),
+    historyUndoCount: 0,
+    addToHistory: (action) => set((state) => {
+        const trimmedHistory = state.historyUndoCount > 0
+            ? state.history.slice(state.historyUndoCount)
+            : state.history;
+        return {
+            history: [action, ...trimmedHistory].slice(0, 50),
+            historyUndoCount: 0
+        };
+    }),
 
     autoSave: readBoolean(STORAGE_KEYS.autoSave, true),
     toggleAutoSave: () => set((state) => {

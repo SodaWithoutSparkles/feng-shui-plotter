@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { useStore } from '../../store/useStore';
 import { Header } from './Header';
 import { LeftSidebar } from './LeftSidebar';
 import { RightSidebar } from './RightSidebar';
 import { BottomBar } from './BottomBar';
-import { FloorplanCanvas } from '../canvas/FloorplanCanvas';
-import { KeyboardShortcuts } from '../common/KeyboardShortcuts';
-import { ProjectConfigModal } from '../ProjectConfigModal';
+
+const FloorplanCanvas = lazy(() => import('../canvas/FloorplanCanvas').then((m) => ({ default: m.FloorplanCanvas })));
+const KeyboardShortcuts = lazy(() => import('../common/KeyboardShortcuts').then((m) => ({ default: m.KeyboardShortcuts })));
+const ProjectConfigModal = lazy(() => import('../ProjectConfigModal').then((m) => ({ default: m.ProjectConfigModal })));
 
 export const MainLayout: React.FC = () => {
     const showProjectConfig = useStore(state => state.showProjectConfig);
@@ -30,17 +31,21 @@ export const MainLayout: React.FC = () => {
 
     return (
         <div className="flex flex-col h-screen w-screen overflow-hidden bg-gray-900">
-            <KeyboardShortcuts />
-            <ProjectConfigModal
-                isOpen={showProjectConfig}
-                onClose={() => setShowProjectConfig(false)}
-                onComplete={handleConfigComplete}
-                initialData={{
-                    floorplanImage: floorplan.imageSrc || '', // Handle null
-                    rotation: floorplan.rotation,
-                    fengShui
-                }}
-            />
+            <Suspense fallback={null}>
+                <KeyboardShortcuts />
+                {showProjectConfig && (
+                    <ProjectConfigModal
+                        isOpen={showProjectConfig}
+                        onClose={() => setShowProjectConfig(false)}
+                        onComplete={handleConfigComplete}
+                        initialData={{
+                            floorplanImage: floorplan.imageSrc || '', // Handle null
+                            rotation: floorplan.rotation,
+                            fengShui
+                        }}
+                    />
+                )}
+            </Suspense>
             {/* 1. Top Header */}
             <Header />
 
@@ -53,7 +58,9 @@ export const MainLayout: React.FC = () => {
                 {/* Center Canvas Area */}
                 <div className="flex-1 bg-gray-500 relative overflow-hidden flex flex-col">
                     <div className="flex-1 relative bg-gray-200">
-                        <FloorplanCanvas />
+                        <Suspense fallback={<div className="h-full w-full flex items-center justify-center text-gray-700">Loading canvas...</div>}>
+                            <FloorplanCanvas />
+                        </Suspense>
                     </div>
                 </div>
 

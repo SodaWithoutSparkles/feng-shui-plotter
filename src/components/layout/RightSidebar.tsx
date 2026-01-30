@@ -6,6 +6,7 @@ import { ColorPicker } from '../common/ColorPicker';
 
 export const RightSidebar: React.FC = () => {
     const history = useStore((state) => state.history);
+    const historyUndoCount = useStore((state) => state.historyUndoCount);
     const objects = useStore((state) => state.objects);
     const selectedIds = useStore((state) => state.selectedIds);
     const selectItem = useStore((state) => state.selectItem);
@@ -337,11 +338,18 @@ export const RightSidebar: React.FC = () => {
                         />
                     ) : (
                         <ul className="space-y-1">
-                            {history.map((action, i) => (
-                                <li key={i} className="text-sm px-2 py-1 hover:bg-gray-700 rounded cursor-pointer truncate">
-                                    {action}
-                                </li>
-                            ))}
+                            {history.map((action, i) => {
+                                const isShadowDeleted = i < historyUndoCount;
+                                return (
+                                    <li
+                                        key={i}
+                                        className={`text-sm px-2 py-1 rounded cursor-pointer truncate ${isShadowDeleted ? 'text-gray-500 line-through' : 'hover:bg-gray-700'}`}
+                                        title={isShadowDeleted ? 'Undone' : undefined}
+                                    >
+                                        {action}
+                                    </li>
+                                );
+                            })}
                             {history.length === 0 && <li className="text-gray-500 italic text-xs p-2">No history</li>}
                         </ul>
                     )}

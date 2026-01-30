@@ -318,7 +318,7 @@ export const Header: React.FC = () => {
                             </div>
                             <input
                                 type="range"
-                                min="0.1" max="1" step="0.05"
+                                min="0.1" max="1" step="0.01"
                                 value={compass.opacity}
                                 onChange={(e) => updateCompass({ opacity: parseFloat(e.target.value) })}
                                 className="w-full accent-blue-500 h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer"

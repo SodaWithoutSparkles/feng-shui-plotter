@@ -37,7 +37,7 @@ const createCompassSvg = () => {
 
     // 1. Background
     // stroke-width 2
-    svg += `<circle cx="${Center}" cy="${Center}" r="${rings.outer}" fill="#FDF5E6" stroke="#8B4513" stroke-width="2" opacity="0.9"/>`;
+    svg += `<circle cx="${Center}" cy="${Center}" r="${rings.outer}" fill="#FDF5E6" stroke="#8B4513" stroke-width="2" opacity="1"/>`;
 
     // 2. Ticks & Degree Text (Outer Ring)
     for (let i = 0; i < 72; i++) {

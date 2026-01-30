@@ -1,3 +1,5 @@
+// Deprecated, see src/components/canvas/CompassShape.tsx
+
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 interface CompassOverlayProps {

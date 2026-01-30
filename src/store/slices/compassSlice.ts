@@ -5,7 +5,7 @@ export const createCompassSlice: StoreSlice = (set) => ({
         visible: true,
         mode: 'visible',
         rotation: 0,
-        opacity: 1.0,
+        opacity: 0.9,
         x: 400,
         y: 300,
         radius: 200,

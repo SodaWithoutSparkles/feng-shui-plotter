@@ -26,12 +26,16 @@ export const createProjectSlice: StoreSlice = (set) => ({
             mode: 'edit',
             floorplan: data.floorplan,
             objects: data.objects,
-            fengShui: data.fengShui,
+            fengShui: {
+                ...data.fengShui,
+                purples: { ...data.fengShui.purples, offset: 0 }
+            },
             compass: {
                 ...data.compass,
                 locked: (data.compass as any).locked ?? true
             },
             history: ['Loaded Project'],
+            historyUndoCount: 0,
             past: [],
             future: [],
             selectedIds: [],
@@ -45,6 +49,7 @@ export const createProjectSlice: StoreSlice = (set) => ({
         objects: [],
         fengShui: defaultFengShui,
         history: ['New Project'],
+        historyUndoCount: 0,
         showFlyStar: false,
         past: [],
         future: [],
