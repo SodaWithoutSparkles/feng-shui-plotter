@@ -14,7 +14,7 @@ export const colorsHelpSection: HelpSection = {
                 <ul className="list-disc pl-5 space-y-1 text-gray-300">
                     <li>點擊左上三角以編輯描邊顏色。</li>
                     <li>點擊右下三角以編輯填充顏色（支援透明度）。</li>
-                    <li>使用吸管（pipette）從畫布中直接取樣顏色。</li>
+                    <li>使用吸管（pipette）從畫布中直接取樣顏色。吸管只能從物件取樣，無法從平面圖或圖像中取樣。</li>
                 </ul>
             </div>
 
@@ -28,8 +28,8 @@ export const colorsHelpSection: HelpSection = {
             </div>
 
             <div className="rounded border border-amber-700/60 bg-amber-900/20 px-3 py-2 text-amber-200">
-                <strong className="font-semibold">注意：</strong> 文字（字型）顏色不在此處配置。
-                請使用 `Text` 工具或物件設定來調整文字顏色。
+                <strong className="font-semibold">注意：</strong> 如果需要調整文字顔色，請使用文字工具選單中的顏色選擇器，或在物件設定面板中調整。
+                詳情請參閱工具（Tools）和多功能面板（Panel）幫助章節。
             </div>
         </div>
     )

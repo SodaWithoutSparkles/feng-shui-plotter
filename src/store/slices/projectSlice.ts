@@ -2,12 +2,20 @@ import { CURRENT_VERSION } from '../../types';
 import type { SaveFile } from '../../types';
 import type { StoreSlice } from '../storeTypes';
 import { defaultFengShui } from '../storeDefaults';
+import { createDefaultProjectName } from '../../utils/projectName';
 
 export const createProjectSlice: StoreSlice = (set) => ({
     mode: 'welcome',
     setMode: (mode) => set({ mode }),
 
-    filename: 'Untitled',
+    projectName: createDefaultProjectName(),
+    setProjectName: (name) => set({ projectName: name }),
+    saveFileName: null,
+    setSaveFileName: (name) => set({ saveFileName: name }),
+    fileHandle: null,
+    setFileHandle: (handle) => set({ fileHandle: handle }),
+    lastSavedAt: null,
+    setLastSavedAt: (timestamp) => set({ lastSavedAt: timestamp }),
     version: CURRENT_VERSION,
 
     floorplan: {
@@ -22,10 +30,11 @@ export const createProjectSlice: StoreSlice = (set) => ({
     updateFloorplan: (updates) => set((state) => ({ floorplan: { ...state.floorplan, ...updates } })),
 
     loadProject: (data: SaveFile) => {
-        set({
+        set((state) => ({
             mode: 'edit',
             floorplan: data.floorplan,
             objects: data.objects,
+            projectName: data.projectName ?? state.projectName,
             fengShui: {
                 ...data.fengShui,
                 purples: { ...data.fengShui.purples, offset: 0 }
@@ -40,17 +49,21 @@ export const createProjectSlice: StoreSlice = (set) => ({
             future: [],
             selectedIds: [],
             selectionColorSnapshot: null
-        });
+        }));
     },
 
     resetProject: () => set({
         mode: 'edit',
+        projectName: createDefaultProjectName(),
+        saveFileName: null,
+        fileHandle: null,
+        lastSavedAt: null,
         floorplan: { imageSrc: null, rotation: 0, scale: 1, opacity: 1, x: 0, y: 0 },
         objects: [],
         fengShui: defaultFengShui,
         history: ['New Project'],
         historyUndoCount: 0,
-        showFlyStar: false,
+        showFlyStar: true,
         past: [],
         future: [],
         selectedIds: [],

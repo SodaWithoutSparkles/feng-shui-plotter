@@ -19,46 +19,103 @@ export const HelpModal: FC<HelpModalProps> = ({
     // Persisted key for the selected help locale
     const HELP_LOCALE_KEY = 'help.locale';
 
-    const [selectedLocale, setSelectedLocale] = useState<HelpLocale>('en');
+    // Persisted value can be an explicit locale or 'auto' to mean "follow browser"
+    type PersistedHelpLocale = HelpLocale | 'auto';
+
+    const detectBrowserLocale = (): HelpLocale => {
+        try {
+            const nav = navigator.language || (navigator.languages && navigator.languages[0]) || 'en';
+            const l = nav.toLowerCase();
+            if (l.startsWith('zh')) {
+                // prefer traditional for Taiwan/HK/Macau or explicit Hant variant
+                if (l.includes('-tw') || l.includes('-hk') || l.includes('-mo') || l.includes('hant')) {
+                    return 'zh-hant';
+                }
+                return 'zh-hans';
+            }
+            // default to English
+            return 'en';
+        } catch { return 'en'; }
+    };
+
+    const getInitialPersistedLocale = (propLocale?: HelpLocale): PersistedHelpLocale => {
+        try {
+            const stored = localStorage.getItem(HELP_LOCALE_KEY);
+            if (stored === 'auto') return 'auto';
+            if (stored && (availableHelpLocales as readonly string[]).includes(stored)) return stored as HelpLocale;
+        } catch { }
+        if (propLocale && (availableHelpLocales as readonly string[]).includes(propLocale)) return propLocale;
+        return 'auto';
+    };
+
+    const initialPersisted = getInitialPersistedLocale(locale);
+    const [persistedLocale, setPersistedLocale] = useState<PersistedHelpLocale>(initialPersisted);
+    const [selectedLocale, setSelectedLocale] = useState<HelpLocale>(() =>
+        initialPersisted === 'auto' ? detectBrowserLocale() : initialPersisted
+    );
 
     // Labels for UI — extend as locales are added
     const LOCALE_LABELS: Record<string, string> = {
-        en: 'English',
+        'auto': 'Automatic (browser)',
+        'en': 'English',
         'zh-hans': '中文（简体）',
         'zh-hant': '中文（繁體）'
     };
 
-    // Load persisted locale when modal opens (or use prop or default)
+    // Load persisted mode when modal opens (or use prop). Only run on open/prop change to avoid interfering with user interactions.
     useEffect(() => {
         if (!isOpen) return;
-        const stored = localStorage.getItem(HELP_LOCALE_KEY);
-        const initial = stored && (availableHelpLocales as readonly string[]).includes(stored)
-            ? (stored as HelpLocale)
-            : (locale && (availableHelpLocales as readonly string[]).includes(locale)
-                ? (locale as HelpLocale)
-                : 'en');
-        setSelectedLocale(initial);
+        try {
+            const stored = localStorage.getItem(HELP_LOCALE_KEY);
+            const resolved: PersistedHelpLocale = stored === 'auto'
+                ? 'auto'
+                : (stored && (availableHelpLocales as readonly string[]).includes(stored) ? (stored as HelpLocale)
+                    : (locale && (availableHelpLocales as readonly string[]).includes(locale) ? (locale as HelpLocale) : 'auto'));
+            if (resolved !== persistedLocale) {
+                setPersistedLocale(resolved);
+                setSelectedLocale(resolved === 'auto' ? detectBrowserLocale() : resolved);
+            }
+        } catch { }
     }, [isOpen, locale]);
 
-    // Persist selection
+    // Persist selection mode (auto or explicit)
     useEffect(() => {
         try {
-            localStorage.setItem(HELP_LOCALE_KEY, selectedLocale);
+            localStorage.setItem(HELP_LOCALE_KEY, persistedLocale);
         } catch { }
-    }, [selectedLocale]);
+    }, [persistedLocale]);
+
+    // react to storage changes in other tabs
+    useEffect(() => {
+        const onStorage = (e: StorageEvent) => {
+            if (e.key !== HELP_LOCALE_KEY) return;
+            try {
+                const v = e.newValue;
+                const resolved: PersistedHelpLocale = v === 'auto'
+                    ? 'auto'
+                    : (v && (availableHelpLocales as readonly string[]).includes(v) ? (v as HelpLocale) : 'auto');
+                setPersistedLocale(resolved);
+                setSelectedLocale(resolved === 'auto' ? detectBrowserLocale() : resolved);
+            } catch { }
+        };
+        window.addEventListener('storage', onStorage);
+        return () => window.removeEventListener('storage', onStorage);
+    }, []);
 
     // Derive sections from selected locale
     const helpSections = useMemo(() => getHelpSections(selectedLocale), [selectedLocale]);
 
-    // When modal opens or locale changes, reset active section to initial or default
+    // When modal opens or the set of sections changes, reset active section to initial or default
     useEffect(() => {
         if (!isOpen) return;
         setActiveSectionId(initialSectionId ?? (helpSections[0]?.id ?? 'tools'));
-    }, [isOpen, initialSectionId, selectedLocale]);
+    }, [isOpen, initialSectionId, helpSections]);
 
-    const [activeSectionId, setActiveSectionId] = useState<HelpSectionId>(
-        initialSectionId ?? (helpSections[0]?.id ?? 'tools')
-    );
+    const [activeSectionId, setActiveSectionId] = useState<HelpSectionId>(() => {
+        const resolvedLocale = initialPersisted === 'auto' ? detectBrowserLocale() : initialPersisted;
+        const initialSections = getHelpSections(resolvedLocale);
+        return initialSectionId ?? (initialSections[0]?.id ?? 'tools');
+    });
 
     const activeSection = useMemo(() => {
         return helpSections.find((section: HelpSection) => section.id === activeSectionId) ?? helpSections[0];
@@ -76,8 +133,8 @@ export const HelpModal: FC<HelpModalProps> = ({
                             key={section.id}
                             onClick={() => setActiveSectionId(section.id)}
                             className={`w-full text-left px-3 py-2 rounded text-sm transition-colors ${section.id === activeSectionId
-                                    ? 'bg-blue-600/20 text-blue-200'
-                                    : 'text-gray-300 hover:bg-gray-800'
+                                ? 'bg-blue-600/20 text-blue-200'
+                                : 'text-gray-300 hover:bg-gray-800'
                                 }`}
                         >
                             {section.title}
@@ -95,16 +152,21 @@ export const HelpModal: FC<HelpModalProps> = ({
                             <label htmlFor="help-locale-select" className="sr-only">Language</label>
                             <select
                                 id="help-locale-select"
-                                value={selectedLocale}
+                                value={persistedLocale}
                                 onChange={(e) => {
                                     const v = e.target.value;
-                                    if ((availableHelpLocales as readonly string[]).includes(v)) {
+                                    if (v === 'auto') {
+                                        setPersistedLocale('auto');
+                                        setSelectedLocale(detectBrowserLocale());
+                                    } else if ((availableHelpLocales as readonly string[]).includes(v)) {
+                                        setPersistedLocale(v as PersistedHelpLocale);
                                         setSelectedLocale(v as HelpLocale);
                                     }
                                 }}
                                 className="bg-gray-800 text-gray-200 text-sm rounded px-2 py-1 border border-gray-700"
                                 aria-label="Select help language"
                             >
+                                <option value="auto">{LOCALE_LABELS['auto']}</option>
                                 {availableHelpLocales.map((l) => (
                                     <option key={l} value={l}>{LOCALE_LABELS[l] ?? l}</option>
                                 ))}

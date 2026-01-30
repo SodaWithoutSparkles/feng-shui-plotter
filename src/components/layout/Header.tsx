@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useStore } from '../../store/useStore';
 import type { SaveFile } from '../../types';
-import { compress, decompress, compressToBase64 } from '../../utils/compress';
+import { compressToBase64 } from '../../utils/compress';
+import { createDefaultProjectName } from '../../utils/projectName';
+import { sanitizeFilename, ensureSaveExtension, buildDefaultSaveName, parseTimestamp, parseSaveFile, writeSaveFileToHandle, downloadSaveFile } from '../../utils/saveProject';
 import { ShortcutConfigModal } from '../common/ShortcutConfigModal';
 import { ProjectConfigModal } from '../ProjectConfigModal';
 import { HelpModal } from '../help/HelpModal';
@@ -14,6 +16,11 @@ export const Header: React.FC = () => {
     const [helpSectionId, setHelpSectionId] = useState<HelpSectionId>('tools');
     const fileInputRef = useRef<HTMLInputElement>(null);
     const imageInputRef = useRef<HTMLInputElement>(null);
+    const [isEditingName, setIsEditingName] = useState(false);
+    const [nameDraft, setNameDraft] = useState('');
+    const [showSaveAsModal, setShowSaveAsModal] = useState(false);
+    const [saveAsProjectName, setSaveAsProjectName] = useState('');
+    const [saveAsFileName, setSaveAsFileName] = useState('');
 
     // For new project init flow
     const [showProjectInit, setShowProjectInit] = useState(false);
@@ -32,6 +39,14 @@ export const Header: React.FC = () => {
     const moveSelectedLayer = useStore(state => state.moveSelectedLayer);
     const updateCompass = useStore(state => state.updateCompass);
     const addItem = useStore(state => state.addItem);
+    const projectName = useStore(state => state.projectName);
+    const setProjectName = useStore(state => state.setProjectName);
+    const saveFileName = useStore(state => state.saveFileName);
+    const setSaveFileName = useStore(state => state.setSaveFileName);
+    const fileHandle = useStore(state => state.fileHandle);
+    const setFileHandle = useStore(state => state.setFileHandle);
+    const setLastSavedAt = useStore(state => state.setLastSavedAt);
+    const lastSavedAt = useStore(state => state.lastSavedAt);
     const autoSave = useStore(state => state.autoSave);
     const toggleAutoSave = useStore(state => state.toggleAutoSave);
     const setLastAutoSaveAt = useStore(state => state.setLastAutoSaveAt);
@@ -45,6 +60,14 @@ export const Header: React.FC = () => {
     const compass = useStore(state => state.compass);
     const version = useStore(state => state.version);
 
+    const supportsFileSystemAccess = typeof window !== 'undefined' && 'showSaveFilePicker' in window;
+
+    useEffect(() => {
+        if (!isEditingName) {
+            setNameDraft(projectName);
+        }
+    }, [projectName, isEditingName]);
+
     // Auto-save effect
     useEffect(() => {
         if (autoSave) {
@@ -55,6 +78,9 @@ export const Header: React.FC = () => {
                     fengShui,
                     compass,
                     version,
+                    projectName,
+                    // include user's preferred filename so it can be recovered from autosave
+                    saveFileName: saveFileName ?? undefined,
                     timestamp: new Date()
                 };
                 try {
@@ -68,78 +94,132 @@ export const Header: React.FC = () => {
             }, 5000); // Auto-save 5s debounce
             return () => clearTimeout(timer);
         }
-    }, [floorplan, objects, fengShui, compass, version, autoSave]);
+    }, [floorplan, objects, fengShui, compass, version, projectName, saveFileName, autoSave]);
+
+
+    const lastSavedProjectNameRef = useRef(projectName);
+
+    useEffect(() => {
+        // Update snapshot of the project name when the project is saved or loaded
+        lastSavedProjectNameRef.current = projectName;
+    }, [lastSavedAt]);
+
+    const hasNameChanged = projectName.trim() !== (lastSavedProjectNameRef.current?.trim() ?? '');
 
     const handleSave = async () => {
-        const saveFile: SaveFile = {
-            version,
-            timestamp: new Date(),
-            floorplan,
-            objects,
-            fengShui,
-            compass
-        };
-
         try {
-            const json = JSON.stringify(saveFile, null, 2);
-            const compressed = await compress(json);
-            const blob = new Blob([compressed], { type: 'application/gzip' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `project-${new Date().toISOString().slice(0, 10)}.fsp`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            const saveFile: SaveFile = {
+                version,
+                projectName,
+                // persist the user's preferred filename in the save file
+                saveFileName: saveFileName ?? undefined,
+                timestamp: new Date(),
+                floorplan,
+                objects,
+                fengShui,
+                compass
+            };
+
+            if (fileHandle) {
+                await writeSaveFileToHandle(fileHandle, saveFile);
+                setSaveFileName((fileHandle as any).name);
+                setLastSavedAt(Date.now());
+                setActiveMenu(null);
+                return;
+            }
+
+            if (supportsFileSystemAccess) {
+                setActiveMenu(null);
+                openSaveAsModal();
+                return;
+            }
+
+            // No File System Access API — prefer the user's previously chosen filename if available
+            const filename = saveFileName ? ensureSaveExtension(saveFileName) : ensureSaveExtension(sanitizeFilename(projectName.trim()) || buildDefaultSaveName(projectName));
+            await downloadSaveFile(filename, saveFile);
+            setFileHandle(null);
+            setSaveFileName(filename);
+            setLastSavedAt(Date.now());
             setActiveMenu(null);
         } catch (err) {
-            console.error('Failed to compress save file', err);
+            console.error('Failed to save project', err);
             alert('Failed to save project');
         }
     };
 
-    const handleLoad = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleSaveAs = async () => {
+        try {
+            setActiveMenu(null);
+            openSaveAsModal();
+        } catch (err) {
+            console.error('Failed to save project as', err);
+            alert('Failed to save project');
+        }
+    };
+
+    const handleLoad = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        const reader = new FileReader();
-        reader.onload = async (event) => {
-            const result = event.target?.result;
-            try {
-                // First try to read as UTF-8 text (legacy .json saves)
-                if (result instanceof ArrayBuffer) {
-                    try {
-                        const text = new TextDecoder().decode(new Uint8Array(result));
-                        const parsed = JSON.parse(text) as SaveFile;
-                        loadProject(parsed);
-                        return;
-                    } catch (err) {
-                        // Not plain text, try decompressing
-                    }
+        try {
+            const parsed = await parseSaveFile(file);
+            loadProject(parsed);
+            setFileHandle(null);
+            const preferredName = parsed.saveFileName ?? file.name;
+            setSaveFileName(preferredName);
+            setProjectName(parsed.projectName ?? file.name.replace(/\.[^/.]+$/, '') ?? createDefaultProjectName());
+            setLastSavedAt(parseTimestamp(parsed.timestamp));
 
-                    try {
-                        const decompressed = await decompress(result as ArrayBuffer);
-                        const parsed = JSON.parse(decompressed) as SaveFile;
-                        loadProject(parsed);
-                        return;
-                    } catch (err) {
-                        console.error('Failed to decompress/load file', err);
-                        alert('Failed to load project file');
+            // If the File System Access API is available, prompt the user to pick a handle
+            // so future saves can write in-place. This is optional — ignore cancellation.
+            if (supportsFileSystemAccess) {
+                try {
+                    const handle = await (window as any).showSaveFilePicker({
+                        suggestedName: preferredName,
+                        types: [{ description: 'Feng Shui Plotter Save', accept: { 'application/json': ['.fsp', '.json'] } }]
+                    });
+                    if (handle) {
+                        setFileHandle(handle);
+                        setSaveFileName(handle.name);
                     }
-                } else if (typeof result === 'string') {
-                    const parsed = JSON.parse(result as string) as SaveFile;
-                    loadProject(parsed);
-                    return;
+                } catch (err) {
+                    // user cancelled or permission denied — fine to ignore
                 }
-            } catch (err) {
-                console.error('Failed to load project file', err);
-                alert('Failed to load project file');
             }
-        };
-        reader.readAsArrayBuffer(file);
+        } catch (err) {
+            console.error('Failed to load project file', err);
+            alert('Failed to load project file');
+        }
+
         setActiveMenu(null);
         if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+
+    const handleOpenProject = async () => {
+        try {
+            if (typeof window !== 'undefined' && 'showOpenFilePicker' in window) {
+                const [handle] = await (window as any).showOpenFilePicker({
+                    types: [{ description: 'Feng Shui Plotter Save', accept: { 'application/json': ['.fsp', '.json'] } }],
+                    multiple: false
+                });
+                if (!handle) return;
+                const file = await handle.getFile();
+                const parsed = await parseSaveFile(file);
+                loadProject(parsed);
+                setFileHandle(handle);
+                // prefer the internal preferred filename if present
+                setSaveFileName(parsed.saveFileName ?? file.name);
+                setProjectName(parsed.projectName ?? file.name.replace(/\.[^/.]+$/, '') ?? createDefaultProjectName());
+                setLastSavedAt(parseTimestamp(parsed.timestamp));
+                setActiveMenu(null);
+                return;
+            }
+            fileInputRef.current?.click();
+            setActiveMenu(null);
+        } catch (err) {
+            console.error('Failed to open project file', err);
+            alert('Failed to open project file');
+        }
     };
 
     const handleImageInsert = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -196,12 +276,83 @@ export const Header: React.FC = () => {
         setActiveMenu(activeMenu === menu ? null : menu);
     };
 
+    const openSaveAsModal = () => {
+        const suggestedName = saveFileName || buildDefaultSaveName(projectName);
+        setSaveAsProjectName(projectName || createDefaultProjectName());
+        setSaveAsFileName(suggestedName);
+        setShowSaveAsModal(true);
+    };
+
+    const confirmSaveAs = async () => {
+        const nextProjectName = saveAsProjectName.trim() || createDefaultProjectName();
+        const nextFilename = ensureSaveExtension(sanitizeFilename(saveAsFileName.trim()) || buildDefaultSaveName(nextProjectName));
+        setProjectName(nextProjectName);
+        setSaveFileName(nextFilename);
+
+        const saveFile: SaveFile = {
+            version,
+            projectName: nextProjectName,
+            // include chosen filename inside the save file for later recovery
+            saveFileName: nextFilename,
+            timestamp: new Date(),
+            floorplan,
+            objects,
+            fengShui,
+            compass
+        };
+
+        try {
+            if (supportsFileSystemAccess) {
+                try {
+                    const handle = await (window as any).showSaveFilePicker({
+                        suggestedName: nextFilename,
+                        types: [{ description: 'Feng Shui Plotter Save', accept: { 'application/json': ['.fsp', '.json'] } }]
+                    });
+                    await writeSaveFileToHandle(handle, saveFile);
+                    setFileHandle(handle);
+                    setSaveFileName(handle.name);
+                    setLastSavedAt(Date.now());
+                } catch (err) {
+                    await downloadSaveFile(nextFilename, saveFile);
+                    setFileHandle(null);
+                    setLastSavedAt(Date.now());
+                }
+            } else {
+                await downloadSaveFile(nextFilename, saveFile);
+                setFileHandle(null);
+                setLastSavedAt(Date.now());
+            }
+            setShowSaveAsModal(false);
+        } catch (err) {
+            console.error('Failed to save project', err);
+            alert('Failed to save project');
+        }
+    };
+
+    const commitProjectName = () => {
+        const trimmed = nameDraft.trim();
+        if (!trimmed) {
+            const fallback = createDefaultProjectName();
+            setProjectName(fallback);
+            setNameDraft(fallback);
+        } else {
+            setProjectName(trimmed);
+        }
+        setIsEditingName(false);
+    };
+
+    const cancelProjectName = () => {
+        setIsEditingName(false);
+        setNameDraft(projectName);
+    };
+
     // Close menu when clicking outside (simple implementation: overlay or specific click handler would be better but this is MVP)
-    const MenuItem = ({ label, onClick, shortcut, checked }: { label: string, onClick: () => void, shortcut?: string, checked?: boolean }) => (
+    const MenuItem = ({ label, onClick, shortcut, checked, disabled }: { label: string, onClick: () => void, shortcut?: string, checked?: boolean, disabled?: boolean }) => (
         <div
-            className="px-4 py-2 hover:bg-gray-700 cursor-pointer flex justify-between min-w-[160px]"
+            className={`px-4 py-2 flex justify-between min-w-[160px] ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-700 cursor-pointer'}`}
             onClick={(e) => {
                 e.stopPropagation();
+                if (disabled) return;
                 onClick();
                 setActiveMenu(null);
             }}
@@ -249,8 +400,13 @@ export const Header: React.FC = () => {
                                 setShowProjectInit(false);
                             }}
                         />
-                        <MenuItem label="Open Project" onClick={() => fileInputRef.current?.click()} />
-                        <MenuItem label="Save Project" onClick={handleSave} />
+                        <MenuItem label="Open Project" onClick={handleOpenProject} />
+                        <MenuItem
+                            label={supportsFileSystemAccess ? 'Save Project (in-place)' : 'Save Project'}
+                            onClick={handleSave}
+                            disabled={!hasNameChanged}
+                        />
+                        <MenuItem label="Save Project As..." onClick={handleSaveAs} />
                         <MenuItem
                             label="Auto-save"
                             onClick={() => {
@@ -262,6 +418,36 @@ export const Header: React.FC = () => {
                         <MenuItem label="Configure Project" onClick={() => { setShowProjectConfig(true); }} />
                         <MenuItem label="Export as Image..." onClick={() => triggerExport()} />
                     </div>
+                )}
+            </div>
+
+            <div className="absolute left-1/2 top-0 h-full -translate-x-1/2 flex items-center max-w-[480px] w-full justify-center px-4">
+                {isEditingName ? (
+                    <input
+                        value={nameDraft}
+                        onChange={(e) => setNameDraft(e.target.value)}
+                        onBlur={commitProjectName}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                                commitProjectName();
+                            }
+                            if (e.key === 'Escape') {
+                                cancelProjectName();
+                            }
+                        }}
+                        className="bg-gray-800 border border-gray-600 text-gray-100 text-sm px-2 py-1 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 min-w-[240px]"
+                        autoFocus
+                        aria-label="Project name"
+                    />
+                ) : (
+                    <button
+                        type="button"
+                        onClick={() => setIsEditingName(true)}
+                        className="px-3 py-1 rounded text-gray-200 hover:bg-gray-800 transition-colors truncate max-w-full"
+                        title="Click to rename project"
+                    >
+                        {projectName}
+                    </button>
                 )}
             </div>
 
@@ -411,6 +597,59 @@ export const Header: React.FC = () => {
             {/* Click backdrop to close menu */}
             {activeMenu && (
                 <div className="fixed inset-0 z-[-1]" onClick={() => setActiveMenu(null)} />
+            )}
+            {showSaveAsModal && (
+                <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60">
+                    <div className="bg-gray-900 text-white rounded-lg shadow-2xl w-full max-w-2xl overflow-hidden border border-gray-700">
+                        <div className="px-6 py-4 border-b border-gray-700 flex justify-between items-center">
+                            <h2 className="text-lg font-semibold">Save Project As</h2>
+                            <button
+                                className="text-gray-300 hover:text-white transition-colors"
+                                onClick={() => setShowSaveAsModal(false)}
+                                aria-label="Close save as"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        <div className="p-6 space-y-4">
+                            <div className="space-y-2">
+                                <label className="text-sm text-gray-300">Project name</label>
+                                <input
+                                    value={saveAsProjectName}
+                                    onChange={(e) => setSaveAsProjectName(e.target.value)}
+                                    className="w-full bg-gray-800 border border-gray-700 text-gray-100 px-3 py-2 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                    placeholder="Project name"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm text-gray-300">File name</label>
+                                <input
+                                    value={saveAsFileName}
+                                    onChange={(e) => setSaveAsFileName(e.target.value)}
+                                    className="w-full bg-gray-800 border border-gray-700 text-gray-100 px-3 py-2 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                    placeholder="filename.fsp"
+                                />
+                                <p className="text-xs text-gray-400">Use .fsp for compressed saves or .json for legacy format.</p>
+                            </div>
+                        </div>
+
+                        <div className="px-6 py-4 border-t border-gray-700 flex justify-end space-x-2">
+                            <button
+                                className="px-4 py-2 text-sm rounded bg-gray-700 hover:bg-gray-600"
+                                onClick={() => setShowSaveAsModal(false)}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                className="px-4 py-2 text-sm rounded bg-blue-600 hover:bg-blue-500"
+                                onClick={confirmSaveAs}
+                            >
+                                Save
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
             <ShortcutConfigModal
                 isOpen={showShortcutConfig}

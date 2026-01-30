@@ -30,7 +30,7 @@ export const FloorplanCanvas: React.FC = () => {
     const colors = useStore((state) => state.colors);
     const setColors = useStore((state) => state.setColors);
     const fengShui = useStore((state) => state.fengShui);
-    const filename = useStore((state) => state.filename);
+    const projectName = useStore((state) => state.projectName);
     const isDropperActive = useStore((state) => state.isDropperActive);
     const setDropperActive = useStore((state) => state.setDropperActive);
     const toolSettings = useStore((state) => state.toolSettings);
@@ -102,7 +102,7 @@ export const FloorplanCanvas: React.FC = () => {
     const floorplanImg = useFloorplanImage(floorplan.imageSrc, containerRef, setStagePos);
 
     useCanvasExport(exportTrigger, stageRef, trRef, {
-        filename,
+        filename: projectName,
         fengShui,
         compass,
         updateCompass

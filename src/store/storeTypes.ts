@@ -35,7 +35,14 @@ export interface AppState {
     setMode: (mode: 'welcome' | 'edit') => void;
 
     // Project Data
-    filename: string;
+    projectName: string;
+    setProjectName: (name: string) => void;
+    saveFileName: string | null;
+    setSaveFileName: (name: string | null) => void;
+    fileHandle: FileSystemFileHandle | null;
+    setFileHandle: (handle: FileSystemFileHandle | null) => void;
+    lastSavedAt: number | null;
+    setLastSavedAt: (timestamp: number | null) => void;
     version: string;
     floorplan: SaveFile['floorplan'];
     setFloorplanImage: (src: string) => void;

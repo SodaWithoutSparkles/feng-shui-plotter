@@ -13,7 +13,7 @@ export const compassHelpSection: HelpSection = {
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400">模式</h4>
                 <ul className="list-disc pl-5 space-y-1 text-gray-300">
                     <li><span className="text-gray-100 font-semibold">查看 (View):</span> 顯示羅盤但不可互動。</li>
-                    <li><span className="text-gray-100 font-semibold">編輯（互動） (Edit (Interactive)):</span> 顯示控制點，允許移動、調整大小和旋轉羅盤。</li>
+                    <li><span className="text-gray-100 font-semibold">編輯（互動） (Edit (Interactive)):</span> 顯示控制點，以縮放和旋轉平面圖。當 Options → Lock to South 解鎖時，旋轉將會應用到羅盤而不是平面圖。</li>
                     <li><span className="text-gray-100 font-semibold">投影 (Projection):</span> 顯示 24 山向的投影線。</li>
                     <li><span className="text-gray-100 font-semibold">隱藏 (Hidden):</span> 隱藏羅盤。</li>
                 </ul>
@@ -32,7 +32,7 @@ export const compassHelpSection: HelpSection = {
             <div className="space-y-2">
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400">置中操作流程</h4>
                 <ol className="list-decimal pl-5 space-y-1 text-gray-300">
-                    <li>繪製包圍房屋的矩形。</li>
+                    <li>繪製包圍目標房屋的矩形。</li>
                     <li>繪製對角線以找到中心點。</li>
                     <li>刪除矩形，僅保留對角線。</li>
                     <li>將羅盤切換到編輯模式，並將其置於對角線交點處。</li>

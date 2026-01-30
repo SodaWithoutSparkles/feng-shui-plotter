@@ -251,47 +251,49 @@ export const DualColorPicker: React.FC<DualColorPickerProps> = ({
     return (
         <div className="relative group" ref={pickerRef}>
             {/* Split Box */}
-            <div className="w-8 h-8 rounded border border-gray-600 relative overflow-hidden shadow-sm">
+            <div className="w-12 flex items-center justify-center border-b border-gray-600 pb-2">
+                <div className="w-8 h-8 rounded border border-gray-600 relative overflow-hidden shadow-md transition-shadow duration-150 hover:shadow-lg">
 
-                {/* Visual Background for Transparency (entire box) */}
-                <div
-                    className="absolute inset-0"
-                    style={{
-                        backgroundImage: 'linear-gradient(45deg, #808080 25%, transparent 25%), linear-gradient(-45deg, #808080 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #808080 75%), linear-gradient(-45deg, transparent 75%, #808080 75%)',
-                        backgroundSize: '8px 8px',
-                        backgroundColor: '#fff'
-                    }}
-                />
+                    {/* Visual Background for Transparency (entire box) */}
+                    <div
+                        className="absolute inset-0"
+                        style={{
+                            backgroundImage: 'linear-gradient(45deg, #808080 25%, transparent 25%), linear-gradient(-45deg, #808080 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #808080 75%), linear-gradient(-45deg, transparent 75%, #808080 75%)',
+                            backgroundSize: '8px 8px',
+                            backgroundColor: '#fff'
+                        }}
+                    />
 
-                {/* Stroke Triangle (Top Left) */}
-                <div
-                    className={`absolute inset-0 cursor-pointer hover:opacity-90 transition-opacity z-10 ${activeType === 'stroke' ? 'ring-2 ring-blue-500 border-transparent' : ''}`}
-                    style={{
-                        clipPath: 'polygon(0 0, 100% 0, 0 100%)',
-                        backgroundColor: strokeColor
-                    }}
-                    onClick={() => {
-                        setEditTarget('current');
-                        onActiveTypeChange('stroke');
-                        setIsOpen(true);
-                    }}
-                    title="Stroke Color"
-                />
+                    {/* Stroke Triangle (Top Left) */}
+                    <div
+                        className={`absolute inset-0 cursor-pointer hover:opacity-90 transition-opacity z-10 ${activeType === 'stroke' ? 'ring-2 ring-blue-500 border-transparent' : ''}`}
+                        style={{
+                            clipPath: 'polygon(0 0, 100% 0, 0 100%)',
+                            backgroundColor: strokeColor
+                        }}
+                        onClick={() => {
+                            setEditTarget('current');
+                            onActiveTypeChange('stroke');
+                            setIsOpen(true);
+                        }}
+                        title="Stroke Color"
+                    />
 
-                {/* Fill Triangle (Bottom Right) */}
-                <div
-                    className={`absolute inset-0 cursor-pointer hover:opacity-90 transition-opacity z-10 ${activeType === 'fill' ? 'ring-2 ring-blue-500 border-transparent' : ''}`}
-                    style={{
-                        clipPath: 'polygon(100% 100%, 100% 0, 0 100%)',
-                        backgroundColor: fillColor === 'transparent' ? 'transparent' : fillColor
-                    }}
-                    onClick={() => {
-                        setEditTarget('current');
-                        onActiveTypeChange('fill');
-                        setIsOpen(true);
-                    }}
-                    title="Fill Color"
-                />
+                    {/* Fill Triangle (Bottom Right) */}
+                    <div
+                        className={`absolute inset-0 cursor-pointer hover:opacity-90 transition-opacity z-10 ${activeType === 'fill' ? 'ring-2 ring-blue-500 border-transparent' : ''}`}
+                        style={{
+                            clipPath: 'polygon(100% 100%, 100% 0, 0 100%)',
+                            backgroundColor: fillColor === 'transparent' ? 'transparent' : fillColor
+                        }}
+                        onClick={() => {
+                            setEditTarget('current');
+                            onActiveTypeChange('fill');
+                            setIsOpen(true);
+                        }}
+                        title="Fill Color"
+                    />
+                </div>
             </div>
 
             {/* Presets List */}

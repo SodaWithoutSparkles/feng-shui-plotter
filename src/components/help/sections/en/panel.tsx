@@ -23,7 +23,7 @@ export const panelHelpSection: HelpSection = {
                 <ul className="list-disc pl-5 space-y-1 text-gray-300">
                     <li><span className="text-gray-100 font-semibold">Object Settings:</span> Edit size, position, rotation, opacity, and colors for selected items (multi-select supported).</li>
                     <li><span className="text-gray-100 font-semibold">History:</span> Displays recent actions; undone steps appear struck-through.</li>
-                    <li><span className="text-gray-100 font-semibold">Fly Star:</span> Shows the chart and the year selector. It defaults to the current year and adjusts automatically via the year offset setting.</li>
+                    <li><span className="text-gray-100 font-semibold">Fly Star:</span> Shows the chart and the year selector. It auto-adjusts based on the current year, and you can preview other years using the + - buttons.</li>
                 </ul>
                 <p className="text-gray-400">
                     For Fly Star details, see the FengShui help section.

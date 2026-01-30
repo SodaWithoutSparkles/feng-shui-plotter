@@ -23,7 +23,7 @@ export const panelHelpSection: HelpSection = {
                 <ul className="list-disc pl-5 space-y-1 text-gray-300">
                     <li><span className="text-gray-100 font-semibold">对象设置 (Object Settings):</span> 编辑已选项的尺寸、位置、旋转、不透明度和颜色（支持多选）。</li>
                     <li><span className="text-gray-100 font-semibold">历史 (History):</span> 显示最近操作；已撤销的步骤会以删除线显示。</li>
-                    <li><span className="text-gray-100 font-semibold">飞星 (Fly Star):</span> 显示飞星图与年份选择器。默认使用当前年份，并可通过年份偏移自动调整。</li>
+                    <li><span className="text-gray-100 font-semibold">飞星 (Fly Star):</span> 显示飞星图与年份选择器。会根据当前年份自动调整，也可以使用 + - 按钮预览其他年份。</li>
                 </ul>
                 <p className="text-gray-400">
                     有关飞星详细信息，请参阅风水（FengShui）帮助章节。

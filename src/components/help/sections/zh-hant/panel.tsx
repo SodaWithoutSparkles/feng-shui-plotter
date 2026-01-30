@@ -10,7 +10,7 @@ export const panelHelpSection: HelpSection = {
             </p>
 
             <div className="space-y-2">
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400">何時切換</h4>
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400">切換邏輯</h4>
                 <ul className="list-disc pl-5 space-y-1 text-gray-300">
                     <li><span className="text-gray-100 font-semibold">物件設定 (Object Settings):</span> 當選中一個或多個物件時顯示。</li>
                     <li><span className="text-gray-100 font-semibold">飛星設定 (Fly Star Settings):</span> 在無選取且飛星開啟時顯示。</li>
@@ -21,9 +21,9 @@ export const panelHelpSection: HelpSection = {
             <div className="space-y-2">
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400">各檢視的功能</h4>
                 <ul className="list-disc pl-5 space-y-1 text-gray-300">
-                    <li><span className="text-gray-100 font-semibold">物件設定 (Object Settings):</span> 編輯已選項目的尺寸、位置、旋轉、不透明度和顏色（支援多選）。</li>
+                    <li><span className="text-gray-100 font-semibold">物件設定 (Object Settings):</span> 編輯已選項目的尺寸、位置、旋轉、顏色等各項屬性（支援多選）。</li>
                     <li><span className="text-gray-100 font-semibold">歷史 (History):</span> 顯示最近操作；已還原的步驟會以刪除線顯示。</li>
-                    <li><span className="text-gray-100 font-semibold">飛星 (Fly Star):</span> 顯示圖表及年份選擇器。預設為當前年份，並可透過年份偏移自動調整。</li>
+                    <li><span className="text-gray-100 font-semibold">飛星 (Fly Star):</span> 顯示圖表及年份選擇器。會隨當前年份自動調整，也可以使用 + - 按鈕預覽其他年份。</li>
                 </ul>
                 <p className="text-gray-400">
                     有關飛星詳情，請參閱風水（FengShui）幫助章節。

@@ -109,6 +109,9 @@ export interface FlyStarData {
 // The Project Save File Format
 export interface SaveFile {
     version: string;
+    projectName?: string;
+    // Optional preferred filename chosen by the user during Save As (helps with autosave recovery)
+    saveFileName?: string;
     floorplan: {
         imageSrc: string | null;
         rotation: number;

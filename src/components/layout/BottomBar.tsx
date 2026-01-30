@@ -11,6 +11,7 @@ export const BottomBar: React.FC = () => {
     const toggleFlyStar = useStore((state) => state.toggleFlyStar);
     const autoSave = useStore((state) => state.autoSave);
     const lastAutoSaveAt = useStore((state) => state.lastAutoSaveAt);
+    const lastSavedAt = useStore((state) => state.lastSavedAt);
 
     // Keep time-sensitive statuses fresh by forcing a re-render every 10s when nothing else changes.
     const [, setTick] = useState(0);
@@ -29,6 +30,19 @@ export const BottomBar: React.FC = () => {
         return `Auto-saved ${minutes}m ago`;
     };
 
+    const getLastSavedStatus = () => {
+        if (!lastSavedAt) return 'Last saved: —';
+        const seconds = Math.floor((Date.now() - lastSavedAt) / 1000);
+        if (seconds < 5) return 'Last saved: just now';
+        if (seconds < 60) return `Last saved: ${seconds}s ago`;
+        const minutes = Math.floor(seconds / 60);
+        if (minutes < 60) return `Last saved: ${minutes}m ago`;
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return `Last saved: ${hours}h ago`;
+        const days = Math.floor(hours / 24);
+        return `Last saved: ${days}d ago`;
+    };
+
     return (
         <div className="h-8 bg-gray-900 border-t border-gray-700 flex items-center justify-between px-4 text-xs text-gray-300 select-none z-30">
             <div className="flex items-center space-x-4">
@@ -37,6 +51,9 @@ export const BottomBar: React.FC = () => {
                 </div>
                 <div className="text-gray-400">
                     <span className={autoSave ? 'text-green-400' : 'text-gray-500'}>{getAutoSaveStatus()}</span>
+                </div>
+                <div className="text-gray-400">
+                    <span className="text-blue-300">{getLastSavedStatus()}</span>
                 </div>
                 {/* Coordinates or Zoom status could go here */}
             </div>

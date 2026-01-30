@@ -1,6 +1,6 @@
 import React from 'react';
 import { useStore } from '../../store/useStore';
-import { Layers, History, Settings, Sliders } from 'lucide-react';
+import { Layers, History, Sliders, Star, ArrowLeftRight } from 'lucide-react';
 import { FlystarVisualization } from '../FlystarVisualization';
 import { ColorPicker } from '../common/ColorPicker';
 
@@ -15,6 +15,7 @@ export const RightSidebar: React.FC = () => {
     const updateItems = useStore((state) => state.updateItems);
     const colors = useStore((state) => state.colors);
     const showFlyStar = useStore((state) => state.showFlyStar);
+    const toggleFlyStar = useStore((state) => state.toggleFlyStar);
     const fengShui = useStore((state) => state.fengShui);
     const updateFengShui = useStore((state) => state.updateFengShui);
 
@@ -45,9 +46,22 @@ export const RightSidebar: React.FC = () => {
                     {hasSelection ? (
                         <><Sliders size={12} className="mr-2" /> Object Settings</>
                     ) : showFlyStar ? (
-                        <><Settings size={12} className="mr-2" /> Fly Star Settings</>
+                        <><Star size={12} className="mr-2" /> Fly Star Settings</>
                     ) : (
                         <><History size={12} className="mr-2" /> History</>
+                    )}
+
+                    {/* Toggle button (triangle) to switch between Fly Star and History when no object is selected */}
+                    {!hasSelection && (
+                        <button
+                            type="button"
+                            aria-label={showFlyStar ? 'Show History' : 'Show Fly Star'}
+                            title={showFlyStar ? 'Show History' : 'Show Fly Star'}
+                            onClick={toggleFlyStar}
+                            className="ml-auto p-1 rounded hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-500"
+                        >
+                            <ArrowLeftRight size={12} className={`transform transition-transform ${showFlyStar ? 'rotate-180' : 'rotate-0'}`} />
+                        </button>
                     )}
                 </div>
 

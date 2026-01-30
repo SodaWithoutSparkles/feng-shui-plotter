@@ -8,6 +8,9 @@ export const fengShuiHelpSection: HelpSection = {
             <p className="text-gray-300">
                 風水設定為飛星圖（Fly Star）提供參數。相關控制項位於專案設定（File → Configure Project）和飛星面板中。
             </p>
+            <p className="text-gray-300">
+                飛星面板可在窗口右下角開啓，開啓後會在多功能面板中顯示飛星圖及年份選擇器。詳見多功能面板（Panel）幫助章節。
+            </p>
 
             <div className="space-y-2">
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400">可用設定</h4>
@@ -29,7 +32,7 @@ export const fengShuiHelpSection: HelpSection = {
                     <li><span className="text-purple-300 font-semibold">紫色 (Purple):</span> 每格右下角的數字。</li>
                 </ul>
                 <p className="text-gray-400">
-                    本節只描述設定的含義，有關如何獲得這些數字，請咨詢風水大師。
+                    本節只描述設定的含義。有關如何獲得這些數字，請咨詢風水大師。
                 </p>
             </div>
         </div>
