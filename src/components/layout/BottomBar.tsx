@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useStore } from '../../store/useStore';
 import { Compass, Star } from 'lucide-react';
 import clsx from 'clsx';
@@ -11,6 +11,13 @@ export const BottomBar: React.FC = () => {
     const toggleFlyStar = useStore((state) => state.toggleFlyStar);
     const autoSave = useStore((state) => state.autoSave);
     const lastAutoSaveAt = useStore((state) => state.lastAutoSaveAt);
+
+    // Keep time-sensitive statuses fresh by forcing a re-render every 10s when nothing else changes.
+    const [, setTick] = useState(0);
+    useEffect(() => {
+        const id = setInterval(() => setTick((t) => t + 1), 10000);
+        return () => clearInterval(id);
+    }, []);
 
     const getAutoSaveStatus = () => {
         if (!autoSave) return 'Auto-save off';
