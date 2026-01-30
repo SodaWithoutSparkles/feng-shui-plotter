@@ -158,6 +158,28 @@ export const Header: React.FC = () => {
         if (imageInputRef.current) imageInputRef.current.value = '';
     };
 
+    const handleRemoteImageInsert = () => {
+        const url = prompt('Paste an image URL');
+        if (!url) return;
+
+        addItem({
+            id: Math.random().toString(36).substr(2, 9),
+            type: 'image',
+            x: 100,
+            y: 100,
+            rotation: 0,
+            stroke: 'transparent',
+            strokeWidth: 0,
+            fill: 'transparent',
+            opacity: 1,
+            draggable: true,
+            width: 200,
+            height: 200,
+            src: url.trim()
+        });
+        setActiveMenu(null);
+    };
+
     const toggleMenu = (menu: string) => {
         setActiveMenu(activeMenu === menu ? null : menu);
     };
@@ -197,7 +219,7 @@ export const Header: React.FC = () => {
                     File
                 </div>
                 {activeMenu === 'file' && (
-                    <div className="absolute top-full left-0 bg-gray-800 border border-gray-600 shadow-xl py-1 rounded-b-md">
+                    <div className="absolute top-full left-0 bg-gray-800 border border-gray-600 shadow-xl py-1 rounded-b-md min-w-[260px]">
                         <MenuItem label="New Project" onClick={resetProject} />
                         <MenuItem label="Open Project" onClick={() => fileInputRef.current?.click()} />
                         <MenuItem label="Save Project" onClick={handleSave} />
@@ -223,7 +245,7 @@ export const Header: React.FC = () => {
                     Edit
                 </div>
                 {activeMenu === 'edit' && (
-                    <div className="absolute top-full left-0 bg-gray-800 border border-gray-600 shadow-xl py-1 rounded-b-md">
+                    <div className="absolute top-full left-0 bg-gray-800 border border-gray-600 shadow-xl py-1 rounded-b-md min-w-[260px]">
                         <MenuItem label="Undo" onClick={undo} shortcut="Ctrl+Z" />
                         <MenuItem label="Redo" onClick={redo} shortcut="Ctrl+Y" />
                         <div className="h-px bg-gray-700 my-1" />
@@ -232,7 +254,8 @@ export const Header: React.FC = () => {
                         <MenuItem label="Move Up" onClick={() => moveSelectedLayer('up')} shortcut="]" />
                         <MenuItem label="Move Down" onClick={() => moveSelectedLayer('down')} shortcut="[" />
                         <div className="h-px bg-gray-700 my-1" />
-                        <MenuItem label="Insert Image" onClick={() => imageInputRef.current?.click()} />
+                        <MenuItem label="Insert Local Image" onClick={() => imageInputRef.current?.click()} />
+                        <MenuItem label="Insert Remote Image" onClick={handleRemoteImageInsert} />
                     </div>
                 )}
             </div>
@@ -245,7 +268,7 @@ export const Header: React.FC = () => {
                     Options
                 </div>
                 {activeMenu === 'option' && (
-                    <div className="absolute top-full left-0 bg-gray-800 border border-gray-600 shadow-xl py-1 rounded-b-md min-w-[220px]">
+                    <div className="absolute top-full left-0 bg-gray-800 border border-gray-600 shadow-xl py-1 rounded-b-md min-w-[260px]">
                         <MenuItem label="About" onClick={() => alert('Feng Shui Plotter v0.1.0\nBuilt with React & Vite')} />
 
                         <div className="h-px bg-gray-700 my-1" />

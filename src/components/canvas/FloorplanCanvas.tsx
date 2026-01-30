@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Stage, Layer, Image as KonvaImage, Transformer } from 'react-konva';
 import { useStore } from '../../store/useStore';
 import { CompassShape } from './CompassShape';
@@ -42,6 +42,8 @@ export const FloorplanCanvas: React.FC = () => {
     const compassRef = useRef<any>(null);
     const trRef = useRef<any>(null);
     const groupDragSnapshotRef = useRef<typeof objects | null>(null);
+    const dragCounterRef = useRef(0);
+    const [isDraggingImage, setIsDraggingImage] = useState(false);
 
     // Custom hooks
     const dimensions = useCanvasDimensions(containerRef);
@@ -118,15 +120,103 @@ export const FloorplanCanvas: React.FC = () => {
         }
     };
 
+    const isLikelyImageUrl = (url: string) => {
+        if (!url) return false;
+        if (url.startsWith('data:image/')) return true;
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+            return /\.(png|jpe?g|gif|webp|bmp|svg)(\?.*)?(#.*)?$/i.test(url);
+        }
+        return false;
+    };
+
+    const extractImageUrl = (dataTransfer: DataTransfer) => {
+        const uriList = dataTransfer.getData('text/uri-list');
+        if (uriList) {
+            const first = uriList.split('\n')[0].trim();
+            if (isLikelyImageUrl(first)) return first;
+        }
+
+        const html = dataTransfer.getData('text/html');
+        if (html) {
+            const match = html.match(/<img[^>]+src=["']([^"']+)["']/i);
+            if (match?.[1] && isLikelyImageUrl(match[1])) return match[1];
+        }
+
+        const text = dataTransfer.getData('text/plain');
+        if (text && isLikelyImageUrl(text.trim())) return text.trim();
+
+        return null;
+    };
+
+    const addImageAt = (src: string, dropX: number, dropY: number) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+            const maxSize = 400;
+            const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+            const width = Math.round(img.width * scale);
+            const height = Math.round(img.height * scale);
+
+            addItem({
+                id: Math.random().toString(36).substr(2, 9),
+                type: 'image',
+                x: dropX,
+                y: dropY,
+                rotation: 0,
+                stroke: 'transparent',
+                strokeWidth: 0,
+                fill: 'transparent',
+                opacity: 1,
+                draggable: true,
+                width,
+                height,
+                src
+            });
+        };
+        img.src = src;
+    };
+
+    const addImageCentered = (src: string) => {
+        const centerX = (dimensions.width / 2 - stagePos.x) / stagePos.scale;
+        const centerY = (dimensions.height / 2 - stagePos.y) / stagePos.scale;
+        addImageAt(src, centerX, centerY);
+    };
+
+    const isImageDrag = (e: React.DragEvent<HTMLDivElement>) => {
+        const items = Array.from(e.dataTransfer.items || []);
+        const hasImageFile = items.some(item => item.kind === 'file' && item.type.startsWith('image/'));
+        if (hasImageFile) return true;
+        const url = extractImageUrl(e.dataTransfer);
+        return !!url;
+    };
+
     const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+        if (!isImageDrag(e)) return;
         e.preventDefault();
         e.dataTransfer.dropEffect = 'copy';
     };
 
-    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+        if (!isImageDrag(e)) return;
         e.preventDefault();
-        const file = e.dataTransfer.files?.[0];
-        if (!file || !file.type.startsWith('image/')) return;
+        dragCounterRef.current += 1;
+        setIsDraggingImage(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+        if (!isDraggingImage) return;
+        if (!isImageDrag(e)) return;
+        dragCounterRef.current = Math.max(0, dragCounterRef.current - 1);
+        if (dragCounterRef.current === 0) {
+            setIsDraggingImage(false);
+        }
+    };
+
+    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+        if (!isImageDrag(e)) return;
+        e.preventDefault();
+        dragCounterRef.current = 0;
+        setIsDraggingImage(false);
 
         const rect = containerRef.current?.getBoundingClientRect();
         if (!rect) return;
@@ -136,42 +226,58 @@ export const FloorplanCanvas: React.FC = () => {
         const dropX = (clientX - stagePos.x) / stagePos.scale;
         const dropY = (clientY - stagePos.y) / stagePos.scale;
 
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            const src = event.target?.result as string;
-            const img = new Image();
-            img.onload = () => {
-                const maxSize = 400;
-                const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
-                const width = Math.round(img.width * scale);
-                const height = Math.round(img.height * scale);
-
-                addItem({
-                    id: Math.random().toString(36).substr(2, 9),
-                    type: 'image',
-                    x: dropX,
-                    y: dropY,
-                    rotation: 0,
-                    stroke: 'transparent',
-                    strokeWidth: 0,
-                    fill: 'transparent',
-                    opacity: 1,
-                    draggable: true,
-                    width,
-                    height,
-                    src
-                });
+        const file = e.dataTransfer.files?.[0];
+        if (file && file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const src = event.target?.result as string;
+                addImageAt(src, dropX, dropY);
             };
-            img.src = src;
-        };
-        reader.readAsDataURL(file);
+            reader.readAsDataURL(file);
+            return;
+        }
+
+        const url = extractImageUrl(e.dataTransfer);
+        if (url) {
+            addImageAt(url, dropX, dropY);
+        }
     };
+
+    useEffect(() => {
+        const handlePaste = (e: ClipboardEvent) => {
+            const items = Array.from(e.clipboardData?.items || []);
+            const imageItem = items.find(item => item.kind === 'file' && item.type.startsWith('image/'));
+            if (imageItem) {
+                e.preventDefault();
+                const file = imageItem.getAsFile();
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const src = event.target?.result as string;
+                    addImageCentered(src);
+                };
+                reader.readAsDataURL(file);
+                return;
+            }
+
+            const text = e.clipboardData?.getData('text/plain')?.trim();
+            if (text && isLikelyImageUrl(text)) {
+                e.preventDefault();
+                addImageCentered(text);
+            }
+        };
+
+        window.addEventListener('paste', handlePaste);
+        return () => window.removeEventListener('paste', handlePaste);
+    }, [dimensions.width, dimensions.height, stagePos.x, stagePos.y, stagePos.scale]);
 
     return (
         <div
             ref={containerRef}
             className="w-full h-full relative object-contain bg-gray-200 overflow-hidden"
             onDragOver={handleDragOver}
+            onDragEnter={handleDragEnter}
+            onDragLeave={handleDragLeave}
             onDrop={handleDrop}
         >
             <Stage
@@ -304,6 +410,14 @@ export const FloorplanCanvas: React.FC = () => {
                     saveKey={keyboardShortcuts.textSave.key}
                     saveModifier={keyboardShortcuts.textSave.modifier}
                 />
+            )}
+
+            {isDraggingImage && (
+                <div className="absolute inset-0 bg-blue-600/10 border-2 border-dashed border-blue-500 flex items-center justify-center pointer-events-none">
+                    <div className="bg-white/90 px-6 py-3 rounded-lg shadow-lg text-blue-700 font-semibold">
+                        Drop to insert image
+                    </div>
+                </div>
             )}
         </div>
     );

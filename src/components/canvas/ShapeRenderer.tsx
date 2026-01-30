@@ -123,6 +123,14 @@ export const ShapeRenderer: React.FC<ShapeRendererProps> = ({
                 height: Math.max(20, item.height * scaleY)
                 // fontSize stays the same - don't scale it
             });
+        } else if (item.type === 'image') {
+            onChange({
+                x: node.x(),
+                y: node.y(),
+                rotation: node.rotation(),
+                width: Math.max(10, item.width * scaleX),
+                height: Math.max(10, item.height * scaleY)
+            });
         } else {
             onChange({
                 x: node.x(),
