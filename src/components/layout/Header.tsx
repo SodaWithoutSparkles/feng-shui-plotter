@@ -4,10 +4,14 @@ import type { SaveFile } from '../../types';
 import { compress, decompress, compressToBase64 } from '../../utils/compress';
 import { ShortcutConfigModal } from '../common/ShortcutConfigModal';
 import { ProjectConfigModal } from '../ProjectConfigModal';
+import { HelpModal } from '../help/HelpModal';
+import type { HelpSectionId } from '../help/sections';
 
 export const Header: React.FC = () => {
     const [activeMenu, setActiveMenu] = useState<string | null>(null);
     const [showShortcutConfig, setShowShortcutConfig] = useState(false);
+    const [showHelp, setShowHelp] = useState(false);
+    const [helpSectionId, setHelpSectionId] = useState<HelpSectionId>('tools');
     const fileInputRef = useRef<HTMLInputElement>(null);
     const imageInputRef = useRef<HTMLInputElement>(null);
 
@@ -349,6 +353,61 @@ export const Header: React.FC = () => {
                 )}
             </div>
 
+            <div className="relative">
+                <div
+                    className={`px-3 hover:bg-gray-700 cursor-pointer h-full flex items-center ${activeMenu === 'help' ? 'bg-gray-700' : ''}`}
+                    onClick={() => toggleMenu('help')}
+                >
+                    Help
+                </div>
+                {activeMenu === 'help' && (
+                    <div className="absolute top-full left-0 bg-gray-800 border border-gray-600 shadow-xl py-1 rounded-b-md min-w-[260px]">
+                        <MenuItem
+                            label="Tools"
+                            onClick={() => {
+                                setHelpSectionId('tools');
+                                setShowHelp(true);
+                            }}
+                        />
+                        <MenuItem
+                            label="Colors"
+                            onClick={() => {
+                                setHelpSectionId('colors');
+                                setShowHelp(true);
+                            }}
+                        />
+                        <MenuItem
+                            label="Multi-function panel"
+                            onClick={() => {
+                                setHelpSectionId('panel');
+                                setShowHelp(true);
+                            }}
+                        />
+                        <MenuItem
+                            label="FengShui"
+                            onClick={() => {
+                                setHelpSectionId('fengshui');
+                                setShowHelp(true);
+                            }}
+                        />
+                        <MenuItem
+                            label="Compass"
+                            onClick={() => {
+                                setHelpSectionId('compass');
+                                setShowHelp(true);
+                            }}
+                        />
+                        <MenuItem
+                            label="Images"
+                            onClick={() => {
+                                setHelpSectionId('images');
+                                setShowHelp(true);
+                            }}
+                        />
+                    </div>
+                )}
+            </div>
+
             {/* Click backdrop to close menu */}
             {activeMenu && (
                 <div className="fixed inset-0 z-[-1]" onClick={() => setActiveMenu(null)} />
@@ -356,6 +415,11 @@ export const Header: React.FC = () => {
             <ShortcutConfigModal
                 isOpen={showShortcutConfig}
                 onClose={() => setShowShortcutConfig(false)}
+            />
+            <HelpModal
+                isOpen={showHelp}
+                onClose={() => setShowHelp(false)}
+                initialSectionId={helpSectionId}
             />
         </div>
     );
