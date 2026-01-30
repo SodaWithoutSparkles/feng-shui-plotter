@@ -118,8 +118,62 @@ export const FloorplanCanvas: React.FC = () => {
         }
     };
 
+    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+    };
+
+    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        const file = e.dataTransfer.files?.[0];
+        if (!file || !file.type.startsWith('image/')) return;
+
+        const rect = containerRef.current?.getBoundingClientRect();
+        if (!rect) return;
+
+        const clientX = e.clientX - rect.left;
+        const clientY = e.clientY - rect.top;
+        const dropX = (clientX - stagePos.x) / stagePos.scale;
+        const dropY = (clientY - stagePos.y) / stagePos.scale;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const src = event.target?.result as string;
+            const img = new Image();
+            img.onload = () => {
+                const maxSize = 400;
+                const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+                const width = Math.round(img.width * scale);
+                const height = Math.round(img.height * scale);
+
+                addItem({
+                    id: Math.random().toString(36).substr(2, 9),
+                    type: 'image',
+                    x: dropX,
+                    y: dropY,
+                    rotation: 0,
+                    stroke: 'transparent',
+                    strokeWidth: 0,
+                    fill: 'transparent',
+                    opacity: 1,
+                    draggable: true,
+                    width,
+                    height,
+                    src
+                });
+            };
+            img.src = src;
+        };
+        reader.readAsDataURL(file);
+    };
+
     return (
-        <div ref={containerRef} className="w-full h-full relative object-contain bg-gray-200 overflow-hidden">
+        <div
+            ref={containerRef}
+            className="w-full h-full relative object-contain bg-gray-200 overflow-hidden"
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+        >
             <Stage
                 width={dimensions.width}
                 height={dimensions.height}

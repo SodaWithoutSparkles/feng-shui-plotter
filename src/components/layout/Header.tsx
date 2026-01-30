@@ -22,6 +22,7 @@ export const Header: React.FC = () => {
     const addItem = useStore(state => state.addItem);
     const autoSave = useStore(state => state.autoSave);
     const toggleAutoSave = useStore(state => state.toggleAutoSave);
+    const setLastAutoSaveAt = useStore(state => state.setLastAutoSaveAt);
     const setShowProjectConfig = useStore(state => state.setShowProjectConfig);
     const triggerExport = useStore(state => state.triggerExport);
 
@@ -47,11 +48,12 @@ export const Header: React.FC = () => {
                 try {
                     const base64 = await compressToBase64(JSON.stringify(saveData, null, 2));
                     localStorage.setItem('autosave_project', base64);
+                    setLastAutoSaveAt(Date.now());
                     console.log('Auto-saved (compressed)'); // Optional confirmation
                 } catch (err) {
                     console.error('Failed to compress autosave', err);
                 }
-            }, 3000); // 3 sec debounce
+            }, 5000); // Auto-save 5s debounce
             return () => clearTimeout(timer);
         }
     }, [floorplan, objects, fengShui, compass, version, autoSave]);

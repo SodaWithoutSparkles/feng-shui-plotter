@@ -15,6 +15,7 @@ export const WelcomeScreen: React.FC = () => {
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [hasAutoSave, setHasAutoSave] = useState(false);
+    const [isDraggingFile, setIsDraggingFile] = useState(false);
 
     React.useEffect(() => {
         const checkAutoSave = () => {
@@ -38,10 +39,7 @@ export const WelcomeScreen: React.FC = () => {
         }
     };
 
-    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
+    const handleSaveFile = (file: File) => {
         const reader = new FileReader();
         reader.onload = async (event) => {
             const result = event.target?.result;
@@ -79,8 +77,49 @@ export const WelcomeScreen: React.FC = () => {
         reader.readAsArrayBuffer(file);
     };
 
+    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        handleSaveFile(file);
+    };
+
+    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+    };
+
+    const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        setIsDraggingFile(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+        if (e.currentTarget === e.target) {
+            setIsDraggingFile(false);
+        }
+    };
+
+    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        setIsDraggingFile(false);
+        const file = e.dataTransfer.files?.[0];
+        if (!file) return;
+        const isSupported = file.name.toLowerCase().endsWith('.fsp') || file.name.toLowerCase().endsWith('.json');
+        if (!isSupported) {
+            alert('Please drop a .fsp or .json save file.');
+            return;
+        }
+        handleSaveFile(file);
+    };
+
     return (
-        <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
+        <div
+            className="flex flex-col items-center justify-center h-screen bg-gray-50 relative"
+            onDragOver={handleDragOver}
+            onDragEnter={handleDragEnter}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+        >
             <h1 className="text-4xl font-bold mb-8 text-gray-800">Feng Shui Plotter</h1>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl w-full px-4">
@@ -138,6 +177,14 @@ export const WelcomeScreen: React.FC = () => {
                     <h2 className="text-2xl font-semibold text-gray-800 mb-2">Recover Auto-save</h2>
                     <p className="text-gray-500 text-center">Restore the last auto-saved session.</p>
                 </button>
+            )}
+
+            {isDraggingFile && (
+                <div className="absolute inset-0 bg-blue-600/10 border-2 border-dashed border-blue-500 rounded-lg flex items-center justify-center pointer-events-none">
+                    <div className="bg-white/90 px-6 py-4 rounded-lg shadow-lg text-blue-700 font-semibold">
+                        Drop .fsp or .json to open
+                    </div>
+                </div>
             )}
 
         </div>

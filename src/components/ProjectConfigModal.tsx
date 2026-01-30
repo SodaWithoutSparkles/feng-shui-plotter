@@ -134,26 +134,28 @@ export const ProjectConfigModal: React.FC<ProjectConfigModalProps> = ({
                         <div className="space-y-4">
                             <h3 className="text-xl font-semibold text-gray-800 mb-4">Floorplan Image</h3>
 
-                            {/* Upload Button */}
-                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                                <input
-                                    ref={fileInputRef}
-                                    type="file"
-                                    accept="image/*"
-                                    className="hidden"
-                                    onChange={handleImageUpload}
-                                />
-                                <button
-                                    onClick={() => fileInputRef.current?.click()}
-                                    className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 mx-auto"
-                                >
-                                    <Upload size={20} />
-                                    {floorplanImage ? 'Change Image' : 'Upload Image'}
-                                </button>
-                                <p className="text-gray-500 text-sm mt-2">
-                                    {floorplanImage ? 'Image uploaded successfully' : 'Upload a floorplan image (PNG, JPG, etc.)'}
-                                </p>
-                            </div>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={handleImageUpload}
+                            />
+
+                            {!floorplanImage && (
+                                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                                    <button
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 mx-auto"
+                                    >
+                                        <Upload size={20} />
+                                        Upload Image
+                                    </button>
+                                    <p className="text-gray-500 text-sm mt-2">
+                                        Upload a floorplan image (PNG, JPG, etc.)
+                                    </p>
+                                </div>
+                            )}
 
                             {/* Rotation Control */}
                             <div className="space-y-2">
@@ -194,9 +196,15 @@ export const ProjectConfigModal: React.FC<ProjectConfigModalProps> = ({
 
                             {/* Floorplan Preview */}
                             {floorplanImage && (
-                                <div className="border border-gray-300 rounded-lg overflow-hidden bg-gray-100">
-                                    <div className="bg-gray-800 text-white px-3 py-2 text-sm font-semibold">
-                                        Preview
+                                <button
+                                    type="button"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="border border-gray-300 rounded-lg overflow-hidden bg-gray-100 w-full text-left hover:border-blue-400 transition-colors"
+                                    title="Click to replace image"
+                                >
+                                    <div className="bg-gray-800 text-white px-3 py-2 text-sm font-semibold flex items-center justify-between">
+                                        <span>Preview</span>
+                                        <span className="text-xs text-blue-200">Click to replace</span>
                                     </div>
                                     <div className="p-4 flex items-center justify-center min-h-[300px]">
                                         <img
@@ -209,7 +217,7 @@ export const ProjectConfigModal: React.FC<ProjectConfigModalProps> = ({
                                             }}
                                         />
                                     </div>
-                                </div>
+                                </button>
                             )}
                         </div>
 

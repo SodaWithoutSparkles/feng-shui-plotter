@@ -9,12 +9,27 @@ export const BottomBar: React.FC = () => {
     const toggleCompass = useStore((state) => state.toggleCompass);
     const showFlyStar = useStore((state) => state.showFlyStar);
     const toggleFlyStar = useStore((state) => state.toggleFlyStar);
+    const autoSave = useStore((state) => state.autoSave);
+    const lastAutoSaveAt = useStore((state) => state.lastAutoSaveAt);
+
+    const getAutoSaveStatus = () => {
+        if (!autoSave) return 'Auto-save off';
+        if (!lastAutoSaveAt) return 'Auto-save on';
+        const seconds = Math.floor((Date.now() - lastAutoSaveAt) / 1000);
+        if (seconds < 5) return 'Auto-saved just now';
+        if (seconds < 60) return `Auto-saved ${seconds}s ago`;
+        const minutes = Math.floor(seconds / 60);
+        return `Auto-saved ${minutes}m ago`;
+    };
 
     return (
         <div className="h-8 bg-gray-900 border-t border-gray-700 flex items-center justify-between px-4 text-xs text-gray-300 select-none z-30">
             <div className="flex items-center space-x-4">
                 <div className="text-gray-400">
                     Tool: <span className="text-white font-medium capitalize">{activeTool}</span>
+                </div>
+                <div className="text-gray-400">
+                    <span className={autoSave ? 'text-green-400' : 'text-gray-500'}>{getAutoSaveStatus()}</span>
                 </div>
                 {/* Coordinates or Zoom status could go here */}
             </div>

@@ -126,6 +126,8 @@ interface AppState {
     // AutoSave
     autoSave: boolean;
     toggleAutoSave: () => void;
+    lastAutoSaveAt: number | null;
+    setLastAutoSaveAt: (timestamp: number | null) => void;
 
     // Export
     exportTrigger: number;
@@ -544,8 +546,10 @@ export const useStore = create<AppState>((set) => ({
         selectionColorSnapshot: null
     }),
 
-    autoSave: false,
+    autoSave: true,
     toggleAutoSave: () => set((state) => ({ autoSave: !state.autoSave })),
+    lastAutoSaveAt: null,
+    setLastAutoSaveAt: (timestamp) => set({ lastAutoSaveAt: timestamp }),
 
     exportTrigger: 0,
     triggerExport: () => set((state) => ({ exportTrigger: state.exportTrigger + 1 })),
