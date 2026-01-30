@@ -1,6 +1,9 @@
 import { useEffect, useRef, type RefObject } from 'react';
 import { genFullFlyStarSeq } from '../../../utils/FengShui';
 import type { FengShuiData, SaveFile } from '../../../types';
+import { getExportModalStyles } from './export/styles';
+import { getExportModalTemplate } from './export/template';
+import { drawFlystar, computeTrimBoundsFromDataUrl } from './export/utils';
 
 interface ExportOptions {
     filename: string;
@@ -83,110 +86,20 @@ export const useCanvasExport = (
         if (!styleTag) {
             styleTag = document.createElement('style');
             styleTag.id = styleId;
-            styleTag.textContent = `
-                * { box-sizing: border-box; }
-                .export-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.72); display: flex; align-items: center; justify-content: center; z-index: 9999; }
-                .export-window { width: min(1200px, 94vw); height: min(800px, 94vh); background: #0f172a; color: #e2e8f0; border-radius: 16px; box-shadow: 0 24px 80px rgba(15, 23, 42, 0.45); display: flex; flex-direction: column; overflow: hidden; border: 1px solid #1f2937; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; }
-                .export-header { padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; background: #111827; border-bottom: 1px solid #1f2937; }
-                .export-header h1 { margin: 0; font-size: 16px; font-weight: 700; }
-                .export-close { border: none; background: transparent; color: #94a3b8; font-size: 14px; cursor: pointer; padding: 4px 8px; }
-                .export-close:hover { color: #e2e8f0; }
-                .layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; height: 100%; }
-                .preview { padding: 24px; overflow: auto; }
-                .panel { padding: 24px; background: #111827; border-left: 1px solid #1f2937; display: flex; flex-direction: column; gap: 16px; }
-                .card { background: #0b1220; border: 1px solid #1f2937; border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
-                label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: #94a3b8; }
-                .row { display: flex; gap: 8px; align-items: center; }
-                input, select { width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #e2e8f0; font-size: 14px; }
-                input[type=range] { width: 100%; }
-                .value { font-size: 12px; color: #cbd5f5; }
-                .button { padding: 10px 14px; border-radius: 10px; border: none; background: #38bdf8; color: #0f172a; font-weight: 700; cursor: pointer; }
-                .button:disabled { opacity: 0.5; cursor: not-allowed; }
-                canvas { width: 100%; height: auto; background: #0f172a; border-radius: 12px; border: 1px solid #1f2937; }
-                .preview-meta { margin-top: 10px; font-size: 12px; color: #94a3b8; }
-                @media (max-width: 1024px) {
-                    .layout { grid-template-columns: 1fr; }
-                    .panel { border-left: none; border-top: 1px solid #1f2937; }
-                }
-            `;
+            styleTag.textContent = getExportModalStyles();
             document.head.appendChild(styleTag);
         }
 
         const modal = document.createElement('div');
         modal.id = 'export-preview-modal';
-        modal.innerHTML = `
-            <div class="export-overlay" data-export-overlay>
-                <div class="export-window" role="dialog" aria-modal="true">
-                    <div class="export-header">
-                        <h1>Export Preview</h1>
-                        <button class="export-close" type="button" data-export-close>Close</button>
-                    </div>
-                    <div class="layout">
-                        <div class="preview">
-                            <canvas id="previewCanvas"></canvas>
-                            <div class="preview-meta" id="previewMeta">Capturing preview...</div>
-                        </div>
-                        <div class="panel">
-                            <div class="card">
-                                <label for="filename">Filename</label>
-                                <div class="row">
-                                    <input id="filename" type="text" placeholder="feng-shui-export" />
-                                    <select id="ext">
-                                        <option value="png">.png</option>
-                                        <option value="jpg">.jpg</option>
-                                        <option value="webp">.webp</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="card">
-                                <label>Size</label>
-                                <input id="scale" type="range" min="0.5" max="3" step="0.1" value="1" />
-                                <div class="row" style="justify-content: space-between;">
-                                    <span class="value" id="scaleValue">100%</span>
-                                    <span class="value" id="sizeValue">0 × 0 px</span>
-                                </div>
-                            </div>
-                            <div class="card">
-                                <label>Quality</label>
-                                <input id="quality" type="range" min="0.5" max="1" step="0.02" value="0.92" />
-                                <div class="row" style="justify-content: space-between;">
-                                    <span class="value" id="qualityValue">92%</span>
-                                    <span class="value" id="qualityHint">JPG/WebP only</span>
-                                </div>
-                            </div>
-                            <div class="card">
-                                <label>Compass</label>
-                                <select id="compassMode">
-                                    <option value="hidden">Hide</option>
-                                    <option value="visible">View</option>
-                                    <option value="projections">Projection</option>
-                                </select>
-                            </div>
-                            <div class="card">
-                                <label>Flystar chart</label>
-                                <select id="flystarPlacement">
-                                    <option value="top-left">Top left</option>
-                                    <option value="top-right">Top right</option>
-                                    <option value="bottom-left">Bottom left</option>
-                                    <option value="bottom-right">Bottom right</option>
-                                    <option value="extend-top-left">Extend + top left</option>
-                                    <option value="extend-top-right">Extend + top right</option>
-                                    <option value="extend-bottom-left">Extend + bottom left</option>
-                                    <option value="extend-bottom-right">Extend + bottom right</option>
-                                </select>
-                            </div>
-                            <button class="button" id="downloadBtn" disabled>Download</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
+        modal.innerHTML = getExportModalTemplate();
 
         document.body.appendChild(modal);
 
         const overlay = modal.querySelector('[data-export-overlay]') as HTMLDivElement | null;
         const closeButton = modal.querySelector('[data-export-close]') as HTMLButtonElement | null;
         const previewCanvas = modal.querySelector('#previewCanvas') as HTMLCanvasElement | null;
+        const previewViewport = previewCanvas?.closest('.preview-viewport') as HTMLDivElement | null;
         const previewMeta = modal.querySelector('#previewMeta') as HTMLDivElement | null;
         const filenameInput = modal.querySelector('#filename') as HTMLInputElement | null;
         const extSelect = modal.querySelector('#ext') as HTMLSelectElement | null;
@@ -197,15 +110,17 @@ export const useCanvasExport = (
         const qualityValue = modal.querySelector('#qualityValue') as HTMLSpanElement | null;
         const qualityHint = modal.querySelector('#qualityHint') as HTMLSpanElement | null;
         const compassSelect = modal.querySelector('#compassMode') as HTMLSelectElement | null;
-        const flystarSelect = modal.querySelector('#flystarPlacement') as HTMLSelectElement | null;
+        const flystarTrigger = modal.querySelector('#flystarTrigger') as HTMLButtonElement | null;
+        const flystarValue = modal.querySelector('#flystarValue') as HTMLElement | null;
+        const flystarPopover = modal.querySelector('#flystarPopover') as HTMLDivElement | null;
+        const flystarGrid = modal.querySelector('#flystarGrid') as HTMLDivElement | null;
         const downloadBtn = modal.querySelector('#downloadBtn') as HTMLButtonElement | null;
+        const trimCheckbox = modal.querySelector('#trimEmpty') as HTMLInputElement | null;
 
-        if (!previewCanvas || !previewMeta || !filenameInput || !extSelect || !scaleInput || !scaleValue || !sizeValue || !qualityInput || !qualityValue || !qualityHint || !compassSelect || !flystarSelect || !downloadBtn) {
+        if (!previewCanvas || !previewViewport || !previewMeta || !filenameInput || !extSelect || !scaleInput || !scaleValue || !sizeValue || !qualityInput || !qualityValue || !qualityHint || !compassSelect || !flystarTrigger || !flystarValue || !flystarPopover || !flystarGrid || !downloadBtn || !trimCheckbox) {
             modal.remove();
             return;
         }
-
-        const digitToChinese = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
 
         const state = {
             stageDataUrl: null as string | null,
@@ -215,14 +130,141 @@ export const useCanvasExport = (
             quality: 0.92,
             ext: 'png',
             compassMode: (optionsRef.current.compass?.mode ?? 'visible') as SaveFile['compass']['mode'],
-            flystarPlacement: 'bottom-right',
-            flystar: null as ReturnType<typeof buildFlystarData> | null
+            flystarPlacement: 'r2c4',
+            flystar: null as ReturnType<typeof buildFlystarData> | null,
+            trimEmpty: true,
+            trimBounds: null as { x: number; y: number; width: number; height: number } | null
         };
 
         const stageImage = new Image();
         stageImage.onload = () => {
             drawPreview();
         };
+
+        const gridButtons: HTMLButtonElement[] = [];
+        const placementKeyPattern = /^r([0-4])c([0-4])$/;
+        let isFlystarPopoverOpen = false;
+
+        const parsePlacementKey = (key: string) => {
+            const match = placementKeyPattern.exec(key);
+            if (!match) {
+                return { row: 2, col: 4 };
+            }
+            return { row: Number(match[1]), col: Number(match[2]) };
+        };
+
+        const buildPlacementKey = (row: number, col: number) => `r${row}c${col}`;
+
+        const placementLabel = (key: string) => {
+            const { row, col } = parsePlacementKey(key);
+            return `[${row}${col}]`;
+        };
+
+        const describePlacement = (row: number, col: number) => {
+            if (row === 2 && col === 2) {
+                return 'Center';
+            }
+
+            const extendParts: string[] = [];
+            if (row === 0) extendParts.push('Extend top');
+            if (row === 4) extendParts.push('Extend bottom');
+            if (col === 0) extendParts.push('Extend left');
+            if (col === 4) extendParts.push('Extend right');
+
+            const alignParts: string[] = [];
+            if (row === 1) alignParts.push('Align top');
+            if (row === 2) alignParts.push('Align middle');
+            if (row === 3) alignParts.push('Align bottom');
+            if (col === 1) alignParts.push('Align left');
+            if (col === 2) alignParts.push('Align center');
+            if (col === 3) alignParts.push('Align right');
+
+            const descriptionParts = [] as string[];
+            if (extendParts.length) descriptionParts.push(extendParts.join(' & '));
+            if (alignParts.length) descriptionParts.push(alignParts.join(' / '));
+            if (!descriptionParts.length) {
+                return 'Center';
+            }
+            return descriptionParts.join('; ');
+        };
+
+        const updateFlystarSelection = () => {
+            const current = state.flystarPlacement;
+            flystarValue.textContent = placementLabel(current);
+            gridButtons.forEach((button) => {
+                button.classList.toggle('active', button.dataset.key === current);
+            });
+        };
+
+        const closeFlystarPopover = () => {
+            if (!isFlystarPopoverOpen) return;
+            isFlystarPopoverOpen = false;
+            flystarPopover.classList.remove('open');
+            document.removeEventListener('mousedown', handleOutsideClick);
+        };
+
+        const openFlystarPopover = () => {
+            if (isFlystarPopoverOpen) return;
+            isFlystarPopoverOpen = true;
+            flystarPopover.classList.add('open');
+            document.addEventListener('mousedown', handleOutsideClick);
+        };
+
+        const handleOutsideClick = (event: MouseEvent) => {
+            const target = event.target as Node | null;
+            if (!target) return;
+            if (flystarPopover.contains(target) || flystarTrigger.contains(target)) {
+                return;
+            }
+            closeFlystarPopover();
+        };
+
+        // Render the 5x5 placement grid and sync active state.
+        const initializeFlystarGrid = () => {
+            flystarGrid.innerHTML = '';
+            gridButtons.length = 0;
+
+            for (let row = 0; row < 5; row++) {
+                for (let col = 0; col < 5; col++) {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'flystar-cell';
+                    if (row === 0 || row === 4 || col === 0 || col === 4) {
+                        button.classList.add('extend');
+                    }
+                    if (row === 2 && col === 2) {
+                        button.classList.add('center');
+                        button.textContent = 'C';
+                    }
+                    button.dataset.key = buildPlacementKey(row, col);
+                    const description = describePlacement(row, col);
+                    button.title = description;
+                    button.setAttribute('aria-label', description);
+                    button.addEventListener('click', () => {
+                        state.flystarPlacement = button.dataset.key ?? 'r2c4';
+                        updateFlystarSelection();
+                        drawPreview();
+                        closeFlystarPopover();
+                    });
+                    gridButtons.push(button);
+                    flystarGrid.appendChild(button);
+                }
+            }
+
+            updateFlystarSelection();
+        };
+
+        initializeFlystarGrid();
+
+        flystarTrigger.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            if (isFlystarPopoverOpen) {
+                closeFlystarPopover();
+            } else {
+                openFlystarPopover();
+            }
+        });
 
         const updateQualityState = () => {
             const isLossy = state.ext !== 'png';
@@ -238,96 +280,48 @@ export const useCanvasExport = (
             qualityValue.textContent = Math.round(state.quality * 100) + '%';
         };
 
-        const drawFlystar = (ctx: CanvasRenderingContext2D, x: number, y: number, size: number, data: ReturnType<typeof buildFlystarData>) => {
-            const cell = size / 3;
-            ctx.save();
-            ctx.translate(x, y);
-
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, size, size);
-            ctx.strokeStyle = '#4b5563';
-            ctx.lineWidth = 1;
-
-            for (let r = 0; r < 3; r++) {
-                for (let c = 0; c < 3; c++) {
-                    const cellX = c * cell;
-                    const cellY = r * cell;
-                    ctx.strokeRect(cellX, cellY, cell, cell);
-
-                    const i = r * 3 + c;
-                    const fontSmall = Math.max(10, Math.floor(cell * 0.26));
-                    const fontLarge = Math.max(12, Math.floor(cell * 0.32));
-
-                    ctx.font = fontSmall + 'px sans-serif';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-
-                    ctx.fillStyle = '#2563eb';
-                    ctx.fillText(String(data.blues[i]), cellX + cell * 0.25, cellY + cell * 0.3);
-
-                    ctx.fillStyle = '#dc2626';
-                    ctx.fillText(String(data.reds[i]), cellX + cell * 0.75, cellY + cell * 0.3);
-
-                    ctx.font = fontLarge + 'px serif';
-                    ctx.fillStyle = '#111827';
-                    ctx.fillText(digitToChinese[Number(data.blacks[i])] || '', cellX + cell * 0.25, cellY + cell * 0.75);
-
-                    ctx.fillStyle = '#fef3c7';
-                    ctx.fillRect(cellX + cell * 0.5, cellY + cell * 0.5, cell * 0.5, cell * 0.5);
-                    ctx.font = fontLarge + 'px sans-serif';
-                    ctx.fillStyle = '#7c3aed';
-                    ctx.fillText(String(data.purples[i]), cellX + cell * 0.75, cellY + cell * 0.75);
-                }
-            }
-
-            ctx.restore();
-        };
-
-        const parsePlacement = (placement: string) => {
-            const isExtended = placement.startsWith('extend-');
-            const basePlacement = isExtended ? placement.replace('extend-', '') : placement;
-            return { isExtended, basePlacement };
+        const updatePreviewScale = () => {
+            const availableWidth = previewViewport.clientWidth;
+            const availableHeight = previewViewport.clientHeight;
+            const canvasWidth = previewCanvas.width;
+            const canvasHeight = previewCanvas.height;
+            if (!availableWidth || !availableHeight || !canvasWidth || !canvasHeight) return;
+            const fitScale = Math.min(1, availableWidth / canvasWidth, availableHeight / canvasHeight);
+            previewViewport.style.setProperty('--preview-scale', String(fitScale));
         };
 
         const drawPreview = () => {
             if (!state.stageDataUrl || !state.flystar || !stageImage.complete) return;
 
-            const baseWidth = Math.round(state.stageWidth * state.scale);
-            const baseHeight = Math.round(state.stageHeight * state.scale);
+            const trimBorder = state.trimEmpty ? 10 : 0;
+            if (state.trimEmpty && !state.trimBounds) {
+                return;
+            }
+
+            const trimBounds = state.trimBounds ?? {
+                x: 0,
+                y: 0,
+                width: stageImage.width,
+                height: stageImage.height
+            };
+
+            const contentWidth = Math.round(trimBounds.width * state.scale);
+            const contentHeight = Math.round(trimBounds.height * state.scale);
+            const baseWidth = contentWidth + trimBorder * 2;
+            const baseHeight = contentHeight + trimBorder * 2;
             const chartSize = Math.max(140, Math.round(Math.min(baseWidth, baseHeight) * 0.25));
             const margin = Math.round(chartSize * 0.08);
 
-            let outputWidth = baseWidth;
-            let outputHeight = baseHeight;
-            let offsetX = 0;
-            let offsetY = 0;
+            const { row, col } = parsePlacementKey(state.flystarPlacement);
+            const padTop = row === 0 ? chartSize + margin * 2 : 0;
+            const padBottom = row === 4 ? chartSize + margin * 2 : 0;
+            const padLeft = col === 0 ? chartSize + margin * 2 : 0;
+            const padRight = col === 4 ? chartSize + margin * 2 : 0;
 
-            const { isExtended, basePlacement } = parsePlacement(state.flystarPlacement);
-            if (isExtended) {
-                const padding = chartSize + margin * 2;
-                let padTop = 0;
-                let padRight = 0;
-                let padBottom = 0;
-                let padLeft = 0;
-
-                if (basePlacement.includes('top')) {
-                    padTop = padding;
-                }
-                if (basePlacement.includes('bottom')) {
-                    padBottom = padding;
-                }
-                if (basePlacement.includes('left')) {
-                    padLeft = padding;
-                }
-                if (basePlacement.includes('right')) {
-                    padRight = padding;
-                }
-
-                outputWidth = baseWidth + padLeft + padRight;
-                outputHeight = baseHeight + padTop + padBottom;
-                offsetX = padLeft;
-                offsetY = padTop;
-            }
+            const outputWidth = baseWidth + padLeft + padRight;
+            const outputHeight = baseHeight + padTop + padBottom;
+            const offsetX = padLeft;
+            const offsetY = padTop;
 
             previewCanvas.width = outputWidth;
             previewCanvas.height = outputHeight;
@@ -336,26 +330,73 @@ export const useCanvasExport = (
 
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(0, 0, outputWidth, outputHeight);
-            ctx.drawImage(stageImage, offsetX, offsetY, baseWidth, baseHeight);
+            const drawX = offsetX + trimBorder;
+            const drawY = offsetY + trimBorder;
+            ctx.drawImage(
+                stageImage,
+                trimBounds.x,
+                trimBounds.y,
+                trimBounds.width,
+                trimBounds.height,
+                drawX,
+                drawY,
+                contentWidth,
+                contentHeight
+            );
 
-            let x = margin;
-            let y = margin;
-            if (basePlacement === 'top-right') {
-                x = outputWidth - chartSize - margin;
-            }
-            if (basePlacement === 'bottom-left') {
-                y = outputHeight - chartSize - margin;
-            }
-            if (basePlacement === 'bottom-right') {
-                x = outputWidth - chartSize - margin;
-                y = outputHeight - chartSize - margin;
+            const baseAreaX = offsetX + trimBorder;
+            const baseAreaY = offsetY + trimBorder;
+            const baseAreaRight = baseAreaX + contentWidth;
+            const baseAreaBottom = baseAreaY + contentHeight;
+
+            let chartX = margin;
+            switch (col) {
+                case 0:
+                    chartX = margin;
+                    break;
+                case 1:
+                    chartX = baseAreaX + margin;
+                    break;
+                case 2:
+                    chartX = Math.round((outputWidth - chartSize) / 2);
+                    break;
+                case 3:
+                    chartX = baseAreaRight - chartSize - margin;
+                    break;
+                case 4:
+                    chartX = outputWidth - chartSize - margin;
+                    break;
+                default:
+                    chartX = baseAreaX + margin;
             }
 
-            drawFlystar(ctx, x, y, chartSize, state.flystar);
+            let chartY = margin;
+            switch (row) {
+                case 0:
+                    chartY = margin;
+                    break;
+                case 1:
+                    chartY = baseAreaY + margin;
+                    break;
+                case 2:
+                    chartY = Math.round((outputHeight - chartSize) / 2);
+                    break;
+                case 3:
+                    chartY = baseAreaBottom - chartSize - margin;
+                    break;
+                case 4:
+                    chartY = outputHeight - chartSize - margin;
+                    break;
+                default:
+                    chartY = baseAreaY + margin;
+            }
+
+            drawFlystar(ctx, chartX, chartY, chartSize, state.flystar);
 
             sizeValue.textContent = outputWidth + ' × ' + outputHeight + ' px';
             previewMeta.textContent = 'Preview ready • ' + outputWidth + ' × ' + outputHeight + 'px';
             downloadBtn.disabled = false;
+            updatePreviewScale();
         };
 
         const updateStageCapture = async (compassMode?: SaveFile['compass']['mode']) => {
@@ -369,16 +410,32 @@ export const useCanvasExport = (
             state.stageHeight = capture.height;
             state.compassMode = capture.compassMode;
             state.flystar = buildFlystarData();
+            state.trimBounds = null;
 
             if (filenameInput.value.trim().length === 0) {
                 filenameInput.value = optionsRef.current.filename || 'feng-shui-export';
             }
 
             stageImage.src = capture.dataUrl;
+
+            if (state.trimEmpty) {
+                const trimMode = state.compassMode === 'projections' ? 'visible' : state.compassMode;
+                const trimCapture = trimMode === capture.compassMode ? capture : await captureStageData(trimMode);
+                if (trimCapture) {
+                    try {
+                        state.trimBounds = await computeTrimBoundsFromDataUrl(trimCapture.dataUrl);
+                    } catch {
+                        state.trimBounds = null;
+                    }
+                }
+                drawPreview();
+            }
         };
 
         const closeModal = () => {
+            closeFlystarPopover();
             window.removeEventListener('keydown', onKeyDown);
+            window.removeEventListener('resize', handleResize);
             modal.remove();
         };
 
@@ -386,6 +443,10 @@ export const useCanvasExport = (
             if (event.key === 'Escape') {
                 closeModal();
             }
+        };
+
+        const handleResize = () => {
+            updatePreviewScale();
         };
 
         overlay?.addEventListener('click', (event) => {
@@ -396,10 +457,11 @@ export const useCanvasExport = (
 
         closeButton?.addEventListener('click', () => closeModal());
         window.addEventListener('keydown', onKeyDown);
+        window.addEventListener('resize', handleResize);
 
         filenameInput.value = optionsRef.current.filename || 'feng-shui-export';
         compassSelect.value = state.compassMode;
-        flystarSelect.value = state.flystarPlacement;
+        trimCheckbox.checked = state.trimEmpty;
 
         filenameInput.addEventListener('input', () => {
             if (!filenameInput.value.trim()) {
@@ -428,9 +490,9 @@ export const useCanvasExport = (
             void updateStageCapture(state.compassMode);
         });
 
-        flystarSelect.addEventListener('change', () => {
-            state.flystarPlacement = flystarSelect.value;
-            drawPreview();
+        trimCheckbox.addEventListener('change', () => {
+            state.trimEmpty = trimCheckbox.checked;
+            void updateStageCapture(state.compassMode);
         });
 
         downloadBtn.addEventListener('click', () => {
@@ -454,7 +516,9 @@ export const useCanvasExport = (
         void updateStageCapture(state.compassMode);
 
         return () => {
+            closeFlystarPopover();
             window.removeEventListener('keydown', onKeyDown);
+            document.removeEventListener('mousedown', handleOutsideClick);
             modal.remove();
         };
     }, [exportTrigger, stageRef, trRef]);
