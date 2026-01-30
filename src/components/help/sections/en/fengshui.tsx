@@ -13,7 +13,7 @@ export const fengShuiHelpSection: HelpSection = {
             <div className="space-y-2">
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Available settings</h4>
                 <ul className="list-disc pl-5 space-y-1 text-gray-300">
-                    <li><span className="text-gray-100 font-semibold">Year:</span> Based on the current year plus an offset.</li>
+                    <li><span className="text-gray-100 font-semibold">Year:</span> The year that the purple starting number was calculated.</li>
                     <li><span className="text-gray-100 font-semibold">Blacks:</span> Starting number.</li>
                     <li><span className="text-gray-100 font-semibold">Reds:</span> Starting number with optional reversed direction.</li>
                     <li><span className="text-gray-100 font-semibold">Blues:</span> Starting number with optional reversed direction.</li>
@@ -30,8 +30,7 @@ export const fengShuiHelpSection: HelpSection = {
                     <li><span className="text-purple-300 font-semibold">Purple:</span> Bottom-right numbers in each cell.</li>
                 </ul>
                 <p className="text-gray-400">
-                    This section describes what the settings are. It intentionally does not explain how to derive the
-                    values.
+                    This section describes what the settings are. If You need help deriving these numbers, please consult a Feng Shui master.
                 </p>
             </div>
         </div>
