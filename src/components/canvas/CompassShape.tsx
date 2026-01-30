@@ -163,7 +163,7 @@ export const CompassShape = React.forwardRef<any, CompassShapeProps>(({
     }, []);
 
     // Projections logic (Dynamic)
-    const showProjections = mode === 'projections';
+    const showProjections = mode === 'projections' || mode === 'interactive';
     const isDraggable = mode === 'interactive';
 
     // Calculate inner ring radius for projections connection point
