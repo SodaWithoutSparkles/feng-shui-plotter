@@ -148,6 +148,92 @@ const defaultFengShui: FengShuiData = {
     purples: { start: 0, calculated_at: new Date() },
 };
 
+const STORAGE_KEYS = {
+    keyboardShortcuts: 'fs_keyboard_shortcuts',
+    autoSave: 'fs_auto_save',
+    toolSettings: 'fs_tool_settings',
+    colors: 'fs_colors'
+};
+
+const defaultKeyboardShortcuts: KeyboardShortcutConfig = {
+    modifyKey: 'ctrl',
+    cancelKey: 'Escape',
+    textSave: {
+        modifier: 'ctrl',
+        key: 'Enter'
+    },
+    tools: {
+        select: 's',
+        rectangle: 'q',
+        ellipse: 'w',
+        line: 'e',
+        arrow: 'a',
+        callout: 'c',
+        star: '1',
+        text: 't',
+        dropper: 'i'
+    }
+};
+
+const defaultToolSettings: AppState['toolSettings'] = {
+    lineWidth: 2,
+    fontSize: 16,
+    fontFamily: 'Arial',
+    fontWeight: 'normal',
+    fontStyle: 'normal',
+    textAlign: 'left',
+    textColor: '#000000',
+};
+
+const defaultColors: AppState['colors'] = { stroke: '#000000', fill: 'transparent', active: 'stroke' };
+
+const isBrowser = typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+
+const readJSON = <T extends Record<string, any>>(key: string, fallback: T): T => {
+    if (!isBrowser) return fallback;
+    try {
+        const raw = localStorage.getItem(key);
+        if (!raw) return fallback;
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== 'object') return fallback;
+        return { ...fallback, ...parsed };
+    } catch {
+        return fallback;
+    }
+};
+
+const readBoolean = (key: string, fallback: boolean): boolean => {
+    if (!isBrowser) return fallback;
+    const raw = localStorage.getItem(key);
+    if (raw === null) return fallback;
+    if (raw === 'true') return true;
+    if (raw === 'false') return false;
+    try {
+        const parsed = JSON.parse(raw);
+        return typeof parsed === 'boolean' ? parsed : fallback;
+    } catch {
+        return fallback;
+    }
+};
+
+const writeJSON = (key: string, value: unknown) => {
+    if (!isBrowser) return;
+    try {
+        localStorage.setItem(key, JSON.stringify(value));
+    } catch {
+        // ignore storage errors
+    }
+};
+
+const writeBoolean = (key: string, value: boolean) => {
+    if (!isBrowser) return;
+    try {
+        localStorage.setItem(key, value ? 'true' : 'false');
+    } catch {
+        // ignore storage errors
+    }
+};
+
 export const useStore = create<AppState>((set) => ({
     mode: 'welcome',
     setMode: (mode) => set({ mode }),
@@ -403,23 +489,19 @@ export const useStore = create<AppState>((set) => ({
         }
         return { activeTool: tool, showToolSettings: false };
     }),
-    toolSettings: {
-        lineWidth: 2,
-        fontSize: 16,
-        fontFamily: 'Arial',
-        fontWeight: 'normal',
-        fontStyle: 'normal',
-        textAlign: 'left',
-        textColor: '#000000',
-    },
-    setToolSettings: (settings) => set((state) => ({ toolSettings: { ...state.toolSettings, ...settings } })),
+    toolSettings: readJSON(STORAGE_KEYS.toolSettings, defaultToolSettings),
+    setToolSettings: (settings) => set((state) => {
+        const nextSettings = { ...state.toolSettings, ...settings };
+        writeJSON(STORAGE_KEYS.toolSettings, nextSettings);
+        return { toolSettings: nextSettings };
+    }),
     showToolSettings: false,
     setShowToolSettings: (show) => set({ showToolSettings: show }),
 
     showProjectConfig: false,
     setShowProjectConfig: (show) => set({ showProjectConfig: show }),
 
-    colors: { stroke: '#000000', fill: 'transparent', active: 'stroke' },
+    colors: readJSON(STORAGE_KEYS.colors, defaultColors),
     setColors: (colors) => set((state) => {
         const nextColors = { ...state.colors, ...colors };
         const shouldUpdateSelection =
@@ -427,6 +509,7 @@ export const useStore = create<AppState>((set) => ({
             (Object.prototype.hasOwnProperty.call(colors, 'stroke') || Object.prototype.hasOwnProperty.call(colors, 'fill'));
 
         if (!shouldUpdateSelection) {
+            writeJSON(STORAGE_KEYS.colors, nextColors);
             return {
                 colors: nextColors,
                 selectedPresetIndex: null
@@ -434,6 +517,7 @@ export const useStore = create<AppState>((set) => ({
         }
 
         const idSet = new Set(state.selectedIds);
+        writeJSON(STORAGE_KEYS.colors, nextColors);
         return {
             colors: nextColors,
             selectedPresetIndex: null,
@@ -546,52 +630,46 @@ export const useStore = create<AppState>((set) => ({
         selectionColorSnapshot: null
     }),
 
-    autoSave: true,
-    toggleAutoSave: () => set((state) => ({ autoSave: !state.autoSave })),
+    autoSave: readBoolean(STORAGE_KEYS.autoSave, true),
+    toggleAutoSave: () => set((state) => {
+        const nextAutoSave = !state.autoSave;
+        writeBoolean(STORAGE_KEYS.autoSave, nextAutoSave);
+        return { autoSave: nextAutoSave };
+    }),
     lastAutoSaveAt: null,
     setLastAutoSaveAt: (timestamp) => set({ lastAutoSaveAt: timestamp }),
 
     exportTrigger: 0,
     triggerExport: () => set((state) => ({ exportTrigger: state.exportTrigger + 1 })),
 
-    keyboardShortcuts: {
-        modifyKey: 'ctrl',
-        cancelKey: 'Escape',
-        textSave: {
-            modifier: 'ctrl',
-            key: 'Enter'
-        },
-        tools: {
-            select: 'v',
-            rectangle: 'm',
-            ellipse: 'l',
-            line: 'p',
-            arrow: 'a',
-            callout: 'c',
-            star: 's',
-            text: 't',
-            dropper: 'i'
-        }
-    },
-    setModifyKey: (key) => set((state) => ({
-        keyboardShortcuts: { ...state.keyboardShortcuts, modifyKey: key }
-    })),
-    setCancelKey: (key) => set((state) => ({
-        keyboardShortcuts: { ...state.keyboardShortcuts, cancelKey: key }
-    })),
-    setTextSaveShortcut: (modifier, key) => set((state) => ({
-        keyboardShortcuts: {
+    keyboardShortcuts: readJSON(STORAGE_KEYS.keyboardShortcuts, defaultKeyboardShortcuts),
+    setModifyKey: (key) => set((state) => {
+        const nextShortcuts = { ...state.keyboardShortcuts, modifyKey: key };
+        writeJSON(STORAGE_KEYS.keyboardShortcuts, nextShortcuts);
+        return { keyboardShortcuts: nextShortcuts };
+    }),
+    setCancelKey: (key) => set((state) => {
+        const nextShortcuts = { ...state.keyboardShortcuts, cancelKey: key };
+        writeJSON(STORAGE_KEYS.keyboardShortcuts, nextShortcuts);
+        return { keyboardShortcuts: nextShortcuts };
+    }),
+    setTextSaveShortcut: (modifier, key) => set((state) => {
+        const nextShortcuts = {
             ...state.keyboardShortcuts,
             textSave: { modifier, key }
-        }
-    })),
-    setToolShortcut: (tool, key) => set((state) => ({
-        keyboardShortcuts: {
+        };
+        writeJSON(STORAGE_KEYS.keyboardShortcuts, nextShortcuts);
+        return { keyboardShortcuts: nextShortcuts };
+    }),
+    setToolShortcut: (tool, key) => set((state) => {
+        const nextShortcuts = {
             ...state.keyboardShortcuts,
             tools: {
                 ...state.keyboardShortcuts.tools,
                 [tool]: key
             }
-        }
-    })),
+        };
+        writeJSON(STORAGE_KEYS.keyboardShortcuts, nextShortcuts);
+        return { keyboardShortcuts: nextShortcuts };
+    }),
 }));

@@ -3,6 +3,7 @@ import { useStore } from '../../store/useStore';
 import type { SaveFile } from '../../types';
 import { compress, decompress, compressToBase64 } from '../../utils/compress';
 import { ShortcutConfigModal } from '../common/ShortcutConfigModal';
+import { ProjectConfigModal } from '../ProjectConfigModal';
 
 export const Header: React.FC = () => {
     const [activeMenu, setActiveMenu] = useState<string | null>(null);
@@ -10,8 +11,15 @@ export const Header: React.FC = () => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const imageInputRef = useRef<HTMLInputElement>(null);
 
+    // For new project init flow
+    const [showProjectInit, setShowProjectInit] = useState(false);
+
     // Store actions
     const resetProject = useStore(state => state.resetProject);
+    const setMode = useStore(state => state.setMode);
+    const setFloorplanImage = useStore(state => state.setFloorplanImage);
+    const updateFloorplan = useStore(state => state.updateFloorplan);
+    const updateFengShui = useStore(state => state.updateFengShui);
     const loadProject = useStore(state => state.loadProject);
     const undo = useStore(state => state.undo);
     const redo = useStore(state => state.redo);
@@ -220,7 +228,23 @@ export const Header: React.FC = () => {
                 </div>
                 {activeMenu === 'file' && (
                     <div className="absolute top-full left-0 bg-gray-800 border border-gray-600 shadow-xl py-1 rounded-b-md min-w-[260px]">
-                        <MenuItem label="New Project" onClick={resetProject} />
+                        <MenuItem label="New Project" onClick={() => setShowProjectInit(true)} />
+                        {/* Project Init Modal for New Project */}
+                        <ProjectConfigModal
+                            isOpen={showProjectInit}
+                            onClose={() => setShowProjectInit(false)}
+                            onComplete={(config) => {
+                                resetProject();
+                                setFloorplanImage(config.floorplanImage);
+                                updateFloorplan({ rotation: config.rotation });
+                                updateFengShui(config.fengShui);
+                                if (config.compassPosition) {
+                                    updateCompass({ x: config.compassPosition.x, y: config.compassPosition.y });
+                                }
+                                setMode && setMode('edit');
+                                setShowProjectInit(false);
+                            }}
+                        />
                         <MenuItem label="Open Project" onClick={() => fileInputRef.current?.click()} />
                         <MenuItem label="Save Project" onClick={handleSave} />
                         <MenuItem
