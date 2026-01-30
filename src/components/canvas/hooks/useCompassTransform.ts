@@ -77,6 +77,11 @@ export const useCompassTransform = (
             if (visual) {
                 visual.rotation(-currentRot);
             }
+
+            const projections = node.findOne('.compass-projections');
+            if (projections) {
+                projections.rotation(-currentRot);
+            }
         }
     };
 
@@ -104,6 +109,8 @@ export const useCompassTransform = (
             node.rotation(0);
             const visual = node.findOne('.compass-inner-visual');
             if (visual) visual.rotation(0);
+            const projections = node.findOne('.compass-projections');
+            if (projections) projections.rotation(0);
 
             updateCompass({
                 x: lastCompassCenter.current.x,

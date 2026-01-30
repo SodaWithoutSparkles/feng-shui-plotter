@@ -139,13 +139,16 @@ export const DualColorPicker: React.FC<DualColorPickerProps> = ({
     onPick
 }) => {
     const [isOpen, setIsOpen] = useState(false);
+    const [editTarget, setEditTarget] = useState<'current' | 'preset'>('current');
     const pickerRef = useRef<HTMLDivElement>(null);
 
     // Global color presets
     const colorPresets = useStore(state => state.colorPresets);
     const addColorPreset = useStore(state => state.addColorPreset);
+    const updateColorPreset = useStore(state => state.updateColorPreset);
     const selectColorPreset = useStore(state => state.selectColorPreset);
     const selectedPresetIndex = useStore(state => state.selectedPresetIndex);
+    const selectedPreset = selectedPresetIndex !== null ? colorPresets[selectedPresetIndex] : null;
 
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
@@ -162,6 +165,29 @@ export const DualColorPicker: React.FC<DualColorPickerProps> = ({
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, [isOpen]);
+
+    useEffect(() => {
+        if (!isOpen) {
+            setEditTarget('current');
+        }
+    }, [isOpen]);
+
+    useEffect(() => {
+        if (selectedPresetIndex === null) {
+            setEditTarget('current');
+        }
+    }, [selectedPresetIndex]);
+
+    const displayStrokeColor = editTarget === 'preset' && selectedPreset ? selectedPreset.stroke : strokeColor;
+    const displayFillColor = editTarget === 'preset' && selectedPreset ? selectedPreset.fill : fillColor;
+
+    const handleColorChange = (type: 'stroke' | 'fill', color: string) => {
+        if (editTarget === 'preset' && selectedPresetIndex !== null) {
+            updateColorPreset(selectedPresetIndex, { [type]: color });
+            return;
+        }
+        onColorChange(type, color);
+    };
 
     return (
         <div className="relative group" ref={pickerRef}>
@@ -186,6 +212,7 @@ export const DualColorPicker: React.FC<DualColorPickerProps> = ({
                         backgroundColor: strokeColor
                     }}
                     onClick={() => {
+                        setEditTarget('current');
                         onActiveTypeChange('stroke');
                         setIsOpen(true);
                     }}
@@ -200,6 +227,7 @@ export const DualColorPicker: React.FC<DualColorPickerProps> = ({
                         backgroundColor: fillColor === 'transparent' ? 'transparent' : fillColor
                     }}
                     onClick={() => {
+                        setEditTarget('current');
                         onActiveTypeChange('fill');
                         setIsOpen(true);
                     }}
@@ -217,6 +245,7 @@ export const DualColorPicker: React.FC<DualColorPickerProps> = ({
                             e.stopPropagation();
                             if (selectedPresetIndex === i) {
                                 // Already selected - open color picker
+                                setEditTarget('preset');
                                 setIsOpen(true);
                             } else {
                                 // Select this preset
@@ -272,8 +301,8 @@ export const DualColorPicker: React.FC<DualColorPickerProps> = ({
                 <div className="absolute top-0 left-full ml-4 bg-gray-800 border border-gray-600 rounded-md shadow-xl p-3 z-50 min-w-[200px]">
                     <ColorSection
                         label="Stroke"
-                        color={strokeColor}
-                        onChange={(c) => onColorChange('stroke', c)}
+                        color={displayStrokeColor}
+                        onChange={(c) => handleColorChange('stroke', c)}
                         onPick={() => {
                             onActiveTypeChange('stroke');
                             onPick();
@@ -285,8 +314,8 @@ export const DualColorPicker: React.FC<DualColorPickerProps> = ({
 
                     <ColorSection
                         label="Fill"
-                        color={fillColor}
-                        onChange={(c) => onColorChange('fill', c)}
+                        color={displayFillColor}
+                        onChange={(c) => handleColorChange('fill', c)}
                         onPick={() => {
                             onActiveTypeChange('fill');
                             onPick();

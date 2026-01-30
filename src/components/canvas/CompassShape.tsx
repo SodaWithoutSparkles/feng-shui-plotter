@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useImperativeHandle, useRef } from 'react';
 import { Group, Line, Image } from 'react-konva';
 import type { KonvaEventObject } from 'konva/lib/Node';
 
@@ -152,6 +152,11 @@ interface CompassShapeProps {
 export const CompassShape = React.forwardRef<any, CompassShapeProps>(({
     x, y, radius, rotation, opacity, mode, onChange, onTransformStart, onTransform, onTransformEnd
 }, ref) => {
+    const groupRef = useRef<any>(null);
+    const innerVisualRef = useRef<any>(null);
+
+    useImperativeHandle(ref, () => groupRef.current);
+
     // Load static image
     const [image, setImage] = useState<HTMLImageElement | null>(null);
     useEffect(() => {
@@ -160,6 +165,30 @@ export const CompassShape = React.forwardRef<any, CompassShapeProps>(({
         // avoiding recalculation of hundreds of primitives in Konva scene graph
         img.src = COMPASS_SVG_URL;
         img.onload = () => setImage(img);
+    }, []);
+
+    useEffect(() => {
+        const groupNode = groupRef.current;
+        const innerNode = innerVisualRef.current;
+        if (!groupNode || !innerNode) return;
+
+        const originalGetClientRect = groupNode.getClientRect?.bind(groupNode);
+
+        groupNode.getClientRect = (config?: any) => {
+            if (!innerVisualRef.current) {
+                return originalGetClientRect ? originalGetClientRect(config) : { x: 0, y: 0, width: 0, height: 0 };
+            }
+            return innerVisualRef.current.getClientRect({
+                ...config,
+                relativeTo: groupNode
+            });
+        };
+
+        return () => {
+            if (originalGetClientRect) {
+                groupNode.getClientRect = originalGetClientRect;
+            }
+        };
     }, []);
 
     // Projections logic (Dynamic)
@@ -188,7 +217,7 @@ export const CompassShape = React.forwardRef<any, CompassShapeProps>(({
 
     return (
         <Group
-            ref={ref}
+            ref={groupRef}
             x={x}
             y={y}
             rotation={rotation}
@@ -199,7 +228,7 @@ export const CompassShape = React.forwardRef<any, CompassShapeProps>(({
             onTransform={onTransform}
             onTransformEnd={onTransformEnd}
         >
-            <Group name="compass-inner-visual">
+            <Group ref={innerVisualRef} name="compass-inner-visual">
                 {/* Optimized Compass Face */}
                 <Image
                     image={image || undefined}
@@ -210,29 +239,33 @@ export const CompassShape = React.forwardRef<any, CompassShapeProps>(({
                     // Ensure hit detection works on the image pixels (non-transparent mostly)
                     listening={mode !== 'hidden'}
                 />
-
-                {/* Dynamic Projections */}
-                {showProjections && Array.from({ length: 24 }).map((_, i) => {
-                    const bearing = i * 15;
-                    const angle = (bearing + 90) % 360;
-                    const sepAngle = angle - 7.5;
-
-                    const start = p2c(innerRadius, sepAngle);
-                    const end = p2c(radius * 3, sepAngle);
-
-                    return (
-                        <Line
-                            key={`proj-${i}`}
-                            points={[start.x, start.y, end.x, end.y]}
-                            stroke="red"
-                            strokeWidth={1}
-                            dash={[5, 5]}
-                            opacity={0.5}
-                            listening={false} // Optimization: don't catch events on projection lines
-                        />
-                    );
-                })}
             </Group>
+
+            {/* Dynamic Projections */}
+            {showProjections && (
+                <Group name="compass-projections">
+                    {Array.from({ length: 24 }).map((_, i) => {
+                        const bearing = i * 15;
+                        const angle = (bearing + 90) % 360;
+                        const sepAngle = angle - 7.5;
+
+                        const start = p2c(innerRadius, sepAngle);
+                        const end = p2c(radius * 3, sepAngle);
+
+                        return (
+                            <Line
+                                key={`proj-${i}`}
+                                points={[start.x, start.y, end.x, end.y]}
+                                stroke="red"
+                                strokeWidth={1}
+                                dash={[5, 5]}
+                                opacity={0.5}
+                                listening={false} // Optimization: don't catch events on projection lines
+                            />
+                        );
+                    })}
+                </Group>
+            )}
         </Group>
     );
 });
