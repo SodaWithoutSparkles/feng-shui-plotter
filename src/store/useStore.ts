@@ -8,12 +8,12 @@ import { createPreferencesSlice } from './slices/preferencesSlice';
 import { createProjectSlice } from './slices/projectSlice';
 import { createToolsSlice } from './slices/toolsSlice';
 
-export const useStore = create<AppState>((set, get) => ({
-    ...createProjectSlice(set, get),
-    ...createCanvasSlice(set, get),
-    ...createFengShuiSlice(set, get),
-    ...createCompassSlice(set, get),
-    ...createToolsSlice(set, get),
-    ...createColorsSlice(set, get),
-    ...createPreferencesSlice(set, get),
-}));
+export const useStore = create<AppState>((set, get, store) => ({
+    ...createProjectSlice(set, get, store),
+    ...createCanvasSlice(set, get, store),
+    ...createFengShuiSlice(set, get, store),
+    ...createCompassSlice(set, get, store),
+    ...createToolsSlice(set, get, store),
+    ...createColorsSlice(set, get, store),
+    ...createPreferencesSlice(set, get, store),
+} as AppState));
