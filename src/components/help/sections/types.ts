@@ -7,7 +7,10 @@ export type HelpSectionId =
     | 'bottomBar'
     | 'fengshui'
     | 'compass'
-    | 'images';
+    | 'images'
+    | 'header'
+    | 'saveExport'
+    | 'objects';
 
 export interface HelpSection {
     id: HelpSectionId;

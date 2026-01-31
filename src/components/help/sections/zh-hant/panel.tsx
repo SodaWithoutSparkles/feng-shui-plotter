@@ -25,7 +25,10 @@ export const panelHelpSection: HelpSection = {
             <div className="space-y-2">
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400">各檢視的功能</h4>
                 <ul className="list-disc pl-5 space-y-1 text-gray-300">
-                    <li><span className="text-gray-100 font-semibold">物件設定 (Object Settings):</span> 編輯已選項目的尺寸、位置、旋轉、顏色及圖層屬性。</li>
+                    <li>
+                        <span className="text-gray-100 font-semibold">物件設定 (Object Settings):</span>
+                        編輯已選項目的尺寸、位置、旋轉、顏色及圖層屬性。詳細操作請參考「<span className="text-blue-400 cursor-pointer" onClick={() => document.dispatchEvent(new CustomEvent('help-navigate', { detail: 'objects' }))}>物件操作</span>」章節。
+                    </li>
                     <li><span className="text-gray-100 font-semibold">歷史 (History):</span> 顯示最近的操作步驟。已還原（Undo）的步驟會以刪除線顯示，點擊可快速跳轉至該狀態。</li>
                     <li><span className="text-gray-100 font-semibold">飛星 (Fly Star):</span> 顯示風水參數及年份選擇器。詳見風水（FengShui）幫助章節。</li>
                 </ul>

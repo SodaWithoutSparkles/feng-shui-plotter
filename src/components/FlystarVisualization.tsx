@@ -1,5 +1,5 @@
 import React from 'react';
-import { Lock, Unlock, Calendar } from 'lucide-react';
+import { Lock, Calendar } from 'lucide-react';
 import { genFullFlyStarSeq, DIGIT_TO_CHINESE } from '../utils/FengShui';
 import type { FengShuiData } from '../types';
 import { PopoverSlider } from './common/PopoverSlider';

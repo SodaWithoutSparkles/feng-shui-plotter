@@ -125,7 +125,7 @@ export const HelpModal: FC<HelpModalProps> = ({
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60">
-            <div className="bg-gray-900 text-white rounded-lg shadow-2xl w-full max-w-5xl max-h-[85vh] overflow-hidden flex border border-gray-700">
+            <div className="bg-gray-900 text-white rounded-lg shadow-2xl w-full max-w-5xl h-[85vh] overflow-hidden flex border border-gray-700">
                 <div className="w-56 border-r border-gray-700 bg-gray-950/40 p-4 space-y-2">
                     <div className="text-xs uppercase tracking-widest text-gray-500 px-2">Help</div>
                     {helpSections.map((section: HelpSection) => (

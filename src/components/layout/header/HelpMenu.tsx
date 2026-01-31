@@ -25,9 +25,13 @@ export const HelpMenu: React.FC<HelpMenuProps> = ({
             </div>
             {activeMenu === 'help' && (
                 <div className="absolute top-full left-0 bg-gray-800 border border-gray-600 shadow-xl py-1 rounded-b-md min-w-[260px]">
+                    <MenuItem label="Top Menu" onClick={() => { onShowHelp('header'); onCloseMenu(); }} />
+                    <MenuItem label="Save & Export" onClick={() => { onShowHelp('saveExport'); onCloseMenu(); }} />
                     <MenuItem label="Tools" onClick={() => { onShowHelp('tools'); onCloseMenu(); }} />
+                    <MenuItem label="Object Operations" onClick={() => { onShowHelp('objects'); onCloseMenu(); }} />
                     <MenuItem label="Colors" onClick={() => { onShowHelp('colors'); onCloseMenu(); }} />
                     <MenuItem label="Multi-function panel" onClick={() => { onShowHelp('panel'); onCloseMenu(); }} />
+                    <MenuItem label="Bottom Bar" onClick={() => { onShowHelp('bottomBar'); onCloseMenu(); }} />
                     <MenuItem label="FengShui" onClick={() => { onShowHelp('fengshui'); onCloseMenu(); }} />
                     <MenuItem label="Compass" onClick={() => { onShowHelp('compass'); onCloseMenu(); }} />
                     <MenuItem label="Images" onClick={() => { onShowHelp('images'); onCloseMenu(); }} />

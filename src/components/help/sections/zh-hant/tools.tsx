@@ -12,7 +12,10 @@ export const toolsHelpSection: HelpSection = {
             <div className="space-y-2">
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400">各工具說明</h4>
                 <ul className="list-disc pl-5 space-y-1 text-gray-300">
-                    <li><span className="text-gray-100 font-semibold">選取 (Select):</span> 選取並移動物件。Ctrl+點擊可加入或移除選取。</li>
+                    <li>
+                        <span className="text-gray-100 font-semibold">選取 (Select):</span>
+                        選取並移動物件。詳見「<span className="text-blue-400 cursor-pointer" onClick={() => document.dispatchEvent(new CustomEvent('help-navigate', { detail: 'objects' }))}>物件操作</span>」。
+                    </li>
                     <li><span className="text-gray-100 font-semibold">矩形 (Rectangle):</span> 繪製矩形形狀。按下修飾鍵以鎖定為正方形。</li>
                     <li><span className="text-gray-100 font-semibold">橢圓 (Ellipse):</span> 繪製橢圓類。按下修飾鍵以鎖定為圓形。</li>
                     <li><span className="text-gray-100 font-semibold">直線 (Line):</span> 繪製直線段。</li>
@@ -49,6 +52,10 @@ export const toolsHelpSection: HelpSection = {
                     工具設定面板會在左側邊欄的活動工具旁開啟。
                 </p>
             </div>
+
+            <p className="text-gray-400 text-xs mt-2">
+                更多選單操作請參考「<span className="text-blue-400 cursor-pointer" onClick={() => document.dispatchEvent(new CustomEvent('help-navigate', { detail: 'header' }))}>頂部選單</span>」章節。
+            </p>
         </div>
     )
 };

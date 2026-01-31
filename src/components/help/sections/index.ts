@@ -8,6 +8,9 @@ import { bottomBarHelpSection } from './en/bottomBar';
 import { fengShuiHelpSection } from './en/fengshui';
 import { compassHelpSection } from './en/compass';
 import { imagesHelpSection } from './en/images';
+import { headerHelpSection } from './en/header';
+import { saveExportHelpSection } from './en/saveExport';
+import { objectsHelpSection } from './en/objects';
 
 // Simplified Chinese
 import { toolsHelpSection as toolsHelpSectionZhHans } from './zh-hans/tools';
@@ -17,6 +20,9 @@ import { bottomBarHelpSection as bottomBarHelpSectionZhHans } from './zh-hans/bo
 import { fengShuiHelpSection as fengShuiHelpSectionZhHans } from './zh-hans/fengshui';
 import { compassHelpSection as compassHelpSectionZhHans } from './zh-hans/compass';
 import { imagesHelpSection as imagesHelpSectionZhHans } from './zh-hans/images';
+import { headerHelpSection as headerHelpSectionZhHans } from './zh-hans/header';
+import { saveExportHelpSection as saveExportHelpSectionZhHans } from './zh-hans/saveExport';
+import { objectsHelpSection as objectsHelpSectionZhHans } from './zh-hans/objects';
 
 // Traditional Chinese
 import { toolsHelpSection as toolsHelpSectionZhHant } from './zh-hant/tools';
@@ -26,6 +32,9 @@ import { bottomBarHelpSection as bottomBarHelpSectionZhHant } from './zh-hant/bo
 import { fengShuiHelpSection as fengShuiHelpSectionZhHant } from './zh-hant/fengshui';
 import { compassHelpSection as compassHelpSectionZhHant } from './zh-hant/compass';
 import { imagesHelpSection as imagesHelpSectionZhHant } from './zh-hant/images';
+import { headerHelpSection as headerHelpSectionZhHant } from './zh-hant/header';
+import { saveExportHelpSection as saveExportHelpSectionZhHant } from './zh-hant/saveExport';
+import { objectsHelpSection as objectsHelpSectionZhHant } from './zh-hant/objects';
 
 export type { HelpSection, HelpSectionId };
 
@@ -37,7 +46,10 @@ export function getHelpSections(locale: HelpLocale = 'en'): HelpSection[] {
     switch (locale) {
         case 'zh-hans':
             return [
+                headerHelpSectionZhHans,
+                saveExportHelpSectionZhHans,
                 toolsHelpSectionZhHans,
+                objectsHelpSectionZhHans,
                 colorsHelpSectionZhHans,
                 panelHelpSectionZhHans,
                 bottomBarHelpSectionZhHans,
@@ -48,7 +60,10 @@ export function getHelpSections(locale: HelpLocale = 'en'): HelpSection[] {
 
         case 'zh-hant':
             return [
+                headerHelpSectionZhHant,
+                saveExportHelpSectionZhHant,
                 toolsHelpSectionZhHant,
+                objectsHelpSectionZhHant,
                 colorsHelpSectionZhHant,
                 panelHelpSectionZhHant,
                 bottomBarHelpSectionZhHant,
@@ -60,7 +75,10 @@ export function getHelpSections(locale: HelpLocale = 'en'): HelpSection[] {
         case 'en':
         default:
             return [
+                headerHelpSection,
+                saveExportHelpSection,
                 toolsHelpSection,
+                objectsHelpSection,
                 colorsHelpSection,
                 panelHelpSection,
                 bottomBarHelpSection,
