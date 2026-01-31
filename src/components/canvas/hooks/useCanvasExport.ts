@@ -234,7 +234,7 @@ export const useCanvasExport = (
                     }
                     if (row === 2 && col === 2) {
                         button.classList.add('center');
-                        button.textContent = 'C';
+                        button.textContent = 'X';
                     }
                     button.dataset.key = buildPlacementKey(row, col);
                     const description = describePlacement(row, col);
@@ -390,9 +390,10 @@ export const useCanvasExport = (
                 default:
                     chartY = baseAreaY + margin;
             }
-
-            drawFlystar(ctx, chartX, chartY, chartSize, state.flystar);
-
+            if (!(row === 2 && col === 2)) {
+                drawFlystar(ctx, chartX, chartY, chartSize, state.flystar);
+                // Special case: center = dont draw
+            }
             sizeValue.textContent = outputWidth + ' × ' + outputHeight + ' px';
             previewMeta.textContent = 'Preview ready • ' + outputWidth + ' × ' + outputHeight + 'px';
             downloadBtn.disabled = false;
@@ -402,6 +403,29 @@ export const useCanvasExport = (
         const updateStageCapture = async (compassMode?: SaveFile['compass']['mode']) => {
             downloadBtn.disabled = true;
             previewMeta.textContent = 'Capturing preview...';
+            sizeValue.textContent = 'Loading...';
+
+            // Draw a placeholder spinner on canvas
+            const ctx = previewCanvas.getContext('2d');
+            if (ctx) {
+                const w = previewCanvas.width;
+                const h = previewCanvas.height;
+                ctx.clearRect(0, 0, w, h);
+                ctx.fillStyle = '#f0f0f0';
+                ctx.fillRect(0, 0, w, h);
+                // Simple static spinner
+                ctx.beginPath();
+                ctx.arc(w / 2, h / 2, Math.min(w, h) * 0.1, 0, Math.PI * 1.5);
+                ctx.lineWidth = Math.min(w, h) * 0.01;
+                ctx.strokeStyle = '#44ccff';
+                ctx.stroke();
+
+                ctx.font = `${Math.min(w, h) * 0.04}px sans-serif`;
+                ctx.fillStyle = '#333333';
+                ctx.textAlign = 'center';
+                ctx.fillText('Capturing preview...', w / 2, h / 2 + Math.min(w, h) * 0.2);
+            }
+
             const capture = await captureStageData(compassMode);
             if (!capture) return;
 
