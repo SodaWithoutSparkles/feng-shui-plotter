@@ -18,7 +18,7 @@ export const saveExportHelpSection: HelpSection = {
                             <li>Supported on Chrome/Edge Desktop (requires file access).</li>
                             <li>Writes changes directly to the original file.</li>
                             <li>
-                                <span className="text-yellow-400 text-opacity-90">Warning:</span> Saving after clearing the canvas will result in an empty file.
+                                <span className="text-yellow-400 text-opacity-90">Warning: </span>Saving after clearing the canvas will result in an empty file.
                             </li>
                             <li>Falls back to downloading a new <code>.fsp</code> file if not supported/authorized.</li>
                         </ul>

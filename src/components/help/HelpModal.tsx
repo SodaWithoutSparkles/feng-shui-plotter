@@ -105,6 +105,19 @@ export const HelpModal: FC<HelpModalProps> = ({
     // Derive sections from selected locale
     const helpSections = useMemo(() => getHelpSections(selectedLocale), [selectedLocale]);
 
+    useEffect(() => {
+        if (!isOpen) return;
+        const onNavigate = (event: Event) => {
+            const detail = (event as CustomEvent<HelpSectionId | undefined>).detail;
+            if (!detail) return;
+            if (!helpSections.some((section) => section.id === detail)) return;
+            setActiveSectionId(detail);
+        };
+
+        document.addEventListener('help-navigate', onNavigate as EventListener);
+        return () => document.removeEventListener('help-navigate', onNavigate as EventListener);
+    }, [isOpen, helpSections]);
+
     // When modal opens or the set of sections changes, reset active section to initial or default
     useEffect(() => {
         if (!isOpen) return;
@@ -132,7 +145,7 @@ export const HelpModal: FC<HelpModalProps> = ({
                         <button
                             key={section.id}
                             onClick={() => setActiveSectionId(section.id)}
-                            className={`w-full text-left px-3 py-2 rounded text-sm transition-colors ${section.id === activeSectionId
+                            className={`w-full text-left px-3 py-2 rounded text-sm transition-colors m-0 ${section.id === activeSectionId
                                 ? 'bg-blue-600/20 text-blue-200'
                                 : 'text-gray-300 hover:bg-gray-800'
                                 }`}

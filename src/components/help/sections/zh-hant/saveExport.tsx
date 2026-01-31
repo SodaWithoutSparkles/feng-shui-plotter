@@ -18,7 +18,7 @@ export const saveExportHelpSection: HelpSection = {
                             <li>支援 Chrome/Edge 等瀏覽器 (需授權檔案存取)。</li>
                             <li>直接寫入原檔案，無需重複下載。</li>
                             <li>
-                                <span className="text-yellow-400 text-opacity-90">警告:</span>
+                                <span className="text-yellow-400 text-opacity-90">警告: </span>
                                 若清空畫布後儲存，原檔案內容也會被清空。
                             </li>
                             <li>若不支援或未授權，將自動下載新 <code>.fsp</code> 檔案。</li>
