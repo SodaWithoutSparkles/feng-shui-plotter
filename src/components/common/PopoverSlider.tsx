@@ -115,9 +115,18 @@ export const PopoverSlider: React.FC<PopoverSliderProps> = ({
         handleConfirm(tempValue);
     };
 
-    // Continuous Press Logic
+    // Continuous Press Logic with acceleration
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const accelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const isAcceleratedRef = useRef(false);
+
+    // Timing constants (ms)
+    const INITIAL_DELAY = 500; // delay before repeating
+    const INITIAL_INTERVAL = 100; // normal repeat interval
+    const ACCEL_THRESHOLD = 3000; // time to accelerate (long-long press)
+    const ACCEL_FACTOR = 5; // how much faster when accelerated
+    const MIN_INTERVAL = 10; // lower bound for interval
 
     const startContinuous = (action: () => void) => {
         // Execute immediately
@@ -126,19 +135,32 @@ export const PopoverSlider: React.FC<PopoverSliderProps> = ({
         // Clear any existing timers
         stopContinuous();
 
-        // Start delay then interval
+        // Start the repeating interval after initial delay
         timerRef.current = setTimeout(() => {
             intervalRef.current = setInterval(() => {
                 action();
-            }, 100); // 100ms interval
-        }, 500); // 500ms delay
+            }, INITIAL_INTERVAL);
+        }, INITIAL_DELAY);
+
+        // Start the acceleration timer which fires after ACCEL_THRESHOLD
+        accelTimerRef.current = setTimeout(() => {
+            isAcceleratedRef.current = true;
+            // Switch to accelerated interval
+            if (intervalRef.current) clearInterval(intervalRef.current);
+            intervalRef.current = setInterval(() => {
+                action();
+            }, Math.max(MIN_INTERVAL, Math.round(INITIAL_INTERVAL / ACCEL_FACTOR)));
+        }, ACCEL_THRESHOLD);
     };
 
     const stopContinuous = () => {
         if (timerRef.current) clearTimeout(timerRef.current);
         if (intervalRef.current) clearInterval(intervalRef.current);
+        if (accelTimerRef.current) clearTimeout(accelTimerRef.current);
         timerRef.current = null;
         intervalRef.current = null;
+        accelTimerRef.current = null;
+        isAcceleratedRef.current = false;
     };
 
     const valueRef = useRef(value);
