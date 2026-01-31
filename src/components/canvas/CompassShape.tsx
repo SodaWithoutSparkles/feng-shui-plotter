@@ -1,11 +1,7 @@
 import React, { useState, useEffect, useImperativeHandle, useRef } from 'react';
 import { Group, Line, Image } from 'react-konva';
 import type { KonvaEventObject } from 'konva/lib/Node';
-
-const MOUNTAINS_24 = [
-    '子', '癸', '丑', '艮', '寅', '甲', '卯', '乙', '辰', '巽', '巳', '丙',
-    '午', '丁', '未', '坤', '申', '庚', '酉', '辛', '戌', '乾', '亥', '壬'
-];
+import { MOUNTAINS_24 } from '../../utils/FengShui';
 
 const DIRECTIONS_8 = [
     '北', '東北', '東', '東南', '南', '西南', '西', '西北'

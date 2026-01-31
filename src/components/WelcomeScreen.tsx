@@ -24,6 +24,26 @@ export const WelcomeScreen: React.FC = () => {
     const [isDraggingFile, setIsDraggingFile] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    // Build info injected at build time by CI (Vite exposes VITE_ prefixed vars on import.meta.env)
+    const rawBuildCommit = (import.meta as any)?.env?.VITE_BUILD_COMMIT;
+    const rawBuildTime = (import.meta as any)?.env?.VITE_BUILD_TIME;
+    const buildCommit = rawBuildCommit ? String(rawBuildCommit) : null;
+    const buildTimeRaw = rawBuildTime ? String(rawBuildTime) : null;
+    let buildCommitShort = 'local';
+    let formattedBuildTime = 'local build';
+    if (buildCommit) {
+        buildCommitShort = buildCommit.slice(0, 7);
+    }
+    if (buildTimeRaw) {
+        try {
+            const d = new Date(buildTimeRaw);
+            // toLocaleString will format according to the user's timezone
+            formattedBuildTime = d.toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', timeZoneName: 'short' });
+        } catch (e) {
+            formattedBuildTime = buildTimeRaw;
+        }
+    }
+
     React.useEffect(() => {
         const checkAutoSave = () => {
             const saved = localStorage.getItem('autosave_project');
@@ -227,6 +247,31 @@ export const WelcomeScreen: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            {/* Footer: author and build info */}
+            <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between text-sm text-gray-500 px-4">
+                <div className="opacity-90">
+                    By <span className="font-semibold">SodaWithoutSparkles</span>
+                    {/* github logo and link to proj */}
+                    <a href='https://github.com/SodaWithoutSparkles/feng-shui-plotter' className="ml-2 inline-block align-middle" aria-label="GitHub repository">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8" />
+                        </svg>
+                    </a>
+                </div>
+
+                <div className="opacity-80" title={buildTimeRaw ? new Date(buildTimeRaw).toString() : undefined}>
+                    {buildCommit ? (
+                        <>
+                            <a href='https://github.com/SodaWithoutSparkles/feng-shui-plotter'><span className="font-mono">{buildCommitShort}</span></a>
+                            <span className="mx-2">•</span>
+                            <span>{formattedBuildTime}</span>
+                        </>
+                    ) : (
+                        <a href='https://github.com/SodaWithoutSparkles/feng-shui-plotter'><span>Development build</span></a>
+                    )}
+                </div>
+            </div>
 
         </div>
     );

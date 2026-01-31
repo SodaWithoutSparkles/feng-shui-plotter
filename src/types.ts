@@ -99,6 +99,17 @@ export interface FengShuiData {
     };
 }
 
+export interface MountainFacingData {
+    mainFacing: string;
+    subFacing: string | null;
+    // aka blues, will be init as FengShuiData.blues.start
+    mountainStar: number;
+    mountainReversed: boolean;
+    // aka reds, will be init as FengShuiData.reds.start
+    waterStar: number;
+    waterReversed: boolean;
+}
+
 export interface FlyStarData {
     blacks: Number[];
     reds: Number[];
@@ -134,5 +145,6 @@ export interface SaveFile {
     };
     timestamp?: Date | string;
 }
+
 
 export const CURRENT_VERSION = '1.0.0';

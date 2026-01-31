@@ -79,7 +79,11 @@ export const FlystarVisualization: React.FC<FlystarVisualizationProps> = ({
     const displayYear = currentYear + offset;
 
     const flyStarData = canCalculate ? genFullFlyStarSeq(fengShui, displayYear) : null;
-    showYear = showYear && !showControls
+
+    // Determine layout: Side-by-side if controls are ON and stand-alone year is OFF.
+    // If showYear is true (and passed from parent like sidebar), force top-bottom.
+    const isSideBySide = showControls && !showYear;
+    const showStandaloneYear = showYear && !showControls;
 
     if (!flyStarData) {
         return (
@@ -90,9 +94,9 @@ export const FlystarVisualization: React.FC<FlystarVisualizationProps> = ({
     }
 
     return (
-        <div className="space-y-4">
+        <div className={isSideBySide ? "flex gap-4 items-start" : "space-y-4"}>
             {/* 3x3 Grid */}
-            <div className="max-w-[250px] mx-auto">
+            <div className={isSideBySide ? "w-[220px] shrink-0" : "max-w-[250px] mx-auto"}>
                 <div className="grid grid-cols-3 aspect-square border-2 border-gray-600 bg-white text-black text-xs">
                     {[0, 1, 2, 3, 4, 5, 6, 7, 8].map(i => (
                         <div key={i} className="border border-gray-400 relative">
@@ -121,9 +125,25 @@ export const FlystarVisualization: React.FC<FlystarVisualizationProps> = ({
                 </div>
             </div>
 
-            {/* Year */}
-            {
-                showYear && updateFengShui && (
+            <div className="flex-grow space-y-4">
+                {/* Year */}
+                {
+                    showStandaloneYear && updateFengShui && (
+                        <div className="flex flex-col p-3 text-sm bg-gray-800 rounded-lg shadow-inner">
+
+                            <NumberStepper
+                                label="Year"
+                                value={displayYear}
+                                onChange={(newYear) => updateFengShui({
+                                    purples: { ...fengShui.purples, offset: newYear - currentYear }
+                                })}
+                            />
+                        </div>
+                    )
+                }
+
+                {/* Controls */}
+                {showControls && updateFengShui && (
                     <div className="flex flex-col p-3 text-sm bg-gray-800 rounded-lg shadow-inner">
 
                         <NumberStepper
@@ -133,77 +153,63 @@ export const FlystarVisualization: React.FC<FlystarVisualizationProps> = ({
                                 purples: { ...fengShui.purples, offset: newYear - currentYear }
                             })}
                         />
+
+                        <NumberStepper
+                            label="Blacks"
+                            value={fengShui.blacks.start}
+                            min={1}
+                            max={9}
+                            onChange={(val) => updateFengShui({ blacks: { start: val } })}
+                        />
+
+                        <NumberStepper
+                            label="Reds"
+                            value={fengShui.reds.start}
+                            min={1}
+                            max={9}
+                            onChange={(val) => updateFengShui({ reds: { ...fengShui.reds, start: val } })}
+                        >
+                            <button
+                                onClick={() => updateFengShui({ reds: { ...fengShui.reds, reversed: !fengShui.reds.reversed } })}
+                                className={`px-2 py-[2px] text-[10px] uppercase font-bold tracking-wider rounded border ${fengShui.reds.reversed
+                                    ? 'bg-blue-900 border-blue-700 text-blue-100 shadow-sm'
+                                    : 'bg-gray-700 border-gray-600 text-gray-400 hover:bg-gray-600'
+                                    }`}
+                                title="Toggle Reversed Direction"
+                            >
+                                Rev
+                            </button>
+                        </NumberStepper>
+
+                        <NumberStepper
+                            label="Blues"
+                            value={fengShui.blues.start}
+                            min={1}
+                            max={9}
+                            onChange={(val) => updateFengShui({ blues: { ...fengShui.blues, start: val } })}
+                        >
+                            <button
+                                onClick={() => updateFengShui({ blues: { ...fengShui.blues, reversed: !fengShui.blues.reversed } })}
+                                className={`px-2 py-[2px] text-[10px] uppercase font-bold tracking-wider rounded border ${fengShui.blues.reversed
+                                    ? 'bg-blue-900 border-blue-700 text-blue-100 shadow-sm'
+                                    : 'bg-gray-700 border-gray-600 text-gray-400 hover:bg-gray-600'
+                                    }`}
+                                title="Toggle Reversed Direction"
+                            >
+                                Rev
+                            </button>
+                        </NumberStepper>
+
+                        <NumberStepper
+                            label="Purples"
+                            value={fengShui.purples.start}
+                            min={1}
+                            max={9}
+                            onChange={(val) => updateFengShui({ purples: { ...fengShui.purples, start: val } })}
+                        />
                     </div>
-                )
-            }
-
-            {/* Controls */}
-            {showControls && updateFengShui && (
-                <div className="flex flex-col p-3 text-sm bg-gray-800 rounded-lg shadow-inner">
-
-                    <NumberStepper
-                        label="Year"
-                        value={displayYear}
-                        onChange={(newYear) => updateFengShui({
-                            purples: { ...fengShui.purples, offset: newYear - currentYear }
-                        })}
-                    />
-
-                    <NumberStepper
-                        label="Blacks"
-                        value={fengShui.blacks.start}
-                        min={1}
-                        max={9}
-                        onChange={(val) => updateFengShui({ blacks: { start: val } })}
-                    />
-
-                    <NumberStepper
-                        label="Reds"
-                        value={fengShui.reds.start}
-                        min={1}
-                        max={9}
-                        onChange={(val) => updateFengShui({ reds: { ...fengShui.reds, start: val } })}
-                    >
-                        <button
-                            onClick={() => updateFengShui({ reds: { ...fengShui.reds, reversed: !fengShui.reds.reversed } })}
-                            className={`px-2 py-[2px] text-[10px] uppercase font-bold tracking-wider rounded border ${fengShui.reds.reversed
-                                ? 'bg-blue-900 border-blue-700 text-blue-100 shadow-sm'
-                                : 'bg-gray-700 border-gray-600 text-gray-400 hover:bg-gray-600'
-                                }`}
-                            title="Toggle Reversed Direction"
-                        >
-                            Rev
-                        </button>
-                    </NumberStepper>
-
-                    <NumberStepper
-                        label="Blues"
-                        value={fengShui.blues.start}
-                        min={1}
-                        max={9}
-                        onChange={(val) => updateFengShui({ blues: { ...fengShui.blues, start: val } })}
-                    >
-                        <button
-                            onClick={() => updateFengShui({ blues: { ...fengShui.blues, reversed: !fengShui.blues.reversed } })}
-                            className={`px-2 py-[2px] text-[10px] uppercase font-bold tracking-wider rounded border ${fengShui.blues.reversed
-                                ? 'bg-blue-900 border-blue-700 text-blue-100 shadow-sm'
-                                : 'bg-gray-700 border-gray-600 text-gray-400 hover:bg-gray-600'
-                                }`}
-                            title="Toggle Reversed Direction"
-                        >
-                            Rev
-                        </button>
-                    </NumberStepper>
-
-                    <NumberStepper
-                        label="Purples"
-                        value={fengShui.purples.start}
-                        min={1}
-                        max={9}
-                        onChange={(val) => updateFengShui({ purples: { ...fengShui.purples, start: val } })}
-                    />
-                </div>
-            )}
+                )}
+            </div>
         </div>
     );
 };
