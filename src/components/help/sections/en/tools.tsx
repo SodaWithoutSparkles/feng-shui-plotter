@@ -27,7 +27,7 @@ export const toolsHelpSection: HelpSection = {
             <div className="space-y-2">
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Modifiers & Shortcuts</h4>
                 <ul className="list-disc pl-5 space-y-1 text-gray-300">
-                    <li><span className="text-gray-100 font-semibold">Constrain:</span> Hold the configured modifier (default Shift) to square/circle or horizontal/vertical axis.</li>
+                    <li><span className="text-gray-100 font-semibold">Constrain:</span> Hold the configured modifier (default Ctrl) to square/circle or horizontal/vertical axis.</li>
                     <li><span className="text-gray-100 font-semibold">Cancel:</span> Press Cancel key (default Esc) to abort drawing or text editing.</li>
                     <li><span className="text-gray-100 font-semibold">Delete:</span> Delete selected objects.</li>
                     <li><span className="text-gray-100 font-semibold">Layer Order:</span> Use <code className="bg-gray-700 px-1 rounded text-xs">]</code> to move up, <code className="bg-gray-700 px-1 rounded text-xs">[</code> to move down.</li>

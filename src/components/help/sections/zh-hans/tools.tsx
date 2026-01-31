@@ -27,12 +27,12 @@ export const toolsHelpSection: HelpSection = {
             <div className="space-y-2">
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400">修饰键与快捷键</h4>
                 <ul className="list-disc pl-5 space-y-1 text-gray-300">
-                    <li><span className="text-gray-100 font-semibold">约束 (Constrain):</span> 按住已配置的修饰键（默认 Shift）以绘制正方/圆或将直线/箭头锁定为水平/垂直。</li>
-                    <li><span className="text-gray-100 font-semibold">取消 (Cancel):</span> 按取消键（默认 Esc）以中止绘制或文字编辑。</li>
+                    <li><span className="text-gray-100 font-semibold">约束 (Constrain):</span> 按住已配置的修饰键 (默认 Ctrl) 以绘制正方/圆或将直线/箭头锁定为水平/垂直。</li>
+                    <li><span className="text-gray-100 font-semibold">取消 (Cancel):</span> 按取消键 (默认 Esc) 以中止绘制或文字编辑。</li>
                     <li><span className="text-gray-100 font-semibold">删除 (Delete):</span> Delete 键删除选中的对象。</li>
                     <li><span className="text-gray-100 font-semibold">图层顺序:</span> 使用 <code className="bg-gray-700 px-1 rounded text-xs">]</code> 上移一层，使用 <code className="bg-gray-700 px-1 rounded text-xs">[</code> 下移一层。</li>
                     <li><span className="text-gray-100 font-semibold">复制:</span> Ctrl+D (或 Cmd+D) 复制选中的对象。</li>
-                    <li><span className="text-gray-100 font-semibold">文字保存:</span> 使用已配置的保存快捷键（默认 Ctrl+Enter）提交文字编辑。也可以点击文字框外的任何位置来保存。</li>
+                    <li><span className="text-gray-100 font-semibold">文字保存:</span> 使用已配置的保存快捷键 (默认 Ctrl+Enter) 提交文字编辑。也可以点击文字框外的任何位置来保存。</li>
                 </ul>
                 <p className="text-gray-400">
                     可在 选项 → 键盘快捷键 (Options → Keyboard Shortcuts) 中自订这些按键。

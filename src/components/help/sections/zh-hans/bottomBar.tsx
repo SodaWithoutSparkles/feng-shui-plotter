@@ -14,7 +14,7 @@ export const bottomBarHelpSection: HelpSection = {
                 <ul className="list-disc pl-5 space-y-1 text-gray-300">
                     <li><span className="text-gray-100 font-semibold">状态信息:</span> 显示当前光标坐标 (X, Y)、画布缩放比例 (Zoom) 以及自动保存的状态。</li>
                     <li><span className="text-gray-100 font-semibold">归位 (Home):</span> 点击 Home 按钮可将视图重置，使平面图居中显示。</li>
-                    <li><span className="text-gray-100 font-semibold">罗盘 (Compass) 切换:</span> 快速切换罗盘的显示模式（隐藏、查看、编辑、延长线）。</li>
+                    <li><span className="text-gray-100 font-semibold">罗盘 (Compass) 切换:</span> 快速切换罗盘的显示模式 (隐藏、查看、编辑、延长线)。</li>
                 </ul>
             </div>
         </div>

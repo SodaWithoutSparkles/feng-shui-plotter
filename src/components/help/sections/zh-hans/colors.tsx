@@ -6,15 +6,15 @@ export const colorsHelpSection: HelpSection = {
     content: (
         <div className="space-y-4 text-sm text-gray-200">
             <p className="text-gray-300">
-                双重颜色选择器用于控制新形状和已选对象的描边（轮廓）和填充颜色。
+                双重颜色选择器用于控制新形状和已选对象的描边 (轮廓) 和填充颜色。
             </p>
 
             <div className="space-y-2">
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400">选择颜色</h4>
                 <ul className="list-disc pl-5 space-y-1 text-gray-300">
                     <li>点击左上三角以编辑描边颜色。</li>
-                    <li>点击右下三角以编辑填充颜色（支持透明度）。</li>
-                    <li>使用吸管（pipette）从画布中直接采样颜色。</li>
+                    <li>点击右下三角以编辑填充颜色 (支持透明度)。</li>
+                    <li>使用吸管 (pipette) 从画布中直接采样颜色。</li>
                 </ul>
             </div>
 
@@ -28,7 +28,7 @@ export const colorsHelpSection: HelpSection = {
             </div>
 
             <div className="rounded border border-amber-700/60 bg-amber-900/20 px-3 py-2 text-amber-200">
-                <strong className="font-semibold">注意：</strong> 文本（字体）颜色不在此处配置。
+                <strong className="font-semibold">注意:</strong> 文本 (字体) 颜色不在此处配置。
                 请使用 `Text` 工具或对象设置来调整文本颜色。
             </div>
         </div>

@@ -15,10 +15,10 @@ export const saveExportHelpSection: HelpSection = {
                     <li>
                         <span className="text-gray-100 font-semibold">原地保存 (In-place Save):</span>
                         <ul className="list-[circle] pl-5 mt-1 space-y-1 text-gray-400">
-                            <li>支持 Chrome/Edge 等浏览器（需授权文件存取）。</li>
+                            <li>支持 Chrome/Edge 等浏览器 (需授权文件存取)。</li>
                             <li>直接写入原文件，无需重复下载。</li>
                             <li>
-                                <span className="text-yellow-400 text-opacity-90">警告：</span>
+                                <span className="text-yellow-400 text-opacity-90">警告:</span>
                                 若清空画布后保存，原文件内容也会被清空。
                             </li>
                             <li>若不支持或未授权，将自动下载新 <code>.fsp</code> 文件。</li>
@@ -43,22 +43,22 @@ export const saveExportHelpSection: HelpSection = {
                 <p className="text-gray-300">
                     开启此选项后，系统会定期将项目状态备份至浏览器的 LocalStorage。若不慎重新整理页面或浏览器崩溃，下次开启网页时会尝试从备份还原。
                     <br />
-                    <span className="text-yellow-400 text-xs text-opacity-80">注意：清除浏览器缓存将会遗失自动保存的数据，重要项目请务必手动保存文件。</span>
+                    <span className="text-yellow-400 text-xs text-opacity-80">注意: 清除浏览器缓存将会遗失自动保存的数据，重要项目请务必手动保存文件。</span>
                 </p>
             </div>
 
             <div className="space-y-2">
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400">导出图片 (Export Image)</h4>
                 <p className="text-gray-300">
-                    将目前的画布内容（包含底图、物件及罗盘层）合并导出为一张图片。
+                    将目前的画布内容 (包含底图、物件及罗盘层) 合并导出为一张图片。
                 </p>
                 <ul className="list-disc pl-5 space-y-1 text-gray-300">
                     <li>
-                        <span className="text-gray-100 font-semibold">选项设置：</span>
-                        在弹出的对话框中选择图片格式（PNG 或 JPEG）及解析度（1x、2x、4x）。
+                        <span className="text-gray-100 font-semibold">选项设置:</span>
+                        在弹出的对话框中选择图片格式 (PNG 或 JPEG) 及解析度 (1x、2x、4x)。
                     </li>
                     <li>
-                        <span className="text-gray-100 font-semibold">飞星图位置：</span>
+                        <span className="text-gray-100 font-semibold">飞星图位置:</span>
                         <ul className="list-[circle] pl-5 mt-1 space-y-1 text-gray-400">
                             <li>飞星图共有 25 种位置配置模式。</li>
                             <li>若不需要在导出图中显示飞星图，请选择 <strong>[22]</strong> (正中央) 模式。</li>

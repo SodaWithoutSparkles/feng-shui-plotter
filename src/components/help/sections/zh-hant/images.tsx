@@ -32,8 +32,8 @@ export const imagesHelpSection: HelpSection = {
                 </ul>
             </div>
             <div className="rounded border border-amber-700/60 bg-amber-900/20 px-3 py-2 text-amber-200">
-                <strong className="font-semibold">注意：</strong> 使用遠端圖片時，本工具會嘗試從該 URL 加載圖片。這將會暴露你的 IP 地址給圖片所在的伺服器。請僅使用你信任的來源。
-                同時，某些網站可能會阻止圖片被嵌入到其他網站（CORS），導致圖片無法顯示。
+                <strong className="font-semibold">注意:</strong> 使用遠端圖片時，本工具會嘗試從該 URL 加載圖片。這將會暴露你的 IP 地址給圖片所在的伺服器。請僅使用你信任的來源。
+                同時，某些網站可能會阻止圖片被嵌入到其他網站 (CORS)，導致圖片無法顯示。
             </div>
         </div>
     )

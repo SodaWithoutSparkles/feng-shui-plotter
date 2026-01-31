@@ -12,7 +12,7 @@ export const objectsHelpSection: HelpSection = {
             <div className="space-y-2">
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400">选取物件 (Select)</h4>
                 <ul className="list-disc pl-5 space-y-1 text-gray-300">
-                    <li><span className="text-gray-100 font-semibold">单选:</span> 使用选取工具（箭头游标）点击物件，或使用右侧面板中的物件列表选取。</li>
+                    <li><span className="text-gray-100 font-semibold">单选:</span> 使用选取工具 (箭头游标) 点击物件，或使用右侧面板中的物件列表选取。</li>
                     <li><span className="text-gray-100 font-semibold">加选/减选:</span> 按住 Ctrl 键并点击物件或物件列表，可将其加入目前的选取范围，或从中移除。</li>
                 </ul>
             </div>

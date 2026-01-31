@@ -2,7 +2,7 @@ import type { HelpSection } from '../types';
 
 export const compassHelpSection: HelpSection = {
     id: 'compass',
-    title: '指南针',
+    title: '罗盘',
     content: (
         <div className="space-y-4 text-sm text-gray-200">
             <p className="text-gray-300">
@@ -13,12 +13,12 @@ export const compassHelpSection: HelpSection = {
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400">模式</h4>
                 <ul className="list-disc pl-5 space-y-1 text-gray-300">
                     <li><span className="text-gray-100 font-semibold">查看 (View):</span> 显示罗盘但不可交互。</li>
-                    <li><span className="text-gray-100 font-semibold">编辑（交互） (Edit (Interactive)):</span> 显示控制点，允许移动、调整大小和旋转罗盘。</li>
+                    <li><span className="text-gray-100 font-semibold">编辑 (交互) (Edit (Interactive)):</span> 显示控制点，允许移动、调整大小和旋转罗盘。</li>
                     <li><span className="text-gray-100 font-semibold">投影 (Projection):</span> 显示 24 山向的投影线。</li>
                     <li><span className="text-gray-100 font-semibold">隐藏 (Hidden):</span> 隐藏罗盘。</li>
                 </ul>
                 <p className="text-gray-400">
-                    使用底部栏（bottom bar）中的罗盘按钮循环切换这些模式。
+                    使用底部栏 (bottom bar) 中的罗盘按钮循环切换这些模式。
                 </p>
             </div>
 
