@@ -25,6 +25,15 @@ export const WelcomeScreen: React.FC = () => {
     const [screenWarning, setScreenWarning] = useState<'none' | 'small' | 'very-small'>('none');
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    const viewOnlyUrl = React.useMemo(() => {
+        if (typeof window === 'undefined') {
+            return '?mode=view';
+        }
+        const url = new URL(window.location.href);
+        url.searchParams.set('mode', 'view');
+        return url.toString();
+    }, []);
+
     // Build info injected at build time by CI (Vite exposes VITE_ prefixed vars on import.meta.env)
     const rawBuildCommit = (import.meta as any)?.env?.VITE_BUILD_COMMIT;
     const rawBuildTime = (import.meta as any)?.env?.VITE_BUILD_TIME;
@@ -214,7 +223,7 @@ export const WelcomeScreen: React.FC = () => {
                     <p className="text-gray-500 text-center">Start a new floorplan annotation from scratch.</p>
 
                     <a
-                        href="/?mode=view"
+                        href={viewOnlyUrl}
                         target='_blank'
                         onClick={(e) => e.stopPropagation()}
                         className="mt-4 text-sm text-gray-400 hover:text-gray-600 underline"
@@ -315,7 +324,7 @@ export const WelcomeScreen: React.FC = () => {
                         </p>
                         <div className="flex flex-col gap-3">
                             <button
-                                onClick={() => window.location.href = '/?mode=view'}
+                                onClick={() => { window.location.href = viewOnlyUrl; }}
                                 className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition flex items-center justify-center gap-2"
                             >
                                 Switch to View Only Mode
