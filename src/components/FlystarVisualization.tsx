@@ -1,6 +1,8 @@
 import React from 'react';
+import { Lock, Unlock, Calendar } from 'lucide-react';
 import { genFullFlyStarSeq, DIGIT_TO_CHINESE } from '../utils/FengShui';
 import type { FengShuiData } from '../types';
+import { PopoverSlider } from './common/PopoverSlider';
 
 interface FlystarVisualizationProps {
     fengShui: FengShuiData;
@@ -75,8 +77,19 @@ export const FlystarVisualization: React.FC<FlystarVisualizationProps> = ({
 }) => {
     const canCalculate = fengShui && fengShui.purples;
     const currentYear = new Date().getFullYear();
-    const offset = fengShui?.purples?.offset || 0;
-    const displayYear = currentYear + offset;
+
+    // Determine display year
+    // If viewMode is 'manual', use manualYear.
+    // If 'auto' (or undefined/legacy), use currentYear + offset.
+    let displayYear = currentYear;
+    const isManual = fengShui?.purples?.viewMode === 'manual';
+
+    if (isManual && fengShui.purples.manualYear) {
+        displayYear = fengShui.purples.manualYear;
+    } else {
+        const offset = fengShui?.purples?.offset || 0;
+        displayYear = currentYear + offset;
+    }
 
     const flyStarData = canCalculate ? genFullFlyStarSeq(fengShui, displayYear) : null;
 
@@ -84,6 +97,42 @@ export const FlystarVisualization: React.FC<FlystarVisualizationProps> = ({
     // If showYear is true (and passed from parent like sidebar), force top-bottom.
     const isSideBySide = showControls && !showYear;
     const showStandaloneYear = showYear && !showControls;
+
+    const handleYearChange = (val: number) => {
+        if (!updateFengShui) return;
+        updateFengShui({
+            purples: {
+                ...fengShui.purples,
+                viewMode: 'manual',
+                manualYear: val,
+                offset: val - currentYear
+            }
+        });
+    };
+
+    // Toggle between Auto (Current Year) and Manual (Fixed Year)
+    const toggleAuto = () => {
+        if (!updateFengShui) return;
+        if (isManual) {
+            // Switch to Auto -> Sync with Now
+            updateFengShui({
+                purples: {
+                    ...fengShui.purples,
+                    viewMode: 'auto',
+                    offset: 0
+                }
+            });
+        } else {
+            // Switch to Manual -> Lock at current display
+            updateFengShui({
+                purples: {
+                    ...fengShui.purples,
+                    viewMode: 'manual',
+                    manualYear: displayYear
+                }
+            });
+        }
+    };
 
     if (!flyStarData) {
         return (
@@ -130,13 +179,33 @@ export const FlystarVisualization: React.FC<FlystarVisualizationProps> = ({
                 {
                     showStandaloneYear && updateFengShui && (
                         <div className="flex flex-col p-3 text-sm bg-gray-800 rounded-lg shadow-inner">
-
-                            <NumberStepper
-                                label="Year"
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-gray-300 font-medium text-xs">Year ({displayYear})</span>
+                                <button
+                                    onClick={toggleAuto}
+                                    title={isManual ? "Switch to Auto-Sync" : "Lock to Current Year"}
+                                    className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border transition-all ${isManual
+                                        ? 'bg-blue-900/40 border-blue-700 text-blue-300 hover:bg-blue-900/60'
+                                        : 'bg-emerald-900/40 border-emerald-700 text-emerald-300 hover:bg-emerald-900/60'
+                                        }`}
+                                >
+                                    {isManual ? (
+                                        <>Locked <Lock size={10} /></>
+                                    ) : (
+                                        <>Auto <Calendar size={10} /></>
+                                    )}
+                                </button>
+                            </div>
+                            <PopoverSlider
                                 value={displayYear}
-                                onChange={(newYear) => updateFengShui({
-                                    purples: { ...fengShui.purples, offset: newYear - currentYear }
-                                })}
+                                onChange={handleYearChange}
+                                min={1900}
+                                max={2100}
+                                hideSlider={true}
+                                presets={[
+                                    { label: 'Now', value: currentYear },
+                                    { label: 'Next', value: currentYear + 1 }
+                                ]}
                             />
                         </div>
                     )
@@ -145,14 +214,44 @@ export const FlystarVisualization: React.FC<FlystarVisualizationProps> = ({
                 {/* Controls */}
                 {showControls && updateFengShui && (
                     <div className="flex flex-col p-3 text-sm bg-gray-800 rounded-lg shadow-inner w-[220px]">
+                        <div className="flex items-center justify-between mb-2 pb-2 border-b border-gray-700">
+                            <div className="flex flex-col">
+                                <span className="text-gray-300 font-medium text-xs">Year</span>
+                                <span className={`text-xs ${isManual ? 'text-blue-300' : 'text-green-300'}`}>
+                                    {displayYear}
+                                </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={toggleAuto}
+                                    title={isManual ? "Switch to Auto-Sync" : "Lock to Current Year"}
+                                    className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border transition-all ${isManual
+                                        ? 'bg-blue-900/40 border-blue-700 text-blue-300 hover:bg-blue-900/60'
+                                        : 'bg-emerald-900/40 border-emerald-700 text-emerald-300 hover:bg-emerald-900/60'
+                                        }`}
+                                >
+                                    {isManual ? (
+                                        <>Locked <Lock size={10} /></>
+                                    ) : (
+                                        <>Auto <Calendar size={10} /></>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
 
-                        <NumberStepper
-                            label="Year"
-                            value={displayYear}
-                            onChange={(newYear) => updateFengShui({
-                                purples: { ...fengShui.purples, offset: newYear - currentYear }
-                            })}
-                        />
+                        <div className="mb-4">
+                            <PopoverSlider
+                                value={displayYear}
+                                onChange={handleYearChange}
+                                min={1900}
+                                max={2100}
+                                hideSlider={true}
+                                presets={[
+                                    { label: 'Now', value: currentYear },
+                                    { label: 'Next', value: currentYear + 1 }
+                                ]}
+                            />
+                        </div>
 
                         <NumberStepper
                             label="Blacks"

@@ -56,6 +56,9 @@ export const Header: React.FC = () => {
     const setShowProjectConfig = useStore(state => state.setShowProjectConfig);
     const triggerExport = useStore(state => state.triggerExport);
 
+    // Safety check for overwriting
+    const hasPerformedClearAll = useStore(state => state.hasPerformedClearAll);
+
     // Store state getters for save - fetch individually to prevent re-render loops
     const floorplan = useStore(state => state.floorplan);
     const objects = useStore(state => state.objects);
@@ -124,6 +127,29 @@ export const Header: React.FC = () => {
             };
 
             if (fileHandle) {
+                // Safeguard 1: Saving empty canvas when it wasn't empty before? 
+                // Hard to track "wasn't empty before" without more state, but generally saving 0 objects is rare.
+                // Safeguard 2: User wiped everything (Clear All) and is now saving in-place.
+                if (hasPerformedClearAll) {
+                    const confirmed = window.confirm(
+                        "WARNING: You have cleared all objects during this session.\n" +
+                        "Saving now will OVERWRITE your existing file on disk with these changes.\n\n" +
+                        "If you intended to start a new year/design based on this file, you should probably use 'Save As' instead to keep the old file intact.\n\n" +
+                        "Click OK to overwrite the existing file.\n" +
+                        "Click Cancel to abort (then use File > Save As)."
+                    );
+                    if (!confirmed) return;
+                } else if (objects.length === 0) {
+                    // Still warn on empty, just in case they deleted manually one by one
+                    const confirmed = window.confirm(
+                        "You are about to save an empty canvas to your existing file.\n" +
+                        "This will overwrite your previous work with no objects.\n\n" +
+                        "Click OK to overwrite in-place.\n" +
+                        "Click Cancel to abort."
+                    );
+                    if (!confirmed) return;
+                }
+
                 await writeSaveFileToHandle(fileHandle, saveFile);
                 setSaveFileName((fileHandle as any).name);
                 setLastSavedAt(Date.now());

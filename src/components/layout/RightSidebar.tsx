@@ -1,6 +1,6 @@
 import React from 'react';
 import { useStore } from '../../store/useStore';
-import { Layers, History, Sliders, Star, ArrowLeftRight } from 'lucide-react';
+import { Layers, History, Sliders, Star, ArrowLeftRight, Trash2 } from 'lucide-react';
 import { FlystarVisualization } from '../FlystarVisualization';
 import { ColorPicker } from '../common/ColorPicker';
 
@@ -18,6 +18,7 @@ export const RightSidebar: React.FC = () => {
     const toggleFlyStar = useStore((state) => state.toggleFlyStar);
     const fengShui = useStore((state) => state.fengShui);
     const updateFengShui = useStore((state) => state.updateFengShui);
+    const deleteAllItems = useStore((state) => state.deleteAllItems);
 
     const hasSelection = selectedIds.length > 0;
     const isMultiSelect = selectedIds.length > 1;
@@ -379,8 +380,25 @@ export const RightSidebar: React.FC = () => {
 
             {/* Bottom Half: Objects / Layers */}
             <div className="flex-1 flex flex-col min-h-0 bg-gray-800">
-                <div className="bg-gray-900 px-3 py-1 text-xs font-semibold uppercase tracking-wider flex items-center">
-                    <Layers size={12} className="mr-2" /> Objects
+                <div className="bg-gray-900 px-3 py-1 text-xs font-semibold uppercase tracking-wider flex items-center justify-between">
+                    <div className="flex items-center">
+                        <Layers size={12} className="mr-2" /> Objects
+                    </div>
+                    {objects.length > 0 && (
+                        <button
+                            type="button"
+                            aria-label="Clear All Objects"
+                            title="Clear All Objects"
+                            onClick={() => {
+                                if (window.confirm("WARNING: This will delete ALL objects in the floorplan.\n\nAre you sure you want to clear everything?")) {
+                                    deleteAllItems();
+                                }
+                            }}
+                            className="p-1 rounded hover:bg-red-900/50 text-gray-400 hover:text-red-400 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-red-500"
+                        >
+                            <Trash2 size={12} />
+                        </button>
+                    )}
                 </div>
                 <div className="flex-1 overflow-y-auto p-2">
                     <ul className="space-y-1">

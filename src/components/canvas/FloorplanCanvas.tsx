@@ -12,7 +12,7 @@ import { useTextEditor } from './hooks/useTextEditor';
 import { useFloorplanImage } from './hooks/useFloorplanImage';
 import { useCompassTransform } from './hooks/useCompassTransform';
 
-export const FloorplanCanvas: React.FC = () => {
+export const FloorplanCanvas: React.FC<{ readOnly?: boolean }> = ({ readOnly = false }) => {
     // Store state
     const floorplan = useStore((state) => state.floorplan);
     const objects = useStore((state) => state.objects);
@@ -51,7 +51,7 @@ export const FloorplanCanvas: React.FC = () => {
 
     // Custom hooks
     const dimensions = useCanvasDimensions(containerRef);
-    const { stagePos, setStagePos, handleWheel } = useCanvasNavigation(stageRef);
+    const { stagePos, setStagePos, handleWheel, handleTouchMove, handleTouchEnd } = useCanvasNavigation(stageRef);
     const {
         editingText,
         setEditingText,
@@ -256,6 +256,7 @@ export const FloorplanCanvas: React.FC = () => {
     };
 
     const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+        if (readOnly) return;
         if (!isImageDrag(e)) return;
         e.preventDefault();
         dragCounterRef.current = 0;
@@ -288,6 +289,7 @@ export const FloorplanCanvas: React.FC = () => {
 
     useEffect(() => {
         const handlePaste = (e: ClipboardEvent) => {
+            if (readOnly) return;
             const items = Array.from(e.clipboardData?.items || []);
             const imageItem = items.find(item => item.kind === 'file' && item.type.startsWith('image/'));
             if (imageItem) {
@@ -327,18 +329,20 @@ export const FloorplanCanvas: React.FC = () => {
                 width={dimensions.width}
                 height={dimensions.height}
                 onWheel={handleWheel}
-                onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+                onMouseDown={readOnly ? undefined : handleMouseDown}
+                onMouseMove={readOnly ? undefined : handleMouseMove}
+                onMouseUp={readOnly ? undefined : handleMouseUp}
                 onDragMove={handleStageDragMove}
-                onClick={handleStageClick}
+                onClick={readOnly ? undefined : handleStageClick}
                 scaleX={stagePos.scale}
                 scaleY={stagePos.scale}
                 x={stagePos.x}
                 y={stagePos.y}
-                draggable={activeTool === 'select' && !isDropperActive}
+                draggable={readOnly || (activeTool === 'select' && !isDropperActive)}
                 ref={stageRef}
-                style={{ cursor: isDropperActive ? 'crosshair' : 'default' }}
+                style={{ cursor: readOnly ? 'grab' : (isDropperActive ? 'crosshair' : 'default') }}
             >
                 <Layer>
                     {/* Floorplan Image */}
@@ -368,14 +372,14 @@ export const FloorplanCanvas: React.FC = () => {
                             rotation={compass.rotation}
                             opacity={compass.opacity}
                             mode={compass.mode}
-                            onChange={(attrs) => updateCompass(attrs)}
-                            onTransformStart={handleCompassTransformStart}
-                            onTransform={handleCompassTransform}
-                            onTransformEnd={handleCompassTransformEnd}
+                            onChange={(attrs) => !readOnly && updateCompass(attrs)}
+                            onTransformStart={!readOnly ? handleCompassTransformStart : undefined}
+                            onTransform={!readOnly ? handleCompassTransform : undefined}
+                            onTransformEnd={!readOnly ? handleCompassTransformEnd : undefined}
                         />
                     )}
 
-                    {compass.mode === 'interactive' && (
+                    {!readOnly && compass.mode === 'interactive' && (
                         <Transformer
                             ref={trRef}
                             rotateEnabled
@@ -388,12 +392,13 @@ export const FloorplanCanvas: React.FC = () => {
                     {objects.map((item) =>
                         editingText && editingText.id === item.id ? null : (
                             <ShapeRenderer
-                                onDblClick={() => handleShapeDblClick(item)}
+                                onDblClick={() => !readOnly && handleShapeDblClick(item)}
                                 key={item.id}
                                 item={item}
                                 isSelected={selectedIds.includes(item.id)}
-                                dragEnabled={activeTool === 'select' && !isDropperActive}
+                                dragEnabled={!readOnly && activeTool === 'select' && !isDropperActive}
                                 onSelect={(e) => {
+                                    if (readOnly) return;
                                     const isCtrl = !!e?.evt?.ctrlKey;
                                     if (isCtrl) {
                                         toggleSelectItem(item.id);
@@ -445,7 +450,7 @@ export const FloorplanCanvas: React.FC = () => {
             </Stage>
 
             {/* Text Editor Overlay */}
-            {editingText && (
+            {!readOnly && editingText && (
                 <TextEditorOverlay
                     editingText={editingText}
                     stageScale={stagePos.scale}

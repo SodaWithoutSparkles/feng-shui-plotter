@@ -95,28 +95,31 @@ export const ProjectConfigModal: React.FC<ProjectConfigModalProps> = ({
         // Calculate Purple
         const pStar = calcPurple(annualYear);
 
-        setFengShui(genFengShui(
+        const newFS = genFengShui(
             period,
             mfData.waterStar,
             mfData.waterReversed,
             mfData.mountainStar,
             mfData.mountainReversed,
             pStar
-        ));
+        );
+
+        // Update purple calculated_at to Jan 1 of annualYear
+        // And ensure view stays consistent with selected year
+        setFengShui({
+            ...newFS,
+            purples: {
+                ...newFS.purples,
+                calculated_at: new Date(annualYear, 0, 1),
+                viewMode: 'manual',
+                manualYear: annualYear
+            }
+        });
 
         setFacingInfo({
             main: mfData.mainFacing,
             sub: mfData.subFacing
         });
-
-        // Update purple calculated_at to Jan 1 of annualYear
-        setFengShui(prev => ({
-            ...prev,
-            purples: {
-                ...prev.purples,
-                calculated_at: new Date(annualYear, 0, 1)
-            }
-        }));
 
     }, [facingAngle, period, annualYear]);
 

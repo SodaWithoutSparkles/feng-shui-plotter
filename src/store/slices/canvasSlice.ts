@@ -5,6 +5,7 @@ export const createCanvasSlice: StoreSlice = (set) => ({
     objects: [],
     past: [],
     future: [],
+    hasPerformedClearAll: false,
 
     addItem: (item: CanvasItem) => set((state) => {
         const trimmedHistory = state.historyUndoCount > 0
@@ -115,6 +116,24 @@ export const createCanvasSlice: StoreSlice = (set) => ({
             historyUndoCount: 0,
             past: [...state.past, state.objects],
             future: []
+        };
+    }),
+
+    deleteAllItems: () => set((state) => {
+        if (state.objects.length === 0) return {};
+        const trimmedHistory = state.historyUndoCount > 0
+            ? state.history.slice(state.historyUndoCount)
+            : state.history;
+        return {
+            objects: [],
+            selectedIds: [],
+            colors: state.selectionColorSnapshot ?? state.colors, // Restore global colors if we were selecting
+            selectionColorSnapshot: null,
+            history: ['Deleted all items', ...trimmedHistory].slice(0, 50),
+            historyUndoCount: 0,
+            past: [...state.past, state.objects],
+            future: [],
+            hasPerformedClearAll: true
         };
     }),
 

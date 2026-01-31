@@ -96,6 +96,8 @@ export interface FengShuiData {
         start: number;
         calculated_at: Date;
         offset?: number;
+        viewMode?: 'auto' | 'manual';
+        manualYear?: number;
     };
 }
 

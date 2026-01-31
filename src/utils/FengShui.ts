@@ -111,7 +111,8 @@ export function genFengShui(
         },
         purples: {
             start: purplesStart,
-            calculated_at: new Date
+            calculated_at: new Date,
+            viewMode: 'auto'
         }
     }
 }

@@ -31,7 +31,7 @@ export const createProjectSlice: StoreSlice = (set) => ({
 
     loadProject: (data: SaveFile) => {
         set((state) => ({
-            mode: 'edit',
+            mode: state.mode === 'view' ? 'view' : 'edit',
             floorplan: data.floorplan,
             objects: data.objects,
             projectName: data.projectName ?? state.projectName,
@@ -48,7 +48,8 @@ export const createProjectSlice: StoreSlice = (set) => ({
             past: [],
             future: [],
             selectedIds: [],
-            selectionColorSnapshot: null
+            selectionColorSnapshot: null,
+            hasPerformedClearAll: false
         }));
     },
 
@@ -77,6 +78,7 @@ export const createProjectSlice: StoreSlice = (set) => ({
         past: [],
         future: [],
         selectedIds: [],
-        selectionColorSnapshot: null
+        selectionColorSnapshot: null,
+        hasPerformedClearAll: false
     }),
 });

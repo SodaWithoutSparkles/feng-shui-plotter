@@ -22,6 +22,7 @@ export const WelcomeScreen: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [hasAutoSave, setHasAutoSave] = useState(false);
     const [isDraggingFile, setIsDraggingFile] = useState(false);
+    const [screenWarning, setScreenWarning] = useState<'none' | 'small' | 'very-small'>('none');
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Build info injected at build time by CI (Vite exposes VITE_ prefixed vars on import.meta.env)
@@ -50,6 +51,21 @@ export const WelcomeScreen: React.FC = () => {
             if (saved) setHasAutoSave(true);
         };
         checkAutoSave();
+
+        const checkSize = () => {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            if (Math.min(w, h) < 620) {
+                setScreenWarning('very-small');
+            } else if (w < 830 || h < 764) {
+                setScreenWarning('small');
+            } else {
+                setScreenWarning('none');
+            }
+        };
+        checkSize();
+        window.addEventListener('resize', checkSize);
+        return () => window.removeEventListener('resize', checkSize);
     }, []);
 
     const handleRecover = async () => {
@@ -196,6 +212,15 @@ export const WelcomeScreen: React.FC = () => {
                     </div>
                     <h2 className="text-2xl font-semibold text-gray-800 mb-2">New Project</h2>
                     <p className="text-gray-500 text-center">Start a new floorplan annotation from scratch.</p>
+
+                    <a
+                        href="/?mode=view"
+                        target='_blank'
+                        onClick={(e) => e.stopPropagation()}
+                        className="mt-4 text-sm text-gray-400 hover:text-gray-600 underline"
+                    >
+                        Or try View Only Mode
+                    </a>
                 </button>
 
                 {/* Load Project Card */}
@@ -272,6 +297,39 @@ export const WelcomeScreen: React.FC = () => {
                     )}
                 </div>
             </div>
+
+            {screenWarning !== 'none' && (
+                <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+                    <div className={`bg-white rounded-lg shadow-xl p-6 max-w-md w-full ${screenWarning === 'very-small' ? 'border-4 border-red-500' : 'border-4 border-yellow-500'}`}>
+                        <h3 className="text-xl font-bold mb-4 flex items-center">
+                            {screenWarning === 'very-small' ? (
+                                <span className="text-red-600 mr-2">⚠️ Screen Too Small</span>
+                            ) : (
+                                <span className="text-yellow-600 mr-2">⚠️ Small Screen Detected</span>
+                            )}
+                        </h3>
+                        <p className="text-gray-600 mb-6">
+                            {screenWarning === 'very-small'
+                                ? "This device's screen is too small for the editor. Editing will be extremely difficult. To continue working or viewing your project, please switch to View Only Mode."
+                                : "The screen size is smaller than recommended (830x764). You may experience layout issues."}
+                        </p>
+                        <div className="flex flex-col gap-3">
+                            <button
+                                onClick={() => window.location.href = '/?mode=view'}
+                                className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition flex items-center justify-center gap-2"
+                            >
+                                Switch to View Only Mode
+                            </button>
+                            <button
+                                onClick={() => setScreenWarning('none')}
+                                className="w-full py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+                            >
+                                {screenWarning === 'very-small' ? 'Try Editing Anyway (Discouraged)' : 'Continue Editing'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
         </div>
     );

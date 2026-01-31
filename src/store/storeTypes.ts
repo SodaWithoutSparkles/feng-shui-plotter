@@ -31,8 +31,8 @@ export interface KeyboardShortcutConfig {
 
 export interface AppState {
     // Application Mode
-    mode: 'welcome' | 'edit';
-    setMode: (mode: 'welcome' | 'edit') => void;
+    mode: 'welcome' | 'edit' | 'view';
+    setMode: (mode: 'welcome' | 'edit' | 'view') => void;
 
     // Project Data
     projectName: string;
@@ -58,6 +58,8 @@ export interface AppState {
     commitHistory: (snapshot: CanvasItem[]) => void;
     removeItem: (id: string) => void;
     deleteSelected: () => void;
+    deleteAllItems: () => void;
+    hasPerformedClearAll: boolean; // flag to guard against accidental massive data loss on save
     selectedIds: string[];
     selectItem: (id: string | null) => void;
     toggleSelectItem: (id: string) => void;

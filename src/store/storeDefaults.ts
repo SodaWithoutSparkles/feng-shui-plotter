@@ -5,7 +5,7 @@ export const defaultFengShui: FengShuiData = {
     blacks: { start: 0 },
     reds: { start: 0, reversed: false },
     blues: { start: 0, reversed: false },
-    purples: { start: 0, calculated_at: new Date() },
+    purples: { start: 0, calculated_at: new Date(), viewMode: 'auto' },
 };
 
 export const defaultKeyboardShortcuts: KeyboardShortcutConfig = {
