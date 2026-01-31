@@ -16,9 +16,19 @@ export const useFloorplanImage = (
                 if (containerRef.current) {
                     const stageW = containerRef.current.offsetWidth;
                     const stageH = containerRef.current.offsetHeight;
-                    const x = (stageW - img.width) / 2;
-                    const y = (stageH - img.height) / 2;
-                    setStagePos({ x, y, scale: 1 });
+
+                    // Calculate scale so the longer side of the floorplan is 50% of canvas
+                    const targetSize = Math.max(stageW, stageH) * 0.5;
+                    const imgLongSide = Math.max(img.width, img.height);
+                    const scale = targetSize / imgLongSide;
+
+                    // Center the stage view on the floorplan
+                    // Since the image is rendered with center offset at (0,0),
+                    // we align the stage center (0,0) to the canvas center
+                    const x = stageW / 2;
+                    const y = stageH / 2;
+
+                    setStagePos({ x, y, scale });
                 }
             };
         } else {

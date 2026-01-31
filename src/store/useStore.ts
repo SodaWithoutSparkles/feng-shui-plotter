@@ -7,6 +7,7 @@ import { createFengShuiSlice } from './slices/fengShuiSlice';
 import { createPreferencesSlice } from './slices/preferencesSlice';
 import { createProjectSlice } from './slices/projectSlice';
 import { createToolsSlice } from './slices/toolsSlice';
+import { createNavigationSlice } from './slices/navigationSlice';
 
 export const useStore = create<AppState>((set, get, store) => ({
     ...createProjectSlice(set, get, store),
@@ -16,4 +17,5 @@ export const useStore = create<AppState>((set, get, store) => ({
     ...createToolsSlice(set, get, store),
     ...createColorsSlice(set, get, store),
     ...createPreferencesSlice(set, get, store),
+    ...createNavigationSlice(set, get, store),
 } as AppState));

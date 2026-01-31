@@ -147,6 +147,12 @@ export interface AppState {
     setCancelKey: (key: string) => void;
     setTextSaveShortcut: (modifier: TextSaveModifier, key: string) => void;
     setToolShortcut: (tool: keyof KeyboardShortcutConfig['tools'], key: string) => void;
+
+    // Canvas Navigation
+    canvasPosition: { x: number; y: number; scale: number };
+    setCanvasPosition: (pos: { x: number; y: number; scale: number }) => void;
+    homeViewTrigger: number;
+    triggerHomeView: () => void;
 }
 
 export type StoreSlice = StateCreator<AppState, [], [], Partial<AppState>>;

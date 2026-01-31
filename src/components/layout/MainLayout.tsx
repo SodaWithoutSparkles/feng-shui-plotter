@@ -24,7 +24,10 @@ export const MainLayout: React.FC = () => {
         if (config.floorplanImage) {
             setFloorplanImage(config.floorplanImage);
         }
-        updateFloorplan({ rotation: config.rotation });
+        updateFloorplan({
+            rotation: config.rotation,
+            ...(config.floorplanPosition && { x: config.floorplanPosition.x, y: config.floorplanPosition.y })
+        });
         updateFengShui(config.fengShui);
         setShowProjectConfig(false);
     };

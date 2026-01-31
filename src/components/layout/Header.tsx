@@ -5,7 +5,10 @@ import { compressToBase64 } from '../../utils/compress';
 import { createDefaultProjectName } from '../../utils/projectName';
 import { sanitizeFilename, ensureSaveExtension, buildDefaultSaveName, parseTimestamp, parseSaveFile, writeSaveFileToHandle, downloadSaveFile } from '../../utils/saveProject';
 import { ShortcutConfigModal } from '../common/ShortcutConfigModal';
-import { ProjectConfigModal } from '../ProjectConfigModal';
+import { FileMenu } from './header/FileMenu';
+import { EditMenu } from './header/EditMenu';
+import { OptionsMenu } from './header/OptionsMenu';
+import { HelpMenu } from './header/HelpMenu';
 import { HelpModal } from '../help/HelpModal';
 import type { HelpSectionId } from '../help/sections';
 
@@ -346,27 +349,6 @@ export const Header: React.FC = () => {
         setNameDraft(projectName);
     };
 
-    // Close menu when clicking outside (simple implementation: overlay or specific click handler would be better but this is MVP)
-    const MenuItem = ({ label, onClick, shortcut, checked, disabled }: { label: string, onClick: () => void, shortcut?: string, checked?: boolean, disabled?: boolean }) => (
-        <div
-            className={`px-4 py-2 flex justify-between min-w-[160px] ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-700 cursor-pointer'}`}
-            onClick={(e) => {
-                e.stopPropagation();
-                if (disabled) return;
-                onClick();
-                setActiveMenu(null);
-            }}
-        >
-            <div className="flex items-center">
-                {checked !== undefined && (
-                    <span className="w-4 mr-2 text-blue-400">{checked ? '✓' : ''}</span>
-                )}
-                <span>{label}</span>
-            </div>
-            {shortcut && <span className="text-gray-500 text-xs ml-4 my-auto">{shortcut}</span>}
-        </div>
-    );
-
     return (
         <div className="h-8 bg-gray-900 border-b border-gray-700 flex items-center px-2 text-sm text-gray-300 select-none relative z-50">
             {/* Hidden Inputs */}
@@ -374,52 +356,40 @@ export const Header: React.FC = () => {
             <input type="file" ref={imageInputRef} className="hidden" accept="image/*" onChange={handleImageInsert} />
 
             {/* Menus */}
-            <div className="relative">
-                <div
-                    className={`px-3 hover:bg-gray-700 cursor-pointer h-full flex items-center ${activeMenu === 'file' ? 'bg-gray-700' : ''}`}
-                    onClick={() => toggleMenu('file')}
-                >
-                    File
-                </div>
-                {activeMenu === 'file' && (
-                    <div className="absolute top-full left-0 bg-gray-800 border border-gray-600 shadow-xl py-1 rounded-b-md min-w-[260px]">
-                        <MenuItem label="New Project" onClick={() => setShowProjectInit(true)} />
-                        {/* Project Init Modal for New Project */}
-                        <ProjectConfigModal
-                            isOpen={showProjectInit}
-                            onClose={() => setShowProjectInit(false)}
-                            onComplete={(config) => {
-                                resetProject();
-                                setFloorplanImage(config.floorplanImage);
-                                updateFloorplan({ rotation: config.rotation });
-                                updateFengShui(config.fengShui);
-                                if (config.compassPosition) {
-                                    updateCompass({ x: config.compassPosition.x, y: config.compassPosition.y });
-                                }
-                                setMode && setMode('edit');
-                                setShowProjectInit(false);
-                            }}
-                        />
-                        <MenuItem label="Open Project" onClick={handleOpenProject} />
-                        <MenuItem
-                            label={supportsFileSystemAccess ? 'Save Project (in-place)' : 'Save Project'}
-                            onClick={handleSave}
-                            disabled={!hasNameChanged}
-                        />
-                        <MenuItem label="Save Project As..." onClick={handleSaveAs} />
-                        <MenuItem
-                            label="Auto-save"
-                            onClick={() => {
-                                toggleAutoSave();
-                            }}
-                            checked={autoSave}
-                        />
-                        <div className="h-px bg-gray-700 my-1" />
-                        <MenuItem label="Configure Project" onClick={() => { setShowProjectConfig(true); }} />
-                        <MenuItem label="Export as Image..." onClick={() => triggerExport()} />
-                    </div>
-                )}
-            </div>
+            <FileMenu
+                activeMenu={activeMenu}
+                onToggle={toggleMenu}
+                onCloseMenu={() => setActiveMenu(null)}
+                supportsFileSystemAccess={supportsFileSystemAccess}
+                hasNameChanged={hasNameChanged}
+                autoSave={autoSave}
+                onNewProject={() => {
+                    setShowProjectInit(true);
+                    setActiveMenu(null);
+                }}
+                showProjectInit={showProjectInit}
+                onCloseProjectInit={() => setShowProjectInit(false)}
+                onCompleteProjectInit={(config) => {
+                    resetProject();
+                    setFloorplanImage(config.floorplanImage);
+                    updateFloorplan({
+                        rotation: config.rotation,
+                        ...(config.floorplanPosition && { x: config.floorplanPosition.x, y: config.floorplanPosition.y })
+                    });
+                    updateFengShui(config.fengShui);
+                    if (config.compassPosition) {
+                        updateCompass({ x: config.compassPosition.x, y: config.compassPosition.y });
+                    }
+                    setMode && setMode('edit');
+                    setShowProjectInit(false);
+                }}
+                onOpenProject={handleOpenProject}
+                onSave={handleSave}
+                onSaveAs={handleSaveAs}
+                onToggleAutoSave={toggleAutoSave}
+                onConfigureProject={() => { setShowProjectConfig(true); }}
+                onExport={triggerExport}
+            />
 
             <div className="absolute left-1/2 top-0 h-full -translate-x-1/2 flex items-center max-w-[480px] w-full justify-center px-4">
                 {isEditingName ? (
@@ -451,148 +421,37 @@ export const Header: React.FC = () => {
                 )}
             </div>
 
-            <div className="relative">
-                <div
-                    className={`px-3 hover:bg-gray-700 cursor-pointer h-full flex items-center ${activeMenu === 'edit' ? 'bg-gray-700' : ''}`}
-                    onClick={() => toggleMenu('edit')}
-                >
-                    Edit
-                </div>
-                {activeMenu === 'edit' && (
-                    <div className="absolute top-full left-0 bg-gray-800 border border-gray-600 shadow-xl py-1 rounded-b-md min-w-[260px]">
-                        <MenuItem label="Undo" onClick={undo} shortcut="Ctrl+Z" />
-                        <MenuItem label="Redo" onClick={redo} shortcut="Ctrl+Y" />
-                        <div className="h-px bg-gray-700 my-1" />
-                        <MenuItem label="Clone Object" onClick={cloneSelected} shortcut="Ctrl+D" />
-                        <MenuItem label="Delete Selected" onClick={deleteSelected} shortcut="Del" />
-                        <MenuItem label="Move Up" onClick={() => moveSelectedLayer('up')} shortcut="]" />
-                        <MenuItem label="Move Down" onClick={() => moveSelectedLayer('down')} shortcut="[" />
-                        <div className="h-px bg-gray-700 my-1" />
-                        <MenuItem label="Insert Local Image" onClick={() => imageInputRef.current?.click()} />
-                        <MenuItem label="Insert Remote Image" onClick={handleRemoteImageInsert} />
-                    </div>
-                )}
-            </div>
+            <EditMenu
+                activeMenu={activeMenu}
+                onToggle={toggleMenu}
+                onCloseMenu={() => setActiveMenu(null)}
+                onUndo={undo}
+                onRedo={redo}
+                onCloneSelected={cloneSelected}
+                onDeleteSelected={deleteSelected}
+                onMoveSelectedLayer={moveSelectedLayer}
+                onInsertLocalImage={() => imageInputRef.current?.click()}
+                onInsertRemoteImage={handleRemoteImageInsert}
+            />
 
-            <div className="relative">
-                <div
-                    className={`px-3 hover:bg-gray-700 cursor-pointer h-full flex items-center ${activeMenu === 'option' ? 'bg-gray-700' : ''}`}
-                    onClick={() => toggleMenu('option')}
-                >
-                    Options
-                </div>
-                {activeMenu === 'option' && (
-                    <div className="absolute top-full left-0 bg-gray-800 border border-gray-600 shadow-xl py-1 rounded-b-md min-w-[260px]">
-                        <MenuItem label="About" onClick={() => alert('Feng Shui Plotter v0.1.0\nBuilt with React & Vite')} />
+            <OptionsMenu
+                activeMenu={activeMenu}
+                onToggle={toggleMenu}
+                onCloseMenu={() => setActiveMenu(null)}
+                compass={compass}
+                onUpdateCompass={updateCompass}
+                onShowShortcutConfig={() => setShowShortcutConfig(true)}
+            />
 
-                        <div className="h-px bg-gray-700 my-1" />
-                        <div className="px-4 py-1 text-xs font-bold text-gray-500 uppercase tracking-wider">Compass</div>
-
-                        <div
-                            className="px-4 py-2 hover:bg-gray-700 cursor-pointer flex justify-between items-center"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                updateCompass({ locked: !compass.locked });
-                            }}
-                        >
-                            <div className="flex items-center">
-                                <span className={`w-4 mr-2 text-blue-400 font-bold`}>{compass.locked ? '✓' : ''}</span>
-                                <span>Lock to South</span>
-                            </div>
-                        </div>
-
-                        <div className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
-                            <div className="flex justify-between text-xs text-text-gray-300 mb-1">
-                                <span>Opacity</span>
-                                <span>{Math.round(compass.opacity * 100)}%</span>
-                            </div>
-                            <input
-                                type="range"
-                                min="0.1" max="1" step="0.01"
-                                value={compass.opacity}
-                                onChange={(e) => updateCompass({ opacity: parseFloat(e.target.value) })}
-                                className="w-full accent-blue-500 h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer"
-                            />
-                        </div>
-
-                        <div className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
-                            <div className="flex justify-between text-xs text-gray-300 mb-1">
-                                <span>Radius</span>
-                                <span>{Math.round(compass.radius)}px</span>
-                            </div>
-                            <input
-                                type="range"
-                                min="50" max="600" step="10"
-                                value={compass.radius}
-                                onChange={(e) => updateCompass({ radius: parseFloat(e.target.value) })}
-                                className="w-full accent-blue-500 h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer"
-                            />
-                        </div>
-                        <div className="h-px bg-gray-700 my-1" />
-                        <MenuItem
-                            label="Keyboard Shortcuts..."
-                            onClick={() => {
-                                setShowShortcutConfig(true);
-                            }}
-                        />
-                    </div>
-                )}
-            </div>
-
-            <div className="relative">
-                <div
-                    className={`px-3 hover:bg-gray-700 cursor-pointer h-full flex items-center ${activeMenu === 'help' ? 'bg-gray-700' : ''}`}
-                    onClick={() => toggleMenu('help')}
-                >
-                    Help
-                </div>
-                {activeMenu === 'help' && (
-                    <div className="absolute top-full left-0 bg-gray-800 border border-gray-600 shadow-xl py-1 rounded-b-md min-w-[260px]">
-                        <MenuItem
-                            label="Tools"
-                            onClick={() => {
-                                setHelpSectionId('tools');
-                                setShowHelp(true);
-                            }}
-                        />
-                        <MenuItem
-                            label="Colors"
-                            onClick={() => {
-                                setHelpSectionId('colors');
-                                setShowHelp(true);
-                            }}
-                        />
-                        <MenuItem
-                            label="Multi-function panel"
-                            onClick={() => {
-                                setHelpSectionId('panel');
-                                setShowHelp(true);
-                            }}
-                        />
-                        <MenuItem
-                            label="FengShui"
-                            onClick={() => {
-                                setHelpSectionId('fengshui');
-                                setShowHelp(true);
-                            }}
-                        />
-                        <MenuItem
-                            label="Compass"
-                            onClick={() => {
-                                setHelpSectionId('compass');
-                                setShowHelp(true);
-                            }}
-                        />
-                        <MenuItem
-                            label="Images"
-                            onClick={() => {
-                                setHelpSectionId('images');
-                                setShowHelp(true);
-                            }}
-                        />
-                    </div>
-                )}
-            </div>
+            <HelpMenu
+                activeMenu={activeMenu}
+                onToggle={toggleMenu}
+                onCloseMenu={() => setActiveMenu(null)}
+                onShowHelp={(sectionId) => {
+                    setHelpSectionId(sectionId);
+                    setShowHelp(true);
+                }}
+            />
 
             {/* Click backdrop to close menu */}
             {activeMenu && (

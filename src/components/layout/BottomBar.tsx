@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useStore } from '../../store/useStore';
-import { Compass, Star } from 'lucide-react';
+import { Compass, Star, Home } from 'lucide-react';
 import clsx from 'clsx';
 
 export const BottomBar: React.FC = () => {
@@ -12,6 +12,9 @@ export const BottomBar: React.FC = () => {
     const autoSave = useStore((state) => state.autoSave);
     const lastAutoSaveAt = useStore((state) => state.lastAutoSaveAt);
     const lastSavedAt = useStore((state) => state.lastSavedAt);
+    const canvasPosition = useStore((state) => state.canvasPosition);
+    const triggerHomeView = useStore((state) => state.triggerHomeView);
+    const floorplan = useStore((state) => state.floorplan);
 
     // Keep time-sensitive statuses fresh by forcing a re-render every 10s when nothing else changes.
     const [, setTick] = useState(0);
@@ -50,15 +53,36 @@ export const BottomBar: React.FC = () => {
                     Tool: <span className="text-white font-medium capitalize">{activeTool}</span>
                 </div>
                 <div className="text-gray-400">
+                    Zoom: <span className="text-white font-medium">{Math.round(canvasPosition.scale * 100)}%</span>
+                </div>
+                <div className="text-gray-400">
+                    X: <span className="text-white font-medium">{Math.round(canvasPosition.x)}</span>
+                    {' '}Y: <span className="text-white font-medium">{Math.round(canvasPosition.y)}</span>
+                </div>
+                <div className="text-gray-400">
                     <span className={autoSave ? 'text-green-400' : 'text-gray-500'}>{getAutoSaveStatus()}</span>
                 </div>
                 <div className="text-gray-400">
                     <span className="text-blue-300">{getLastSavedStatus()}</span>
                 </div>
-                {/* Coordinates or Zoom status could go here */}
             </div>
 
             <div className="flex items-center space-x-2 h-full py-1">
+                <button
+                    onClick={triggerHomeView}
+                    disabled={!floorplan.imageSrc}
+                    className={clsx(
+                        "px-3 h-full flex items-center rounded transition-colors space-x-2",
+                        floorplan.imageSrc
+                            ? "bg-gray-800 hover:bg-gray-700 text-gray-300"
+                            : "bg-gray-800 text-gray-600 cursor-not-allowed"
+                    )}
+                    title="Reset view to center floorplan"
+                >
+                    <Home size={14} />
+                    <span>Home</span>
+                </button>
+
                 <button
                     onClick={toggleCompass}
                     className={clsx(

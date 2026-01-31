@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect, useMemo } from 'react';
 import { Minus, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface PopoverSliderProps {
@@ -8,6 +8,8 @@ interface PopoverSliderProps {
     max?: number;
     step?: number;
     bigStep?: number;
+    // Button step (applies to the small +/- buttons). Defaults to `step` when unset.
+    buttonStep?: number;
     label?: string;
     unit?: string;
 
@@ -21,6 +23,12 @@ interface PopoverSliderProps {
 
     // Presets
     presets?: { label: string; value: number }[];
+    // Layout for presets grid
+    presetsCols?: number; // number of columns (default 2)
+    presetsMaxRows?: number; // max visible rows; when set, presets area becomes scrollable
+    presetsScrollable?: boolean; // if true, enable scrolling without max rows
+    // Column width (px) used when calculating popover min width to fit all columns
+    presetsColWidth?: number;
 
     // Styles
     className?: string;
@@ -41,6 +49,11 @@ export const PopoverSlider: React.FC<PopoverSliderProps> = ({
     hideInput = false,
     hideButtons = false,
     presets,
+    presetsCols = 2,
+    presetsMaxRows,
+    presetsScrollable = false,
+    presetsColWidth = 96,
+    buttonStep = step,
     className = '',
     popoverClassName = ''
 }) => {
@@ -60,6 +73,16 @@ export const PopoverSlider: React.FC<PopoverSliderProps> = ({
             setPopoverAnchor(null);
         }
     }, [isOpen]);
+
+    // Compute a min width so the popover can fit all preset columns
+    const popoverMinWidth = useMemo(() => {
+        if (!presets || presets.length === 0) return 200;
+        const colWidth = presetsColWidth ?? 96; // px per column
+        const gap = 8; // 0.5rem -> 8px (matches grid gap)
+        const paddingLR = 32; // p-4 -> 16px left + 16px right
+        const total = presetsCols * colWidth + Math.max(0, presetsCols - 1) * gap + paddingLR;
+        return Math.max(200, Math.round(total));
+    }, [presetsCols, presetsColWidth, presets]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -122,13 +145,12 @@ export const PopoverSlider: React.FC<PopoverSliderProps> = ({
     useEffect(() => { valueRef.current = value; }, [value]);
 
     // Ref-based actions for interval
-    const doIncrement = () => handleConfirm(valueRef.current + step);
-    const doDecrement = () => handleConfirm(valueRef.current - step);
+    const doIncrement = () => handleConfirm(valueRef.current + buttonStep);
+    const doDecrement = () => handleConfirm(valueRef.current - buttonStep);
     const doIncrementBig = () => handleConfirm(valueRef.current + bigStep);
     const doDecrementBig = () => handleConfirm(valueRef.current - bigStep);
 
-    const handleMouseDown = (action: () => void) => (e: React.MouseEvent | React.TouchEvent) => {
-        // e.preventDefault();
+    const handleMouseDown = (action: () => void) => () => {
         startContinuous(action);
     };
 
@@ -159,10 +181,13 @@ export const PopoverSlider: React.FC<PopoverSliderProps> = ({
             {/* Popover */}
             {isOpen && (
                 <div
-                    className={`absolute z-50 top-full mt-2 min-w-[200px] p-4 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 ${popoverClassName}`}
+                    className={`absolute z-50 top-full mt-2 p-4 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 ${popoverClassName}`}
                     style={{
                         left: popoverAnchor !== null ? `${popoverAnchor}px` : '50%',
-                        transform: 'translateX(-50%)'
+                        transform: 'translateX(-50%)',
+                        minWidth: `${popoverMinWidth}px`,
+                        maxWidth: '90vw',
+                        width: 'auto'
                     }}
                 >
                     {label && <div className="text-xs text-gray-400 mb-3 font-semibold uppercase tracking-wider">{label}</div>}
@@ -191,7 +216,7 @@ export const PopoverSlider: React.FC<PopoverSliderProps> = ({
                                             onTouchStart={handleMouseDown(doDecrement)}
                                             onTouchEnd={handleMouseUp}
                                             className="p-1 hover:bg-gray-800 rounded text-gray-400 hover:text-white transition-colors"
-                                            title={`-${step}`}
+                                            title={`-${buttonStep}`}
                                         >
                                             <Minus size={16} />
                                         </button>
@@ -225,7 +250,7 @@ export const PopoverSlider: React.FC<PopoverSliderProps> = ({
                                             onTouchStart={handleMouseDown(doIncrement)}
                                             onTouchEnd={handleMouseUp}
                                             className="p-1 hover:bg-gray-800 rounded text-gray-400 hover:text-white transition-colors"
-                                            title={`+${step}`}
+                                            title={`+${buttonStep}`}
                                         >
                                             <Plus size={16} />
                                         </button>
@@ -260,12 +285,24 @@ export const PopoverSlider: React.FC<PopoverSliderProps> = ({
 
                         {/* Presets */}
                         {presets && presets.length > 0 && (
-                            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-800">
+                            <div
+                                className="pt-2 border-t border-gray-800"
+                                style={{
+                                    display: 'grid',
+                                    gridTemplateColumns: `repeat(${presetsCols}, minmax(0, 1fr))`,
+                                    gap: '0.5rem',
+                                    maxHeight: presetsMaxRows ? `${presetsMaxRows * 40}px` : presetsScrollable ? '8rem' : undefined,
+                                    overflowY: presetsMaxRows || presetsScrollable ? 'auto' : undefined,
+                                }}
+                                role="list"
+                                aria-label="presets"
+                            >
                                 {presets.map((p) => (
                                     <button
                                         key={p.label}
                                         onClick={() => handleConfirm(p.value)}
-                                        className="text-xs bg-gray-800 hover:bg-gray-700 py-1.5 rounded text-gray-300 transition-colors"
+                                        className="text-xs bg-gray-800 hover:bg-gray-700 py-1.5 rounded text-gray-300 transition-colors min-h-[36px]"
+                                        role="listitem"
                                     >
                                         {p.label}
                                     </button>

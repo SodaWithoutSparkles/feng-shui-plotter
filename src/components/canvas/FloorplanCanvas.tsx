@@ -36,6 +36,8 @@ export const FloorplanCanvas: React.FC = () => {
     const toolSettings = useStore((state) => state.toolSettings);
     const exportTrigger = useStore((state) => state.exportTrigger);
     const keyboardShortcuts = useStore((state) => state.keyboardShortcuts);
+    const setCanvasPosition = useStore((state) => state.setCanvasPosition);
+    const homeViewTrigger = useStore((state) => state.homeViewTrigger);
 
     // Refs
     const stageRef = useRef<any>(null);
@@ -120,6 +122,40 @@ export const FloorplanCanvas: React.FC = () => {
         updateCompass,
         updateFloorplan
     );
+
+    // Sync stagePos to store
+    useEffect(() => {
+        setCanvasPosition(stagePos);
+    }, [stagePos, setCanvasPosition]);
+
+    // Handle home view trigger
+    useEffect(() => {
+        if (homeViewTrigger > 0 && floorplanImg && containerRef.current) {
+            const stageW = containerRef.current.offsetWidth;
+            const stageH = containerRef.current.offsetHeight;
+
+            // Calculate scale so the longer side of the floorplan is 50% of canvas
+            const targetSize = Math.max(stageW, stageH) * 0.5;
+            const imgLongSide = Math.max(floorplanImg.width, floorplanImg.height);
+            const scale = targetSize / imgLongSide;
+
+            // Center the stage view on the floorplan
+            const x = stageW / 2;
+            const y = stageH / 2;
+
+            setStagePos({ x, y, scale });
+        }
+    }, [homeViewTrigger, floorplanImg, containerRef, setStagePos]);
+
+    const handleStageDragMove = (e: any) => {
+        if (e.target === stageRef.current) {
+            setStagePos({
+                x: e.target.x(),
+                y: e.target.y(),
+                scale: stageRef.current.scaleX()
+            });
+        }
+    };
 
     const handleStageClick = (e: any) => {
         if (e.target === e.target.getStage()) {
@@ -294,6 +330,7 @@ export const FloorplanCanvas: React.FC = () => {
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
+                onDragMove={handleStageDragMove}
                 onClick={handleStageClick}
                 scaleX={stagePos.scale}
                 scaleY={stagePos.scale}
@@ -311,6 +348,8 @@ export const FloorplanCanvas: React.FC = () => {
                             image={floorplanImg}
                             x={floorplan.x}
                             y={floorplan.y}
+                            offsetX={floorplanImg.width / 2}
+                            offsetY={floorplanImg.height / 2}
                             scaleX={floorplan.scale}
                             scaleY={floorplan.scale}
                             rotation={floorplan.rotation}

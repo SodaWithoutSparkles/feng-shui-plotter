@@ -60,6 +60,16 @@ export const createProjectSlice: StoreSlice = (set) => ({
         lastSavedAt: null,
         floorplan: { imageSrc: null, rotation: 0, scale: 1, opacity: 1, x: 0, y: 0 },
         objects: [],
+        compass: {
+            visible: true,
+            mode: 'visible',
+            rotation: 0,
+            opacity: 0.9,
+            x: 0,
+            y: 0,
+            radius: 200,
+            locked: true
+        },
         fengShui: defaultFengShui,
         history: ['New Project'],
         historyUndoCount: 0,

@@ -41,7 +41,8 @@ const NumberStepper: React.FC<NumberStepperProps> = ({
     return (
         <div className={`flex items-center justify-between py-1 border-b border-gray-700 last:border-0 ${className}`}>
             <span className="text-xs text-gray-300 font-medium mr-2">{label}</span>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center justify-end space-x-2">
+                {children}
                 <div className="flex items-center bg-gray-900 rounded border border-gray-600">
                     <button
                         className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-700 rounded-l transition-colors"
@@ -61,7 +62,6 @@ const NumberStepper: React.FC<NumberStepperProps> = ({
                         +
                     </button>
                 </div>
-                {children}
             </div>
         </div>
     );
@@ -144,7 +144,7 @@ export const FlystarVisualization: React.FC<FlystarVisualizationProps> = ({
 
                 {/* Controls */}
                 {showControls && updateFengShui && (
-                    <div className="flex flex-col p-3 text-sm bg-gray-800 rounded-lg shadow-inner">
+                    <div className="flex flex-col p-3 text-sm bg-gray-800 rounded-lg shadow-inner w-[220px]">
 
                         <NumberStepper
                             label="Year"

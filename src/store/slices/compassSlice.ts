@@ -6,8 +6,8 @@ export const createCompassSlice: StoreSlice = (set) => ({
         mode: 'visible',
         rotation: 0,
         opacity: 0.9,
-        x: 400,
-        y: 300,
+        x: 0,
+        y: 0,
         radius: 200,
         locked: true
     },
