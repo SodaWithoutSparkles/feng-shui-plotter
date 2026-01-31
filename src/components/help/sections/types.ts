@@ -4,6 +4,7 @@ export type HelpSectionId =
     | 'tools'
     | 'colors'
     | 'panel'
+    | 'bottomBar'
     | 'fengshui'
     | 'compass'
     | 'images';

@@ -4,6 +4,7 @@ import type { HelpSection, HelpSectionId } from './types';
 import { toolsHelpSection } from './en/tools';
 import { colorsHelpSection } from './en/colors';
 import { panelHelpSection } from './en/panel';
+import { bottomBarHelpSection } from './en/bottomBar';
 import { fengShuiHelpSection } from './en/fengshui';
 import { compassHelpSection } from './en/compass';
 import { imagesHelpSection } from './en/images';
@@ -12,6 +13,7 @@ import { imagesHelpSection } from './en/images';
 import { toolsHelpSection as toolsHelpSectionZhHans } from './zh-hans/tools';
 import { colorsHelpSection as colorsHelpSectionZhHans } from './zh-hans/colors';
 import { panelHelpSection as panelHelpSectionZhHans } from './zh-hans/panel';
+import { bottomBarHelpSection as bottomBarHelpSectionZhHans } from './zh-hans/bottomBar';
 import { fengShuiHelpSection as fengShuiHelpSectionZhHans } from './zh-hans/fengshui';
 import { compassHelpSection as compassHelpSectionZhHans } from './zh-hans/compass';
 import { imagesHelpSection as imagesHelpSectionZhHans } from './zh-hans/images';
@@ -20,6 +22,7 @@ import { imagesHelpSection as imagesHelpSectionZhHans } from './zh-hans/images';
 import { toolsHelpSection as toolsHelpSectionZhHant } from './zh-hant/tools';
 import { colorsHelpSection as colorsHelpSectionZhHant } from './zh-hant/colors';
 import { panelHelpSection as panelHelpSectionZhHant } from './zh-hant/panel';
+import { bottomBarHelpSection as bottomBarHelpSectionZhHant } from './zh-hant/bottomBar';
 import { fengShuiHelpSection as fengShuiHelpSectionZhHant } from './zh-hant/fengshui';
 import { compassHelpSection as compassHelpSectionZhHant } from './zh-hant/compass';
 import { imagesHelpSection as imagesHelpSectionZhHant } from './zh-hant/images';
@@ -37,6 +40,7 @@ export function getHelpSections(locale: HelpLocale = 'en'): HelpSection[] {
                 toolsHelpSectionZhHans,
                 colorsHelpSectionZhHans,
                 panelHelpSectionZhHans,
+                bottomBarHelpSectionZhHans,
                 fengShuiHelpSectionZhHans,
                 compassHelpSectionZhHans,
                 imagesHelpSectionZhHans
@@ -47,6 +51,7 @@ export function getHelpSections(locale: HelpLocale = 'en'): HelpSection[] {
                 toolsHelpSectionZhHant,
                 colorsHelpSectionZhHant,
                 panelHelpSectionZhHant,
+                bottomBarHelpSectionZhHant,
                 fengShuiHelpSectionZhHant,
                 compassHelpSectionZhHant,
                 imagesHelpSectionZhHant
@@ -58,6 +63,7 @@ export function getHelpSections(locale: HelpLocale = 'en'): HelpSection[] {
                 toolsHelpSection,
                 colorsHelpSection,
                 panelHelpSection,
+                bottomBarHelpSection,
                 fengShuiHelpSection,
                 compassHelpSection,
                 imagesHelpSection
