@@ -6,45 +6,47 @@ export const toolsHelpSection: HelpSection = {
     content: (
         <div className="space-y-4 text-sm text-gray-200">
             <p className="text-gray-300">
-                The left sidebar contains the drawing and selection tools. Use the tool buttons to switch modes and
-                create objects on the canvas.
+                The left sidebar contains drawing and selection tools. Use buttons to switch modes and create objects on the canvas.
             </p>
 
             <div className="space-y-2">
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400">What each tool does</h4>
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Tool Descriptions</h4>
                 <ul className="list-disc pl-5 space-y-1 text-gray-300">
-                    <li><span className="text-gray-100 font-semibold">Select:</span> Select and move objects. Ctrl+click adds or removes from selection.</li>
-                    <li><span className="text-gray-100 font-semibold">Rectangle:</span> Draw rectangular shapes.</li>
-                    <li><span className="text-gray-100 font-semibold">Ellipse:</span> Draw ellipses and circles.</li>
-                    <li><span className="text-gray-100 font-semibold">Line:</span> Draw straight line segments.</li>
-                    <li><span className="text-gray-100 font-semibold">Arrow:</span> Draw arrows. Press Space while dragging to add extra segments.</li>
-                    <li><span className="text-gray-100 font-semibold">Callout:</span> Place a text box with an arrow. Press Space to switch from box to arrow, then Space again for extra arrow segments.</li>
-                    <li><span className="text-gray-100 font-semibold">Star:</span> Draw a five-point star with adjustable size.</li>
+                    <li><span className="text-gray-100 font-semibold">Select:</span> Select and move objects. Ctrl+Click to add/remove from selection.</li>
+                    <li><span className="text-gray-100 font-semibold">Rectangle:</span> Draw rectangular shapes. Hold modifier key to constrain to a square.</li>
+                    <li><span className="text-gray-100 font-semibold">Ellipse:</span> Draw ellipses. Hold modifier key to constrain to a circle.</li>
+                    <li><span className="text-gray-100 font-semibold">Line:</span> Draw straight lines.</li>
+                    <li><span className="text-gray-100 font-semibold">Arrow:</span> Draw arrows. Press Space while dragging to add segments.</li>
+                    <li><span className="text-gray-100 font-semibold">Callout:</span> Place text boxes with arrows. Drag to draw box, press Space for arrow, press Space again for more segments.</li>
+                    <li><span className="text-gray-100 font-semibold">Star:</span> Draw resizable 5-pointed stars.</li>
                     <li><span className="text-gray-100 font-semibold">Text:</span> Draw a text box, then type in the editor overlay.</li>
-                    <li><span className="text-gray-100 font-semibold">Color Dropper:</span> Sample a stroke or fill color from the canvas.</li>
+                    <li><span className="text-gray-100 font-semibold">Color Dropper:</span> Sample stroke or fill colors from the canvas.</li>
                 </ul>
             </div>
 
             <div className="space-y-2">
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Modifier keys</h4>
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Modifiers & Shortcuts</h4>
                 <ul className="list-disc pl-5 space-y-1 text-gray-300">
-                    <li><span className="text-gray-100 font-semibold">Constrain:</span> Hold the configured modifier key to draw perfect squares/circles or lock lines/arrows to horizontal/vertical.</li>
-                    <li><span className="text-gray-100 font-semibold">Cancel:</span> Press the cancel key (default Esc) to abort a drawing or text edit.</li>
-                    <li><span className="text-gray-100 font-semibold">Text save:</span> Use the configured save shortcut to commit text edits.</li>
+                    <li><span className="text-gray-100 font-semibold">Constrain:</span> Hold the configured modifier (default Shift) to square/circle or horizontal/vertical axis.</li>
+                    <li><span className="text-gray-100 font-semibold">Cancel:</span> Press Cancel key (default Esc) to abort drawing or text editing.</li>
+                    <li><span className="text-gray-100 font-semibold">Delete:</span> Delete selected objects.</li>
+                    <li><span className="text-gray-100 font-semibold">Layer Order:</span> Use <code className="bg-gray-700 px-1 rounded text-xs">]</code> to move up, <code className="bg-gray-700 px-1 rounded text-xs">[</code> to move down.</li>
+                    <li><span className="text-gray-100 font-semibold">Duplicate:</span> Ctrl+D (or Cmd+D) to duplicate selected objects.</li>
+                    <li><span className="text-gray-100 font-semibold">Text Save:</span> Use Save shortcut (default Ctrl+Enter) to commit text edits. Clicking outside also saves.</li>
                 </ul>
                 <p className="text-gray-400">
-                    Configure these keys in Options → Keyboard Shortcuts.
+                    Customize these in Options → Keyboard Shortcuts.
                 </p>
             </div>
 
             <div className="space-y-2">
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Tool settings</h4>
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Tool Settings</h4>
                 <ul className="list-disc pl-5 space-y-1 text-gray-300">
-                    <li><span className="text-gray-100 font-semibold">Shape tools:</span> Line width.</li>
-                    <li><span className="text-gray-100 font-semibold">Text/Callout:</span> Font size, family, weight, style, alignment, and text color.</li>
+                    <li><span className="text-gray-100 font-semibold">All Tools:</span> Line width.</li>
+                    <li><span className="text-gray-100 font-semibold">Text/Callout:</span> Font size, family, style, color, etc.</li>
                 </ul>
                 <p className="text-gray-400">
-                    The tool settings panel opens next to the active tool in the left sidebar.
+                    Tool settings appear next to the active tool in the sidebar.
                 </p>
             </div>
         </div>
