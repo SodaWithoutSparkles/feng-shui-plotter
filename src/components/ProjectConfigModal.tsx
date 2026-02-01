@@ -257,7 +257,7 @@ export const ProjectConfigModal: React.FC<ProjectConfigModalProps> = ({
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 overflow-y-auto p-6">
+                <div className="flex-1 overflow-y-auto px-6 py-4">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full">
 
                         <FloorplanSetup

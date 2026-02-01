@@ -30,6 +30,17 @@ export const panelHelpSection: HelpSection = {
                     <li>
                         <span className="text-gray-100 font-semibold">飞星 (Fly Star):</span>
                         显示风水参数与年份选择器，并会标示用于计算兼向的流派（显示为「沈氏」或「中州」）。
+                        <ul className="list-disc pl-5 mt-1 text-gray-400">
+                            <li>
+                                <span className="font-semibold">年份控制 : </span>显示当前图表年份并提供一个带有预设（例如 <span className="text-gray-200">现在</span>、<span className="text-gray-200">下一年</span>）的滑块以便快速选择。
+                            </li>
+                            <li>
+                                <span className="font-semibold">日历 (自动): </span> 当看到日历图标时，飞星处于<em>自动同步</em>模式，会跟随真实当前年份。点击日历可“锁定为当前年份”，将面板切换为手动（锁定）年份。
+                            </li>
+                            <li>
+                                <span className="font-semibold">锁定 (手动): </span> 当显示锁图标时，图表固定到您选择的指定年份。点击锁可“切换为自动同步”以恢复跟随当前年份。手动模式有助于查看历史或未来年份而不被自动更新覆盖。
+                            </li>
+                        </ul>
                         <span className="text-blue-400 cursor-pointer" onClick={() => document.dispatchEvent(new CustomEvent('help-navigate', { detail: 'fengshui' }))}>详见风水 (FengShui) 帮助章节</span>。
                     </li>
                 </ul>

@@ -19,6 +19,60 @@ export const MOUNTAINS_24 = [
 export const DIGIT_TO_CHINESE = [
     '零', '一', '二', '三', '四', '五', '六', '七', '八', '九'
 ];
+export const ELEMENT_TO_STYLE = {
+    '水': 'text-blue-400',
+    '土': 'text-[#bf9000]',
+    '木': 'text-green-400',
+    '金': 'text-amber-300',
+    '火': 'text-red-400'
+};
+export const PERIOD_TO_CHINESE_STYLE = [
+    { text: '?', style: 'text-gray-400' },
+    { text: '坎水', style: ELEMENT_TO_STYLE['水'] },
+    { text: '坤土', style: ELEMENT_TO_STYLE['土'] },
+    { text: '震木', style: ELEMENT_TO_STYLE['木'] },
+    { text: '巽木', style: ELEMENT_TO_STYLE['木'] },
+    { text: '中土', style: ELEMENT_TO_STYLE['土'] },
+    { text: '乾金', style: ELEMENT_TO_STYLE['金'] },
+    { text: '兑金', style: ELEMENT_TO_STYLE['金'] },
+    { text: '艮土', style: ELEMENT_TO_STYLE['土'] },
+    { text: '离火', style: ELEMENT_TO_STYLE['火'] }
+];
+
+export const STARS_TO_CHINESE = [
+    { text: '?', element: '', style: 'text-gray-400', name: '' },
+    { text: '一白', element: '水', style: ELEMENT_TO_STYLE['水'], name: '貪狼' },
+    { text: '二黑', element: '土', style: ELEMENT_TO_STYLE['土'], name: '巨門' },
+    { text: '三碧', element: '木', style: ELEMENT_TO_STYLE['木'], name: '祿存' },
+    { text: '四綠', element: '木', style: ELEMENT_TO_STYLE['木'], name: '文曲' },
+    { text: '五黃', element: '土', style: ELEMENT_TO_STYLE['土'], name: '廉貞' },
+    { text: '六白', element: '金', style: ELEMENT_TO_STYLE['金'], name: '武曲' },
+    { text: '七赤', element: '金', style: ELEMENT_TO_STYLE['金'], name: '破軍' },
+    { text: '八白', element: '土', style: ELEMENT_TO_STYLE['土'], name: '左輔' },
+    { text: '九紫', element: '火', style: ELEMENT_TO_STYLE['火'], name: '右弼' }
+]
+
+// -2 = 死, -1 = 煞, 0 = 退, 1 = 生, 2 = 旺
+export function getStarStrength(period: number, star: number): number {
+    // Normalize inputs to 1..9 to support values outside the canonical range
+    const p = ((period - 1) % 9 + 9) % 9 + 1;
+    const s = ((star - 1) % 9 + 9) % 9 + 1;
+
+    // Compute relative position d = (star - period) mod 9
+    // d == 0 => 旺 (2)
+    // d == 1 or 2 => 生 (1)
+    // d == 3 or 4 => 死 (-2)
+    // d == 5..7 => 煞 (-1)
+    // d == 8 => 退 (0)
+    const d = ((s - p) % 9 + 9) % 9;
+
+    if (d === 0) return 2; // 旺
+    if (d === 1 || d === 2) return 1; // 生
+    if (d === 3 || d === 4) return -2; // 死
+    if (d >= 5 && d <= 7) return -1; // 煞
+    return 0; // 退 (d === 8)
+}
+
 export function getPurpleStarFromYear(year: number): number {
     let star = (11 - (year % 9)) % 9;
     if (star === 0) star = 9;

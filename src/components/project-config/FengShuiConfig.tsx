@@ -2,6 +2,7 @@ import React from 'react';
 import { Calendar, Compass } from 'lucide-react';
 import { PopoverSlider } from '../common/PopoverSlider';
 import type { FengShuiMethod } from '../../types';
+import { DIGIT_TO_CHINESE, PERIOD_TO_CHINESE_STYLE, getYuanFromPeriod } from '../../utils/FengShui';
 
 interface FengShuiConfigProps {
     houseYear: number;
@@ -36,6 +37,19 @@ export const FengShuiConfig: React.FC<FengShuiConfigProps> = ({
     onFacingAngleChange,
     onAnnualYearChange
 }) => {
+    const getYuan = (p: number) => {
+        switch (getYuanFromPeriod(p)) {
+            case 0:
+                return '上';
+            case 1:
+                return '中';
+            case 2:
+                return '下';
+            default:
+                return '?';
+        }
+    };
+
     return (
         <div className="space-y-6 flex flex-col">
             <div className="flex items-center justify-between shrink-0 h-10">
@@ -74,6 +88,18 @@ export const FengShuiConfig: React.FC<FengShuiConfigProps> = ({
                                     onChange={(e) => onHouseYearChange(parseInt(e.target.value))}
                                     className="w-full bg-gray-900 border border-gray-700 rounded-lg py-2 pl-9 pr-3 text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                                 />
+                            </div>
+
+                            <div className="mt-3 h-[1px] bg-gray-700/50"></div>
+
+                            <div className="mt-2">
+                                <div className="inline-flex items-center gap-2 bg-gray-900 border border-gray-700 rounded-lg px-3 py-1 text-sm text-gray-200">
+                                    <span className="text-yellow-300 font-bold">{getYuan(period)}元</span>
+                                    <span className="text-gray-100">{(period >= 1 && period <= 9) ? DIGIT_TO_CHINESE[period] : '?'}運</span>
+                                    <span className="text-gray-400">|</span>
+                                    <span className={PERIOD_TO_CHINESE_STYLE[period].style}>{PERIOD_TO_CHINESE_STYLE[period].text}</span>
+
+                                </div>
                             </div>
                         </div>
 
