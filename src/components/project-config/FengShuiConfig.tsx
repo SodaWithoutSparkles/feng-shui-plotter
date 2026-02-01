@@ -1,10 +1,12 @@
 import React from 'react';
 import { Calendar, Compass } from 'lucide-react';
 import { PopoverSlider } from '../common/PopoverSlider';
+import type { FengShuiMethod } from '../../types';
 
 interface FengShuiConfigProps {
     houseYear: number;
     period: number;
+    method: FengShuiMethod;
     facingAngle: number;
     facingInfo: { main: string; sub: string | null };
     sittingName: string;
@@ -13,6 +15,7 @@ interface FengShuiConfigProps {
     currentYear: number;
     onHouseYearChange: (val: number) => void;
     onPeriodChange: (val: number) => void;
+    onMethodChange: (val: FengShuiMethod) => void;
     onFacingAngleChange: (val: number) => void;
     onAnnualYearChange: (val: number) => void;
 }
@@ -20,6 +23,7 @@ interface FengShuiConfigProps {
 export const FengShuiConfig: React.FC<FengShuiConfigProps> = ({
     houseYear,
     period,
+    method,
     facingAngle,
     facingInfo,
     sittingName,
@@ -28,15 +32,32 @@ export const FengShuiConfig: React.FC<FengShuiConfigProps> = ({
     currentYear,
     onHouseYearChange,
     onPeriodChange,
+    onMethodChange,
     onFacingAngleChange,
     onAnnualYearChange
 }) => {
     return (
         <div className="space-y-6 flex flex-col">
-            <h3 className="text-lg font-semibold text-gray-200 flex items-center gap-2 shrink-0">
-                <Compass size={18} className="text-purple-400" />
-                Feng Shui Calculation
-            </h3>
+            <div className="flex items-center justify-between shrink-0 h-10">
+                <div className="flex items-center gap-4">
+                    <h3 className="text-lg font-semibold text-gray-200 flex items-center gap-2">
+                        <Compass size={18} className="text-purple-400" />
+                        Feng Shui Calculation
+                    </h3>
+                    <div className="flex items-center gap-2">
+                        <select
+                            value={method}
+                            onChange={(e) => onMethodChange(e.target.value as FengShuiMethod)}
+                            className="bg-gray-900 border border-gray-700 rounded-lg py-2 px-3 text-sm text-gray-200 focus:ring-1 focus:ring-blue-500 outline-none transition-all"
+                        >
+                            <option value="shen_shi_3">沈氏玄空 (3°)</option>
+                            <option value="shen_shi_45">沈氏玄空 (4.5°)</option>
+                            <option value="zhong_zhou_3">中州 (3°)</option>
+                            <option value="zhong_zhou_45">中州 (4.5°)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
 
             <div className="bg-gray-800/40 border border-gray-700 rounded-xl p-5 space-y-6 shrink-0">
                 <div className="space-y-3">

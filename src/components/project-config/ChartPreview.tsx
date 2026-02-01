@@ -17,7 +17,7 @@ export const ChartPreview: React.FC<ChartPreviewProps> = ({
                 fengShui={fengShui}
                 updateFengShui={onUpdateFengShui}
                 showControls={true}
-                showYear={false}
+                showFullSettings={true}
             />
         </div>
     );

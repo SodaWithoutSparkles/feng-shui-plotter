@@ -33,6 +33,9 @@ interface PopoverSliderProps {
     // Styles
     className?: string;
     popoverClassName?: string;
+
+    // Alignment
+    popoverAlign?: 'center' | 'start' | 'end';
 }
 
 export const PopoverSlider: React.FC<PopoverSliderProps> = ({
@@ -55,24 +58,36 @@ export const PopoverSlider: React.FC<PopoverSliderProps> = ({
     presetsColWidth = 96,
     buttonStep = step,
     className = '',
-    popoverClassName = ''
+    popoverClassName = '',
+    popoverAlign = 'center'
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
     const [tempValue, setTempValue] = useState(value);
     const [popoverAnchor, setPopoverAnchor] = useState<number | null>(null);
 
+    const arrowStyle = useMemo(() => {
+        switch (popoverAlign) {
+            case 'center':
+                return { left: '50%', transform: 'translateX(-50%) translateY(50%)' };
+            case 'start':
+                return { left: '16px', transform: 'translateX(-50%) translateY(50%)' };
+            case 'end':
+                return { right: '16px', transform: 'translateX(-50%) translateY(50%)' };
+        }
+    }, [popoverAlign]);
+
     useEffect(() => {
         setTempValue(value);
     }, [value]);
 
     useLayoutEffect(() => {
-        if (isOpen && containerRef.current && popoverAnchor === null) {
+        if (isOpen && containerRef.current && popoverAlign === 'center') {
             setPopoverAnchor(containerRef.current.offsetWidth / 2);
-        } else if (!isOpen) {
+        } else {
             setPopoverAnchor(null);
         }
-    }, [isOpen]);
+    }, [isOpen, popoverAlign]);
 
     // Compute a min width so the popover can fit all preset columns
     const popoverMinWidth = useMemo(() => {
@@ -83,6 +98,7 @@ export const PopoverSlider: React.FC<PopoverSliderProps> = ({
         const total = presetsCols * colWidth + Math.max(0, presetsCols - 1) * gap + paddingLR;
         return Math.max(200, Math.round(total));
     }, [presetsCols, presetsColWidth, presets]);
+
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -205,8 +221,11 @@ export const PopoverSlider: React.FC<PopoverSliderProps> = ({
                 <div
                     className={`absolute z-50 top-full mt-2 p-4 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 ${popoverClassName}`}
                     style={{
-                        left: popoverAnchor !== null ? `${popoverAnchor}px` : '50%',
-                        transform: 'translateX(-50%)',
+                        left: popoverAlign === 'center'
+                            ? (popoverAnchor !== null ? `${popoverAnchor}px` : '50%')
+                            : popoverAlign === 'start' ? '0' : 'auto',
+                        right: popoverAlign === 'end' ? '0' : 'auto',
+                        transform: popoverAlign === 'center' ? 'translateX(-50%)' : 'none',
                         minWidth: `${popoverMinWidth}px`,
                         maxWidth: '90vw',
                         width: 'auto'
@@ -334,7 +353,10 @@ export const PopoverSlider: React.FC<PopoverSliderProps> = ({
                     </div>
 
                     {/* Arrow */}
-                    <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-gray-900 border-l border-t border-gray-700 transform rotate-45" />
+                    <div
+                        className="absolute -top-1.5 w-3 h-3 bg-gray-900 border-l border-t border-gray-700 transform rotate-45"
+                        style={arrowStyle}
+                    />
                 </div>
             )}
         </div>

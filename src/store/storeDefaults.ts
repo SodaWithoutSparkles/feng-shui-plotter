@@ -2,6 +2,7 @@ import type { FengShuiData } from '../types';
 import type { AppState, ColorPreset, KeyboardShortcutConfig } from './storeTypes';
 
 export const defaultFengShui: FengShuiData = {
+    method: 'shen_shi_45',
     blacks: { start: 0 },
     reds: { start: 0, reversed: false },
     blues: { start: 0, reversed: false },

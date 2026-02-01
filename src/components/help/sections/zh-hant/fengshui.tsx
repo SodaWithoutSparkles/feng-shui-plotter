@@ -10,11 +10,31 @@ export const fengShuiHelpSection: HelpSection = {
             </p>
 
             <div className="space-y-2">
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400">流派設定</h4>
+                <p className="text-gray-300">
+                    本軟體支援兩種主要的風水流派: 沈氏玄空與中州派。每個流派都有兩種兼向閾值設定: 3° 和 4.5°。請根據您的需求選擇合適的流派和閾值。
+                </p>
+                <p className="text-amber-300 font-semibold">
+                    本軟體不保證所使用的流派和計算方法完全準確，僅供參考。在實際使用時，請根據個人經驗和專業知識進行調整，並參照相關風水書籍或諮詢專業風水師。
+                </p>
+                <ul className="list-disc pl-5 space-y-1 text-gray-300">
+                    <li><span className="text-gray-100 font-semibold">度數閾值:</span> 此設定決定了系統在計算坐向時，如何判斷是否進入兼向範圍。</li>
+                    <ul className="list-disc pl-5 mt-1 text-gray-400">
+                        <li><span className="text-gray-200">3° 閾值:</span> 當偏離正向3°以外時，系統會考慮為兼向。 (即中間6度)</li>
+                        <li><span className="text-gray-200">4.5° 閾值:</span> 當偏離正向4.5°以外時，系統會考慮為兼向。 (即中間9度)</li>
+                    </ul>
+                    <li><span className="text-gray-100 font-semibold">沈氏玄空:</span> 使用《沈氏玄空學》的替星計算方法，與大多數風水軟體一致。</li>
+                    <li><span className="text-gray-100 font-semibold">中州派:</span> 另一種風水流派，替星計算方法與沈氏玄空不同，請根據個人偏好選擇。</li>
+                </ul>
+            </div>
+
+            <div className="space-y-2">
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400">基本參數設定</h4>
                 <ul className="list-disc pl-5 space-y-1 text-gray-300">
                     <li><span className="text-gray-100 font-semibold">房屋落成年份 (House Completed):</span> 輸入房屋建成的年份，系統將自動建議對應的元運。</li>
                     <li><span className="text-gray-100 font-semibold">元運 (Yun/Period):</span> 選擇一至九運 (例如: 2024年後為九運)。此設定決定地盤 (運星) 的分佈。</li>
-                    <li><span className="text-gray-100 font-semibold">坐向 (Facing Direction):</span> 使用滑桿設定精確角度。系統支援二十四山 (24 Mountains)，並會自動判斷:
+                    <li>
+                        <span className="text-gray-100 font-semibold">坐向 (Facing Direction):</span> 使用滑桿設定精確角度。系統支援二十四山 (24 Mountains)，並會自動判斷:
                         <ul className="list-disc pl-5 mt-1 text-gray-400">
                             <li><span className="text-gray-200">正向</span> (Main)</li>
                             <li><span className="text-gray-200">兼向</span> (Replacement/Sub): 當角度接近兩山交界 (兼線) 時，系統會自動應用替卦星盤。</li>
@@ -27,9 +47,9 @@ export const fengShuiHelpSection: HelpSection = {
             <div className="space-y-2">
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400">飛星顏色與位置參考</h4>
                 <ul className="list-disc pl-5 space-y-1 text-gray-300">
-                    <li><span className="text-blue-300 font-semibold">藍色 (Blue):</span> 山星 (座星)，位於每格右上角。</li>
+                    <li><span className="text-blue-300 font-semibold">藍色 (Blue):</span> 山星 (座星)，位於每格左上角。</li>
                     <li><span className="text-gray-200 font-semibold">黑色 (Black):</span> 運星 (地盤)，位於每格左下 (中文數字)。</li>
-                    <li><span className="text-red-300 font-semibold">紅色 (Red):</span> 向星 (水星)，位於每格左上角。</li>
+                    <li><span className="text-red-300 font-semibold">紅色 (Red):</span> 向星 (水星)，位於每格右上角。</li>
                     <li><span className="text-purple-300 font-semibold">紫色 (Purple):</span> 流年飛星，位於每格右下角。</li>
                 </ul>
             </div>

@@ -79,8 +79,14 @@ export interface StarShape extends BaseShape {
 // Union type for all shapes
 export type CanvasItem = RectangleShape | EllipseShape | LineShape | TextShape | ImageShape | ArrowShape | StarShape | PolygonShape;
 
+// Feng Shui Method Type
+export type FengShuiMethod = 'shen_shi_3' | 'zhong_zhou_45' | 'shen_shi_45' | 'zhong_zhou_3';
+
 // Feng Shui Data Interface
 export interface FengShuiData {
+    // Calculation method used for mountain/facing logic
+    method: FengShuiMethod;
+
     blacks: {
         start: number;
     };

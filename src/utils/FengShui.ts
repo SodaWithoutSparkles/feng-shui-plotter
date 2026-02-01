@@ -1,4 +1,4 @@
-import type { FengShuiData, FlyStarData, MountainFacingData } from '../types';
+import type { FengShuiData, FlyStarData, MountainFacingData, FengShuiMethod } from '../types';
 
 const FLY_STAR = [  // Flying Star sequence for Feng Shui
     4, 9, 2,
@@ -30,9 +30,11 @@ export function genFengShui(
     redsReversed: boolean = false,
     bluesStart: number = 0,
     bluesReversed: boolean = false,
-    purplesStart: number = 0
+    purplesStart: number = 0,
+    method: FengShuiMethod = 'shen_shi_45'
 ): FengShuiData {
     return {
+        method,
         blacks: {
             start: blacksStart
         },
@@ -176,7 +178,7 @@ function getYuanLongFromMountainIndex(index: number): YuanLongYinYang {
 }
 
 
-function checkJian(angle: number, mainIndex: number): number | null {
+function checkJian(angle: number, mainIndex: number, threshold: number = 3.0): number | null {
     // 24 mountains, each 15 degrees.
     // centered at 0, 15, 30, ..., 345
     // so it is center +-7.5 degrees
@@ -201,7 +203,9 @@ function checkJian(angle: number, mainIndex: number): number | null {
     const absDiff = Math.abs(diff);
 
     // within main facing range
-    if (absDiff <= 4.5) return null;
+    // Shen Shi Strict: Main is center +/- 3 degrees. Deviation > 3 triggers Jian.
+    // Zhong Zhou / Other: Main is center +/- 4.5 degrees. Deviation > 4.5 triggers Jian.
+    if (absDiff <= threshold) return null;
 
     // outside jian range
     if (absDiff > 7.5) return null;
@@ -240,8 +244,13 @@ const REPLACEMENT_STARS = [
     9, 9, 2, 2, 1, 9, 7, 7, 6, 6, 6, 2
 ];
 
+// Zhong Zhou mapping (Geng/Yin -> 1)
+const REPLACEMENT_STARS_ZZ = [
+    1, 1, 7, 7, 1, 1, 2, 2, 6, 6, 6, 7,
+    9, 9, 2, 2, 1, 1, 7, 7, 6, 6, 6, 2
+];
+
 // Mountain Index to Gua Index (0:Kan, 1:Gen, 2:Zhen, 3:Xun, 4:Li, 5:Kun, 6:Dui, 7:Qian)
-// 23(Ren)->Kan(0), 0(Zi)->Kan(0), 1(Gui)->Kan(0)
 const GUA_INDICES = [
     0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4,
     4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 7, 0
@@ -274,9 +283,12 @@ function getTrigramMountain(guaIndex: number, dragon: 'sky' | 'earth' | 'human')
 }
 
 
+
+
 export function getMountainFacingFromAngle(
     facingAngle: number,
-    period: number // 元運
+    period: number, // 元運
+    method: FengShuiMethod = 'shen_shi_45'
 ): MountainFacingData {
 
     // Normalize angle to [0, 360)
@@ -297,31 +309,42 @@ export function getMountainFacingFromAngle(
     let mainFacing = MOUNTAINS_24[mainIndex];
     let subFacing: string | null = null;
 
+    // Determine Threshold
+    // Shen Shi (Strict): 3.0 degrees
+    // Zhong Zhou (Classic/Broad): 4.5 degrees (Implied by previous implementation)
+    const threshold = (method.endsWith('3')) ? 3.0 : 4.5;
+    const isShenShi = method.startsWith('shen_shi');
+
     // check for sub-facing (兼向)
-    const jianIndex = checkJian(angle, mainIndex);
+    const jianIndex = checkJian(angle, mainIndex, threshold);
 
     let isReplacement = false;
 
     if (jianIndex !== null) {
         subFacing = MOUNTAINS_24[jianIndex];
 
-        // Determine if Replacement (Ti Gua) is needed
-        // Rule 1: Out of Gua (Different Trigram) -> Replace
-        if (GUA_INDICES[mainIndex] !== GUA_INDICES[jianIndex]) {
+        if (isShenShi) {
+            // Shen Shi (Strict/Full): Always replace if Jian
             isReplacement = true;
         } else {
-            // Rule 2: Same Gua, Different Yin/Yang -> Replace
-            // Get Yin/Yang of main and jian
-            const mainYy = getYuanLongFromMountainIndex(mainIndex).yinYang;
-            const jianYy = getYuanLongFromMountainIndex(jianIndex).yinYang;
-            if (mainYy !== jianYy) {
+            // Zhong Zhou (Partial / Classic Text): Logic that was here previously
+            // Rule 1: Out of Gua (Different Trigram) -> Replace
+            if (GUA_INDICES[mainIndex] !== GUA_INDICES[jianIndex]) {
                 isReplacement = true;
+            } else {
+                // Rule 2: Same Gua, Different Yin/Yang -> Replace
+                // Get Yin/Yang of main and jian
+                const mainYy = getYuanLongFromMountainIndex(mainIndex).yinYang;
+                const jianYy = getYuanLongFromMountainIndex(jianIndex).yinYang;
+                if (mainYy !== jianYy) {
+                    isReplacement = true;
+                }
             }
         }
     }
 
     // Helper to calculate Star and Reversal
-    const calcStar = (baseStar: number, locIndex: number, houseDragon: 'sky' | 'earth' | 'human'): { star: number, reversed: boolean } => {
+    const calcStar = (baseStar: number, locIndex: number, houseDragon: 'sky' | 'earth' | 'human', isShenShi: boolean): { star: number, reversed: boolean } => {
         let finalStar = baseStar;
 
         // 1. Determine Home Gua of the Star
@@ -339,14 +362,11 @@ export function getMountainFacingFromAngle(
         // 3. Apply Replacement if needed
         if (isReplacement) {
             // Lookup replacement
-            // REPLACEMENT_STARS is 1-based star number. 
-            // If the mountain maps to a specific Replacement Star, use it.
-            // If the mapping implies "No Change" (e.g. standard distribution), REPLACEMENT_STARS table logic handles it?
-            // The table I implemented covers all 24 mountains, mapping them to 1,2,6,7,9.
-            // But some mountains map to their original numbers (e.g. Zi->1). 
-            // Which means the REPLACEMENT_STARS array is the "Replacement Chart". 
-            // We just use the value from it.
-            finalStar = REPLACEMENT_STARS[targetMountain];
+            if (!isShenShi) {
+                finalStar = REPLACEMENT_STARS_ZZ[targetMountain];
+            } else {
+                finalStar = REPLACEMENT_STARS[targetMountain];
+            }
         }
 
         // 4. Determine Reversals (Yin/Yang)
@@ -367,12 +387,12 @@ export function getMountainFacingFromAngle(
     // Sitting Dragon (House Sitting)
     const oppositeIndex = (mainIndex + 12) % 24;
     const sittingDragon = getYuanLongFromMountainIndex(oppositeIndex).long;
-    const mRes = calcStar(baseMountainStar, mountainStarLoc, sittingDragon);
+    const mRes = calcStar(baseMountainStar, mountainStarLoc, sittingDragon, isShenShi);
 
     // Calculate Water Star
     // Facing Dragon (House Facing)
     const facingDragon = getYuanLongFromMountainIndex(mainIndex).long;
-    const wRes = calcStar(baseWaterStar, waterStarLoc, facingDragon);
+    const wRes = calcStar(baseWaterStar, waterStarLoc, facingDragon, isShenShi);
 
     return {
         mainFacing,

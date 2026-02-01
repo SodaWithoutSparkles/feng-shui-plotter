@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Compass } from 'lucide-react';
 import { genFengShui, getMountainFacingFromAngle, getPeriodFromYear, MOUNTAINS_24, getMountainIndex, getPurpleStarFromYear } from '../utils/FengShui';
-import type { FengShuiData } from '../types';
+import type { FengShuiData, FengShuiMethod } from '../types';
 import { FloorplanSetup } from './project-config/FloorplanSetup';
 import { FengShuiConfig } from './project-config/FengShuiConfig';
 import { ChartPreview } from './project-config/ChartPreview';
@@ -47,16 +47,18 @@ export const ProjectConfigModal: React.FC<ProjectConfigModalProps> = ({
     const [fengShui, setFengShui] = useState<FengShuiData>(
         genFengShui(9, 1, false, 1, false, 1)
     );
+    const [fengShuiMethod, setFengShuiMethod] = useState<FengShuiMethod>('shen_shi_45');
     const [facingInfo, setFacingInfo] = useState<{ main: string, sub: string | null }>({ main: '', sub: null });
 
     // --- Calculators ---
     const recalculateFengShui = (
         targetPeriod: number,
         targetFacing: number,
-        targetAnnualYear: number
+        targetAnnualYear: number,
+        targetMethod: FengShuiMethod
     ) => {
         // Calculate Mountain/Facing
-        const mfData = getMountainFacingFromAngle(targetFacing, targetPeriod);
+        const mfData = getMountainFacingFromAngle(targetFacing, targetPeriod, targetMethod);
 
         // Calculate Purple
         const pStar = getPurpleStarFromYear(targetAnnualYear);
@@ -68,7 +70,8 @@ export const ProjectConfigModal: React.FC<ProjectConfigModalProps> = ({
             mfData.waterReversed,
             mfData.mountainStar,
             mfData.mountainReversed,
-            pStar
+            pStar,
+            targetMethod
         );
 
         // Update purple calculated_at to Jan 1 of annualYear
@@ -96,8 +99,10 @@ export const ProjectConfigModal: React.FC<ProjectConfigModalProps> = ({
                 setFloorplanImage(initialData.floorplanImage || null);
                 setFloorplanRotation(initialData.rotation);
 
-                // Load existing data
-                setFengShui(initialData.fengShui);
+                // Load existing data and restore method (default to 'shen_shi_45')
+                const savedMethod = initialData.fengShui?.method ?? 'shen_shi_45';
+                setFengShui({ ...initialData.fengShui, method: savedMethod });
+                setFengShuiMethod(savedMethod);
 
                 // Try to infer state from passed data
                 if (initialData.fengShui?.blacks?.start) {
@@ -109,10 +114,11 @@ export const ProjectConfigModal: React.FC<ProjectConfigModalProps> = ({
                 setAnnualYear(savedAnnual);
                 setPurpleStar(getPurpleStarFromYear(savedAnnual));
 
+
                 // We do NOT recalculate here to preserve manual edits. 
                 // Just update the Facing Info display based on current temporary facing angle (180).
                 const p = initialData.fengShui?.blacks?.start || 9;
-                const mfData = getMountainFacingFromAngle(facingAngle, p);
+                const mfData = getMountainFacingFromAngle(facingAngle, p, savedMethod);
                 setFacingInfo({
                     main: mfData.mainFacing,
                     sub: mfData.subFacing
@@ -129,7 +135,7 @@ export const ProjectConfigModal: React.FC<ProjectConfigModalProps> = ({
                 const p = getPeriodFromYear(yr);
                 setPeriod(p);
                 // Initial Calculation for New Project
-                recalculateFengShui(p, 180, yr);
+                recalculateFengShui(p, 180, yr, 'shen_shi_45');
             }
         }
     }, [isOpen, initialData]);
@@ -140,22 +146,27 @@ export const ProjectConfigModal: React.FC<ProjectConfigModalProps> = ({
         setHouseYear(val);
         const p = getPeriodFromYear(val);
         setPeriod(p);
-        recalculateFengShui(p, facingAngle, annualYear);
+        recalculateFengShui(p, facingAngle, annualYear, fengShuiMethod);
     };
 
     const handlePeriodChange = (val: number) => {
         setPeriod(val);
-        recalculateFengShui(val, facingAngle, annualYear);
+        recalculateFengShui(val, facingAngle, annualYear, fengShuiMethod);
     };
 
     const handleFacingAngleChange = (val: number) => {
         setFacingAngle(val);
-        recalculateFengShui(period, val, annualYear);
+        recalculateFengShui(period, val, annualYear, fengShuiMethod);
     };
 
     const handleAnnualYearChange = (val: number) => {
         setAnnualYear(val);
-        recalculateFengShui(period, facingAngle, val);
+        recalculateFengShui(period, facingAngle, val, fengShuiMethod);
+    };
+
+    const handleMethodChange = (val: FengShuiMethod) => {
+        setFengShuiMethod(val);
+        recalculateFengShui(period, facingAngle, annualYear, val);
     };
 
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -267,6 +278,7 @@ export const ProjectConfigModal: React.FC<ProjectConfigModalProps> = ({
                             <FengShuiConfig
                                 houseYear={houseYear}
                                 period={period}
+                                method={fengShuiMethod}
                                 facingAngle={facingAngle}
                                 facingInfo={facingInfo}
                                 sittingName={sittingName}
@@ -275,6 +287,7 @@ export const ProjectConfigModal: React.FC<ProjectConfigModalProps> = ({
                                 currentYear={currentYear}
                                 onHouseYearChange={handleHouseYearChange}
                                 onPeriodChange={handlePeriodChange}
+                                onMethodChange={handleMethodChange}
                                 onFacingAngleChange={handleFacingAngleChange}
                                 onAnnualYearChange={handleAnnualYearChange}
                             />

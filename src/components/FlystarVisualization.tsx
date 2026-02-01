@@ -7,8 +7,20 @@ import { PopoverSlider } from './common/PopoverSlider';
 interface FlystarVisualizationProps {
     fengShui: FengShuiData;
     updateFengShui?: (updates: Partial<FengShuiData>) => void;
+    /**
+     * Master switch for any controls.
+     * If false, shows only the Compass/Grid visualization.
+     * If true, shows at least the Year control.
+     * @default true
+     */
     showControls?: boolean;
-    showYear?: boolean;
+    /**
+     * If true, shows the full suite of steppers (Blacks/Reds/Blues/Purples).
+     * If false, shows only the Year adjustment and Method indicator.
+     * Also determines layout: True = Side-by-Side (Large), False = Stacked (Compact).
+     * @default true
+     */
+    showFullSettings?: boolean;
 }
 
 interface NumberStepperProps {
@@ -73,7 +85,7 @@ export const FlystarVisualization: React.FC<FlystarVisualizationProps> = ({
     fengShui,
     updateFengShui,
     showControls = true,
-    showYear = true
+    showFullSettings = true
 }) => {
     const canCalculate = fengShui && fengShui.purples;
     const currentYear = new Date().getFullYear();
@@ -91,19 +103,34 @@ export const FlystarVisualization: React.FC<FlystarVisualizationProps> = ({
         const startFrom = fengShui?.purples?.calculated_at ? new Date(fengShui.purples.calculated_at).getFullYear() : currentYear;
         displayYear = startFrom + offset;
     }
-    console.log('calculating flystar for year:', displayYear, { isManual, fengShui });
+
+    // Debug logging
+    // console.log('calculating flystar for year:', displayYear, { isManual, fengShui });
+
     const flyStarData = canCalculate ? genFullFlyStarSeq(fengShui, displayYear) : null;
 
-    // Determine layout: Side-by-side if controls are ON and stand-alone year is OFF.
-    // If showYear is true (and passed from parent like sidebar), force top-bottom.
-    const isSideBySide = showControls && !showYear;
-    const showStandaloneYear = showYear && !showControls;
-    console.log('FlystarVisualization render:', { isSideBySide, displayYear, isManual, showStandaloneYear });
+    // Human-readable labels for methods
+    const methodLabels: Record<string, string> = {
+        shen_shi_3: '沈氏 (3°)',
+        shen_shi_45: '沈氏 (4.5°)',
+        zhong_zhou_3: '中州 (3°)',
+        zhong_zhou_45: '中州 (4.5°)'
+    };
+    const methodKey = (fengShui?.method ?? 'shen_shi_45') as string;
+    const methodLabel = methodLabels[methodKey] || methodKey;
+    const methodName = methodKey.startsWith('shen_shi') ? 'Shen Shi' : 'Zhong Zhou';
+    const threshold = methodKey.endsWith('_3') ? '3' : '4.5';
+    const methodTooltip = `Using ${methodName} method with ${threshold} degree Jian threshold`;
+
+    // Determine layout
+    // If showFullSettings is true, we use a Side-By-Side layout (Large display).
+    // If showFullSettings is false, we use a Stacked layout (Compact/Sidebar).
+    const isSideBySide = showFullSettings;
+
     const handleYearChange = (val: number) => {
         if (!updateFengShui) return;
         let wasCalculatedAt = fengShui.purples.calculated_at ? new Date(fengShui.purples.calculated_at).getFullYear() : currentYear;
         const offset = wasCalculatedAt - val;
-        console.log('Handle Year Change:', { val, wasCalculatedAt, offset });
         updateFengShui({
             purples: {
                 ...fengShui.purples,
@@ -151,9 +178,115 @@ export const FlystarVisualization: React.FC<FlystarVisualizationProps> = ({
         );
     }
 
+    // New Refactored Controls Component
+    const ControlsSection = () => (
+        <div className="flex flex-col p-3 text-sm bg-gray-800 rounded-lg shadow-inner w-full min-w-[200px]">
+            {/* Year Control Header */}
+            <div className="flex items-center justify-between mb-2">
+                <span className="text-gray-300 font-medium text-xs">Year ({displayYear})</span>
+                <div className="flex items-center gap-2">
+                    {/* Method Indicator - Compact */}
+                    <div
+                        className="px-1.5 py-0.5 rounded bg-gray-700 border border-gray-600 text-[10px] text-gray-300 whitespace-nowrap"
+                        title={methodTooltip}
+                    >
+                        {methodLabel}
+                    </div>
+                </div>
+            </div>
+
+            {/* Year Slider Row with Lock Button */}
+            {!showFullSettings && (<div className="flex items-center gap-2 mb-3">
+                <div className="flex-1 min-w-0">
+                    <PopoverSlider
+                        value={displayYear}
+                        onChange={handleYearChange}
+                        min={1900}
+                        max={2100}
+                        hideSlider={true}
+                        popoverAlign="start"
+                        presets={[
+                            { label: 'Now', value: currentYear },
+                            { label: 'Next', value: currentYear + 1 }
+                        ]}
+                    />
+                </div>
+                <button
+                    onClick={toggleAuto}
+                    title={isManual ? "Switch to Auto-Sync" : "Lock to Current Year"}
+                    className={`flex-shrink-0 flex items-center justify-center w-8 h-7 rounded border transition-all ${isManual
+                        ? 'bg-blue-900/40 border-blue-700 text-blue-300 hover:bg-blue-900/60'
+                        : 'bg-emerald-900/40 border-emerald-700 text-emerald-300 hover:bg-emerald-900/60'
+                        }`}
+                >
+                    {isManual ? <Lock size={14} /> : <Calendar size={14} />}
+                </button>
+            </div>)}
+
+            {/* Full Settings: Steppers */}
+            {showFullSettings && (
+                <div className="space-y-0 border-t border-gray-700 pt-1 mt-1">
+                    <NumberStepper
+                        label="Blacks"
+                        value={fengShui.blacks.start}
+                        min={1}
+                        max={9}
+                        onChange={(val) => updateFengShui && updateFengShui({ blacks: { start: val } })}
+                    />
+
+                    <NumberStepper
+                        label="Reds"
+                        value={fengShui.reds.start}
+                        min={1}
+                        max={9}
+                        onChange={(val) => updateFengShui && updateFengShui({ reds: { ...fengShui.reds, start: val } })}
+                    >
+                        <button
+                            onClick={() => updateFengShui && updateFengShui({ reds: { ...fengShui.reds, reversed: !fengShui.reds.reversed } })}
+                            className={`px-2 py-[2px] text-[10px] uppercase font-bold tracking-wider rounded border ${fengShui.reds.reversed
+                                ? 'bg-blue-900 border-blue-700 text-blue-100 shadow-sm'
+                                : 'bg-gray-700 border-gray-600 text-gray-400 hover:bg-gray-600'
+                                }`}
+                            title="Toggle Reversed Direction"
+                        >
+                            Rev
+                        </button>
+                    </NumberStepper>
+
+                    <NumberStepper
+                        label="Blues"
+                        value={fengShui.blues.start}
+                        min={1}
+                        max={9}
+                        onChange={(val) => updateFengShui && updateFengShui({ blues: { ...fengShui.blues, start: val } })}
+                    >
+                        <button
+                            onClick={() => updateFengShui && updateFengShui({ blues: { ...fengShui.blues, reversed: !fengShui.blues.reversed } })}
+                            className={`px-2 py-[2px] text-[10px] uppercase font-bold tracking-wider rounded border ${fengShui.blues.reversed
+                                ? 'bg-blue-900 border-blue-700 text-blue-100 shadow-sm'
+                                : 'bg-gray-700 border-gray-600 text-gray-400 hover:bg-gray-600'
+                                }`}
+                            title="Toggle Reversed Direction"
+                        >
+                            Rev
+                        </button>
+                    </NumberStepper>
+
+                    <NumberStepper
+                        label="Purples"
+                        value={fengShui.purples.start}
+                        min={1}
+                        max={9}
+                        onChange={(val) => updateFengShui && updateFengShui({ purples: { ...fengShui.purples, start: val } })}
+                    />
+                </div>
+            )}
+        </div>
+    );
+
     return (
         <div className={isSideBySide ? "flex gap-4 items-start" : "space-y-4"}>
-            {/* 3x3 Grid */}
+            {/* 3x3 Grid - Left/Top */}
             <div className={isSideBySide ? "w-[220px] shrink-0" : "max-w-[250px] mx-auto"}>
                 <div className="grid grid-cols-3 aspect-square border-2 border-gray-600 bg-white text-black text-xs">
                     {[0, 1, 2, 3, 4, 5, 6, 7, 8].map(i => (
@@ -183,141 +316,12 @@ export const FlystarVisualization: React.FC<FlystarVisualizationProps> = ({
                 </div>
             </div>
 
-            <div className="flex-grow space-y-4">
-                {/* Year */}
-                {
-                    showStandaloneYear && updateFengShui && (
-                        <div className="flex flex-col p-3 text-sm bg-gray-800 rounded-lg shadow-inner">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-gray-300 font-medium text-xs">Year ({displayYear})</span>
-                                <button
-                                    onClick={toggleAuto}
-                                    title={isManual ? "Switch to Auto-Sync" : "Lock to Current Year"}
-                                    className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border transition-all ${isManual
-                                        ? 'bg-blue-900/40 border-blue-700 text-blue-300 hover:bg-blue-900/60'
-                                        : 'bg-emerald-900/40 border-emerald-700 text-emerald-300 hover:bg-emerald-900/60'
-                                        }`}
-                                >
-                                    {isManual ? (
-                                        <>Locked <Lock size={10} /></>
-                                    ) : (
-                                        <>Auto <Calendar size={10} /></>
-                                    )}
-                                </button>
-                            </div>
-                            <PopoverSlider
-                                value={displayYear}
-                                onChange={handleYearChange}
-                                min={1900}
-                                max={2100}
-                                hideSlider={true}
-                                presets={[
-                                    { label: 'Now', value: currentYear },
-                                    { label: 'Next', value: currentYear + 1 }
-                                ]}
-                            />
-                        </div>
-                    )
-                }
-
-                {/* Controls */}
-                {showControls && updateFengShui && (
-                    <div className="flex flex-col p-3 text-sm bg-gray-800 rounded-lg shadow-inner w-[220px]">
-                        {/* <div className="flex items-center justify-between mb-2 pb-2 border-b border-gray-700">
-                            <div className="flex flex-col">
-                                <span className="text-gray-300 font-medium text-xs">Year</span>
-                                <span className={`text-xs ${isManual ? 'text-blue-300' : 'text-green-300'}`}>
-                                    {displayYear}
-                                </span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={toggleAuto}
-                                    title={isManual ? "Switch to Auto-Sync" : "Lock to Current Year"}
-                                    className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border transition-all ${isManual
-                                        ? 'bg-blue-900/40 border-blue-700 text-blue-300 hover:bg-blue-900/60'
-                                        : 'bg-emerald-900/40 border-emerald-700 text-emerald-300 hover:bg-emerald-900/60'
-                                        }`}
-                                >
-                                    {isManual ? (
-                                        <>Locked <Lock size={10} /></>
-                                    ) : (
-                                        <>Auto <Calendar size={10} /></>
-                                    )}
-                                </button>
-                            </div>
-                        </div> */}
-
-                        <div className="mb-4">
-                            <PopoverSlider
-                                value={displayYear}
-                                onChange={handleYearChange}
-                                min={1900}
-                                max={2100}
-                                hideSlider={true}
-                                presets={[
-                                    { label: 'Now', value: currentYear },
-                                    { label: 'Next', value: currentYear + 1 }
-                                ]}
-                            />
-                        </div>
-
-                        <NumberStepper
-                            label="Blacks"
-                            value={fengShui.blacks.start}
-                            min={1}
-                            max={9}
-                            onChange={(val) => updateFengShui({ blacks: { start: val } })}
-                        />
-
-                        <NumberStepper
-                            label="Reds"
-                            value={fengShui.reds.start}
-                            min={1}
-                            max={9}
-                            onChange={(val) => updateFengShui({ reds: { ...fengShui.reds, start: val } })}
-                        >
-                            <button
-                                onClick={() => updateFengShui({ reds: { ...fengShui.reds, reversed: !fengShui.reds.reversed } })}
-                                className={`px-2 py-[2px] text-[10px] uppercase font-bold tracking-wider rounded border ${fengShui.reds.reversed
-                                    ? 'bg-blue-900 border-blue-700 text-blue-100 shadow-sm'
-                                    : 'bg-gray-700 border-gray-600 text-gray-400 hover:bg-gray-600'
-                                    }`}
-                                title="Toggle Reversed Direction"
-                            >
-                                Rev
-                            </button>
-                        </NumberStepper>
-
-                        <NumberStepper
-                            label="Blues"
-                            value={fengShui.blues.start}
-                            min={1}
-                            max={9}
-                            onChange={(val) => updateFengShui({ blues: { ...fengShui.blues, start: val } })}
-                        >
-                            <button
-                                onClick={() => updateFengShui({ blues: { ...fengShui.blues, reversed: !fengShui.blues.reversed } })}
-                                className={`px-2 py-[2px] text-[10px] uppercase font-bold tracking-wider rounded border ${fengShui.blues.reversed
-                                    ? 'bg-blue-900 border-blue-700 text-blue-100 shadow-sm'
-                                    : 'bg-gray-700 border-gray-600 text-gray-400 hover:bg-gray-600'
-                                    }`}
-                                title="Toggle Reversed Direction"
-                            >
-                                Rev
-                            </button>
-                        </NumberStepper>
-
-                        <NumberStepper
-                            label="Purples"
-                            value={fengShui.purples.start}
-                            min={1}
-                            max={9}
-                            onChange={(val) => updateFengShui({ purples: { ...fengShui.purples, start: val } })}
-                        />
-                    </div>
-                )}
-            </div>
+            {/* Controls - Right/Bottom */}
+            {showControls && updateFengShui && (
+                <div className={isSideBySide ? "w-[250px]" : "w-full"}>
+                    <ControlsSection />
+                </div>
+            )}
         </div>
     );
 };
