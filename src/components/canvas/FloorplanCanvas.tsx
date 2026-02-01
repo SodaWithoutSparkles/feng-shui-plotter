@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Stage, Layer, Image as KonvaImage, Transformer } from 'react-konva';
 import { useStore } from '../../store/useStore';
 import { CompassShape } from './CompassShape';
@@ -38,6 +38,7 @@ export const FloorplanCanvas: React.FC<{ readOnly?: boolean }> = ({ readOnly = f
     const keyboardShortcuts = useStore((state) => state.keyboardShortcuts);
     const setCanvasPosition = useStore((state) => state.setCanvasPosition);
     const homeViewTrigger = useStore((state) => state.homeViewTrigger);
+    const addNotification = useStore((state) => state.addNotification);
 
     // Refs
     const stageRef = useRef<any>(null);
@@ -103,12 +104,14 @@ export const FloorplanCanvas: React.FC<{ readOnly?: boolean }> = ({ readOnly = f
 
     const floorplanImg = useFloorplanImage(floorplan.imageSrc, containerRef, setStagePos);
 
-    useCanvasExport(exportTrigger, stageRef, trRef, {
+    const exportOptions = useMemo(() => ({
         filename: projectName,
         fengShui,
         compass,
         updateCompass
-    });
+    }), [projectName, fengShui, compass, updateCompass]);
+
+    useCanvasExport(exportTrigger, stageRef, trRef, exportOptions);
 
     const {
         handleCompassTransformStart,
@@ -191,23 +194,32 @@ export const FloorplanCanvas: React.FC<{ readOnly?: boolean }> = ({ readOnly = f
         return null;
     };
 
+    const formatImageSourceLabel = (src: string) => {
+        if (src.startsWith('data:image/')) return 'Pasted image data';
+        if (src.length > 50) return `${src.slice(0, 50)}…`;
+        return src;
+    };
+
     const addImageAt = (src: string, dropX: number, dropY: number) => {
+        console.log('Adding image to:', dropX, dropY);
         const img = new Image();
         img.crossOrigin = 'anonymous';
+        const isExternal = src.startsWith('http://') || src.startsWith('https://');
+        const shouldResize = isExternal;
+        console.log('Downloading image from', isExternal ? 'external URL' : 'data URL');
         img.onload = () => {
-            const isExternal = src.startsWith('http://') || src.startsWith('https://');
             const maxWidth = dimensions.width * 0.5;
             const maxHeight = dimensions.height * 0.5;
             const maxSize = 400;
 
-            const scale = isExternal
+            const scale = shouldResize
                 ? Math.min(1, maxWidth / img.width, maxHeight / img.height)
                 : Math.min(1, maxSize / Math.max(img.width, img.height));
             const width = Math.round(img.width * scale);
             const height = Math.round(img.height * scale);
 
             addItem({
-                id: Math.random().toString(36).substr(2, 9),
+                id: Math.random().toString(36).substring(2, 9),
                 type: 'image',
                 x: dropX,
                 y: dropY,
@@ -220,6 +232,16 @@ export const FloorplanCanvas: React.FC<{ readOnly?: boolean }> = ({ readOnly = f
                 width,
                 height,
                 src
+            });
+        };
+        img.onerror = (err) => {
+            console.error('Failed to load image:', src, err);
+            // Inform the user and don't add a broken image to the canvas.
+            addNotification({
+                type: 'error',
+                title: 'Image Load Failed',
+                message: 'Unable to load the image. This may be caused by CORS restrictions or the resource being unavailable. You can try copy and pasting the image directly instead.',
+                detail: `From: ${formatImageSourceLabel(src)}`
             });
         };
         img.src = src;
@@ -299,6 +321,7 @@ export const FloorplanCanvas: React.FC<{ readOnly?: boolean }> = ({ readOnly = f
             const items = Array.from(e.clipboardData?.items || []);
             const imageItem = items.find(item => item.kind === 'file' && item.type.startsWith('image/'));
             if (imageItem) {
+                console.log('Got image from clipboard');
                 e.preventDefault();
                 const file = imageItem.getAsFile();
                 if (!file) return;
@@ -313,6 +336,7 @@ export const FloorplanCanvas: React.FC<{ readOnly?: boolean }> = ({ readOnly = f
 
             const text = e.clipboardData?.getData('text/plain')?.trim();
             if (text && isLikelyImageUrl(text)) {
+                console.log('Got image URL from clipboard:', text);
                 e.preventDefault();
                 addImageCentered(text);
             }

@@ -1,5 +1,6 @@
 import { Suspense, lazy, useEffect } from 'react';
 import { useStore } from './store/useStore';
+import { NotificationCenter } from './components/common/NotificationCenter';
 
 const MainLayout = lazy(() => import('./components/layout/MainLayout').then((m) => ({ default: m.MainLayout })));
 const WelcomeScreen = lazy(() => import('./components/WelcomeScreen').then((m) => ({ default: m.WelcomeScreen })));
@@ -18,6 +19,7 @@ function App() {
 
     return (
         <Suspense fallback={<div className="h-screen w-screen flex items-center justify-center bg-gray-50 text-gray-600">Loading...</div>}>
+            <NotificationCenter />
             {mode === 'welcome' && <WelcomeScreen />}
             {mode === 'edit' && <MainLayout />}
             {mode === 'view' && <ViewModeLayout />}

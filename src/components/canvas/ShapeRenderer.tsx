@@ -1,6 +1,7 @@
 import React from 'react';
 import { Rect, Circle, Line, Star, Arrow, Text as KonvaText, Image as KonvaImage, Transformer, Group } from 'react-konva';
-import type { CanvasItem } from '../../types';
+import type { CanvasItem, ImageShape } from '../../types';
+import { useStore } from '../../store/useStore';
 
 interface ShapeRendererProps {
     item: CanvasItem;
@@ -28,25 +29,78 @@ export const ShapeRenderer: React.FC<ShapeRendererProps> = ({
     const shapeRef = React.useRef<any>(null);
     const trRef = React.useRef<any>(null);
     const [image, setImage] = React.useState<HTMLImageElement | null>(null);
+    const [imageError, setImageError] = React.useState<boolean>(false);
     const dragPosRef = React.useRef<{ x: number; y: number } | null>(null);
+    const lastAlertedSrcRef = React.useRef<string | null>(null);
+    const addNotification = useStore((state) => state.addNotification);
+
+    // Type guard for image items and a stable image src value for dependency arrays
+    const isImage = (i: CanvasItem): i is ImageShape => i.type === 'image';
+    const imageSrc = isImage(item) ? item.src : null;
+
+    const formatImageSourceLabel = (src: string) => {
+        if (src.startsWith('data:image/')) return 'Pasted image data';
+        if (src.length > 140) return `${src.slice(0, 140)}…`;
+        return src;
+    };
 
     // Load image if item type is 'image'
     React.useEffect(() => {
+        let active = true;
         if (item.type === 'image') {
+            setImageError(false);
+            console.log('Loading image:', item.src.substring(0, 100), '...');
             const img = new window.Image();
+            img.crossOrigin = 'Anonymous';
             img.src = item.src;
             img.onload = () => {
-                setImage(img);
+                if (active) {
+                    setImage(img);
+                    setImageError(false);
+                }
             };
+            img.onerror = () => {
+                console.error('Failed to load image:', item.src);
+                if (active) {
+                    setImageError(true);
+                    setImage(null);
+                }
+            };
+        } else {
+            setImage(null);
+            setImageError(false);
         }
-    }, [item.type, item.type === 'image' ? item.src : null]);
+        return () => {
+            active = false;
+        };
+    }, [item.type, imageSrc]);
 
+    React.useEffect(() => {
+        if (item.type !== 'image') {
+            lastAlertedSrcRef.current = null;
+            return;
+        }
+        if (!imageError) {
+            lastAlertedSrcRef.current = null;
+            return;
+        }
+        if (item.src && lastAlertedSrcRef.current !== item.src) {
+            lastAlertedSrcRef.current = item.src;
+            console.error('Image failed to load for item.src:', item.src);
+            addNotification({
+                type: 'error',
+                title: 'Image Load Failed',
+                message: 'Unable to load the image. This may be caused by CORS restrictions or the resource being unavailable.',
+                detail: formatImageSourceLabel(item.src)
+            });
+        }
+    }, [imageError, imageSrc, item.type, addNotification]);
     React.useEffect(() => {
         if (isSelected && trRef.current && shapeRef.current) {
             trRef.current.nodes([shapeRef.current]);
             trRef.current.getLayer().batchDraw();
         }
-    }, [isSelected]);
+    }, [isSelected, image, imageError]);
 
     const handleDragStart = (e: any) => {
         if (!dragEnabled) return;
@@ -264,6 +318,34 @@ export const ShapeRenderer: React.FC<ShapeRendererProps> = ({
                         width={item.width}
                         height={item.height}
                     />
+                );
+            } else {
+                const isError = imageError;
+                const displayText = isError ? "Image Load Error\n(CORS/404)" : "Loading Image...";
+                const strokeColor = isError ? "red" : "#999";
+                const bgColor = isError ? "#ffe6e6" : "#f0f0f0";
+
+                shape = (
+                    <Group {...commonProps}>
+                        <Rect
+                            width={item.width}
+                            height={item.height}
+                            fill={bgColor}
+                            stroke={strokeColor}
+                            strokeWidth={1}
+                            dash={isError ? undefined : [5, 5]}
+                        />
+                        <KonvaText
+                            text={displayText}
+                            width={item.width}
+                            height={item.height}
+                            align="center"
+                            verticalAlign="middle"
+                            fill={strokeColor}
+                            padding={5}
+                            fontSize={Math.min(item.height / 5, item.width / 10)}
+                        />
+                    </Group>
                 );
             }
             break;

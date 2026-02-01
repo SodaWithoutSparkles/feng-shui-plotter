@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Lock, Calendar } from 'lucide-react';
 import { genFullFlyStarSeq, DIGIT_TO_CHINESE } from '../utils/FengShui';
 import type { FengShuiData } from '../types';
@@ -81,13 +81,13 @@ const NumberStepper: React.FC<NumberStepperProps> = ({
     );
 };
 
-export const FlystarVisualization: React.FC<FlystarVisualizationProps> = ({
+const FlystarVisualizationComponent: React.FC<FlystarVisualizationProps> = ({
     fengShui,
     updateFengShui,
     showControls = true,
     showFullSettings = true
 }) => {
-    const canCalculate = fengShui && fengShui.purples;
+    const canCalculate = Boolean(fengShui?.purples);
     const currentYear = new Date().getFullYear();
 
     // Determine display year
@@ -107,7 +107,10 @@ export const FlystarVisualization: React.FC<FlystarVisualizationProps> = ({
     // Debug logging
     // console.log('calculating flystar for year:', displayYear, { isManual, fengShui });
 
-    const flyStarData = canCalculate ? genFullFlyStarSeq(fengShui, displayYear) : null;
+    const flyStarData = useMemo(
+        () => (canCalculate ? genFullFlyStarSeq(fengShui, displayYear) : null),
+        [canCalculate, fengShui, displayYear]
+    );
 
     // Human-readable labels for methods
     const methodLabels: Record<string, string> = {
@@ -325,3 +328,6 @@ export const FlystarVisualization: React.FC<FlystarVisualizationProps> = ({
         </div>
     );
 };
+
+export const FlystarVisualization = React.memo(FlystarVisualizationComponent);
+FlystarVisualization.displayName = 'FlystarVisualization';

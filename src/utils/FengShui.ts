@@ -91,7 +91,7 @@ export function genFullFlyStarSeq(
 
     let offset = currYear - calcDate.getFullYear();
     if (isNaN(offset)) offset = 0; // Fallback
-    console.log('getting purple for year', fengShuiData.purples.start - offset)
+    // console.log('getting purple for year', fengShuiData.purples.start - offset)
     return {
         blacks: genFlyStarSeq(fengShuiData.blacks.start),
         reds: genFlyStarSeq(fengShuiData.reds.start, fengShuiData.reds.reversed),

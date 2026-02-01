@@ -9,6 +9,17 @@ export interface ColorPreset {
 export type ModifierKey = 'ctrl' | 'alt' | 'shift';
 export type TextSaveModifier = ModifierKey | 'none';
 
+export type NotificationType = 'info' | 'success' | 'warning' | 'error';
+
+export interface Notification {
+    id: string;
+    type: NotificationType;
+    title?: string;
+    message: string;
+    detail?: string;
+    timeout?: number;
+}
+
 export interface KeyboardShortcutConfig {
     modifyKey: ModifierKey;
     cancelKey: string;
@@ -150,6 +161,12 @@ export interface AppState {
     setCancelKey: (key: string) => void;
     setTextSaveShortcut: (modifier: TextSaveModifier, key: string) => void;
     setToolShortcut: (tool: keyof KeyboardShortcutConfig['tools'], key: string) => void;
+
+    // Notifications
+    notifications: Notification[];
+    addNotification: (notification: Omit<Notification, 'id'> & { id?: string }) => string;
+    removeNotification: (id: string) => void;
+    clearNotifications: () => void;
 
     // Canvas Navigation
     canvasPosition: { x: number; y: number; scale: number };
