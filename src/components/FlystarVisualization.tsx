@@ -80,7 +80,7 @@ export const FlystarVisualization: React.FC<FlystarVisualizationProps> = ({
 
     // Determine display year
     // If viewMode is 'manual', use manualYear.
-    // If 'auto' (or undefined/legacy), use currentYear + offset.
+    // If 'auto' (or undefined/legacy), calculate from offset and calculated_at.
     let displayYear = currentYear;
     const isManual = fengShui?.purples?.viewMode === 'manual';
 
@@ -88,24 +88,28 @@ export const FlystarVisualization: React.FC<FlystarVisualizationProps> = ({
         displayYear = fengShui.purples.manualYear;
     } else {
         const offset = fengShui?.purples?.offset || 0;
-        displayYear = currentYear + offset;
+        const startFrom = fengShui?.purples?.calculated_at ? new Date(fengShui.purples.calculated_at).getFullYear() : currentYear;
+        displayYear = startFrom + offset;
     }
-
+    console.log('calculating flystar for year:', displayYear, { isManual, fengShui });
     const flyStarData = canCalculate ? genFullFlyStarSeq(fengShui, displayYear) : null;
 
     // Determine layout: Side-by-side if controls are ON and stand-alone year is OFF.
     // If showYear is true (and passed from parent like sidebar), force top-bottom.
     const isSideBySide = showControls && !showYear;
     const showStandaloneYear = showYear && !showControls;
-
+    console.log('FlystarVisualization render:', { isSideBySide, displayYear, isManual, showStandaloneYear });
     const handleYearChange = (val: number) => {
         if (!updateFengShui) return;
+        let wasCalculatedAt = fengShui.purples.calculated_at ? new Date(fengShui.purples.calculated_at).getFullYear() : currentYear;
+        const offset = wasCalculatedAt - val;
+        console.log('Handle Year Change:', { val, wasCalculatedAt, offset });
         updateFengShui({
             purples: {
                 ...fengShui.purples,
                 viewMode: 'manual',
                 manualYear: val,
-                offset: val - currentYear
+                offset: offset
             }
         });
     };
@@ -113,8 +117,11 @@ export const FlystarVisualization: React.FC<FlystarVisualizationProps> = ({
     // Toggle between Auto (Current Year) and Manual (Fixed Year)
     const toggleAuto = () => {
         if (!updateFengShui) return;
+        let wasCalculatedAt = fengShui.purples.calculated_at ? new Date(fengShui.purples.calculated_at).getFullYear() : currentYear;
+        let offset = 0;
         if (isManual) {
             // Switch to Auto -> Sync with Now
+            offset = currentYear - wasCalculatedAt;
             updateFengShui({
                 purples: {
                     ...fengShui.purples,
@@ -124,11 +131,13 @@ export const FlystarVisualization: React.FC<FlystarVisualizationProps> = ({
             });
         } else {
             // Switch to Manual -> Lock at current display
+            offset = displayYear - wasCalculatedAt;
             updateFengShui({
                 purples: {
                     ...fengShui.purples,
                     viewMode: 'manual',
-                    manualYear: displayYear
+                    manualYear: displayYear,
+                    offset: offset
                 }
             });
         }
@@ -214,7 +223,7 @@ export const FlystarVisualization: React.FC<FlystarVisualizationProps> = ({
                 {/* Controls */}
                 {showControls && updateFengShui && (
                     <div className="flex flex-col p-3 text-sm bg-gray-800 rounded-lg shadow-inner w-[220px]">
-                        <div className="flex items-center justify-between mb-2 pb-2 border-b border-gray-700">
+                        {/* <div className="flex items-center justify-between mb-2 pb-2 border-b border-gray-700">
                             <div className="flex flex-col">
                                 <span className="text-gray-300 font-medium text-xs">Year</span>
                                 <span className={`text-xs ${isManual ? 'text-blue-300' : 'text-green-300'}`}>
@@ -237,7 +246,7 @@ export const FlystarVisualization: React.FC<FlystarVisualizationProps> = ({
                                     )}
                                 </button>
                             </div>
-                        </div>
+                        </div> */}
 
                         <div className="mb-4">
                             <PopoverSlider

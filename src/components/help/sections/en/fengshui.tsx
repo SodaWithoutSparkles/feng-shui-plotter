@@ -27,9 +27,9 @@ export const fengShuiHelpSection: HelpSection = {
             <div className="space-y-2">
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Fly Star Color and Position Reference</h4>
                 <ul className="list-disc pl-5 space-y-1 text-gray-300">
-                    <li><span className="text-blue-300 font-semibold">Blue:</span> Water Star (Xiang Xing), located at the top-left of each cell.</li>
+                    <li><span className="text-blue-300 font-semibold">Blue:</span> Mountain Star (Sitting Star), located at the top-right of each cell.</li>
                     <li><span className="text-gray-200 font-semibold">Black:</span> Period Star (Base), located at the bottom-left (Chinese numerals) of each cell.</li>
-                    <li><span className="text-red-300 font-semibold">Red:</span> Mountain Star (Sitting Star), located at the top-right of each cell.</li>
+                    <li><span className="text-red-300 font-semibold">Red:</span> Water Star (Xiang Xing), located at the top-left of each cell.</li>
                     <li><span className="text-purple-300 font-semibold">Purple:</span> Annual Star, located at the bottom-right of each cell.</li>
                 </ul>
             </div>

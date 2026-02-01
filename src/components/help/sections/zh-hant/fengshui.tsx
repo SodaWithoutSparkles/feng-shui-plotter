@@ -27,9 +27,9 @@ export const fengShuiHelpSection: HelpSection = {
             <div className="space-y-2">
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400">飛星顏色與位置參考</h4>
                 <ul className="list-disc pl-5 space-y-1 text-gray-300">
-                    <li><span className="text-blue-300 font-semibold">藍色 (Blue):</span> 向星 (水星)，位於每格左上角。</li>
+                    <li><span className="text-blue-300 font-semibold">藍色 (Blue):</span> 山星 (座星)，位於每格右上角。</li>
                     <li><span className="text-gray-200 font-semibold">黑色 (Black):</span> 運星 (地盤)，位於每格左下 (中文數字)。</li>
-                    <li><span className="text-red-300 font-semibold">紅色 (Red):</span> 山星 (座星)，位於每格右上角。</li>
+                    <li><span className="text-red-300 font-semibold">紅色 (Red):</span> 向星 (水星)，位於每格左上角。</li>
                     <li><span className="text-purple-300 font-semibold">紫色 (Purple):</span> 流年飛星，位於每格右下角。</li>
                 </ul>
             </div>

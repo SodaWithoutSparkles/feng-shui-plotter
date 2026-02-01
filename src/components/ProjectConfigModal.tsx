@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Compass } from 'lucide-react';
-import { genFengShui, getMountainFacingFromAngle, getPeriodFromYear, MOUNTAINS_24, getMountainIndex } from '../utils/FengShui';
+import { genFengShui, getMountainFacingFromAngle, getPeriodFromYear, MOUNTAINS_24, getMountainIndex, getPurpleStarFromYear } from '../utils/FengShui';
 import type { FengShuiData } from '../types';
 import { FloorplanSetup } from './project-config/FloorplanSetup';
 import { FengShuiConfig } from './project-config/FengShuiConfig';
@@ -50,53 +50,20 @@ export const ProjectConfigModal: React.FC<ProjectConfigModalProps> = ({
     const [facingInfo, setFacingInfo] = useState<{ main: string, sub: string | null }>({ main: '', sub: null });
 
     // --- Calculators ---
-
-    // Calculate Purple Star from Year
-    const calcPurple = (year: number) => {
-        let star = (11 - (year % 9)) % 9;
-        if (star === 0) star = 9;
-        setPurpleStar(star);
-        return star;
-    };
-
-    // --- Initialization ---
-    useEffect(() => {
-        if (isOpen) {
-            if (initialData) {
-                setFloorplanImage(initialData.floorplanImage || null);
-                setFloorplanRotation(initialData.rotation);
-
-                // Try to infer period from passed data or default
-                if (initialData.fengShui?.blacks?.start) {
-                    setPeriod(initialData.fengShui.blacks.start);
-                }
-
-                setFengShui(initialData.fengShui);
-            } else {
-                // New Project Defaults
-                setFloorplanRotation(0);
-                setFacingAngle(180); // South
-                const now = new Date();
-                setHouseYear(now.getFullYear());
-                setAnnualYear(now.getFullYear());
-                const p = getPeriodFromYear(now.getFullYear());
-                setPeriod(p);
-                calcPurple(now.getFullYear());
-            }
-        }
-    }, [isOpen, initialData]);
-
-    // Main Feng Shui Calculation
-    // Triggered when relevant inputs change
-    useEffect(() => {
+    const recalculateFengShui = (
+        targetPeriod: number,
+        targetFacing: number,
+        targetAnnualYear: number
+    ) => {
         // Calculate Mountain/Facing
-        const mfData = getMountainFacingFromAngle(facingAngle, period);
+        const mfData = getMountainFacingFromAngle(targetFacing, targetPeriod);
 
         // Calculate Purple
-        const pStar = calcPurple(annualYear);
+        const pStar = getPurpleStarFromYear(targetAnnualYear);
+        setPurpleStar(pStar);
 
         const newFS = genFengShui(
-            period,
+            targetPeriod,
             mfData.waterStar,
             mfData.waterReversed,
             mfData.mountainStar,
@@ -110,9 +77,9 @@ export const ProjectConfigModal: React.FC<ProjectConfigModalProps> = ({
             ...newFS,
             purples: {
                 ...newFS.purples,
-                calculated_at: new Date(annualYear, 0, 1),
+                calculated_at: new Date(targetAnnualYear, 0, 1),
                 viewMode: 'manual',
-                manualYear: annualYear
+                manualYear: targetAnnualYear
             }
         });
 
@@ -120,14 +87,75 @@ export const ProjectConfigModal: React.FC<ProjectConfigModalProps> = ({
             main: mfData.mainFacing,
             sub: mfData.subFacing
         });
+    };
 
-    }, [facingAngle, period, annualYear]);
+    // --- Initialization ---
+    useEffect(() => {
+        if (isOpen) {
+            if (initialData) {
+                setFloorplanImage(initialData.floorplanImage || null);
+                setFloorplanRotation(initialData.rotation);
 
-    // Handle House Year Change -> Update Period
+                // Load existing data
+                setFengShui(initialData.fengShui);
+
+                // Try to infer state from passed data
+                if (initialData.fengShui?.blacks?.start) {
+                    setPeriod(initialData.fengShui.blacks.start);
+                }
+
+                // Attempt to restore Annual Year
+                const savedAnnual = initialData.fengShui?.purples?.manualYear || currentYear;
+                setAnnualYear(savedAnnual);
+                setPurpleStar(getPurpleStarFromYear(savedAnnual));
+
+                // We do NOT recalculate here to preserve manual edits. 
+                // Just update the Facing Info display based on current temporary facing angle (180).
+                const p = initialData.fengShui?.blacks?.start || 9;
+                const mfData = getMountainFacingFromAngle(facingAngle, p);
+                setFacingInfo({
+                    main: mfData.mainFacing,
+                    sub: mfData.subFacing
+                });
+
+            } else {
+                // New Project Defaults
+                setFloorplanRotation(0);
+                setFacingAngle(180); // South
+                const now = new Date();
+                const yr = now.getFullYear();
+                setHouseYear(yr);
+                setAnnualYear(yr);
+                const p = getPeriodFromYear(yr);
+                setPeriod(p);
+                // Initial Calculation for New Project
+                recalculateFengShui(p, 180, yr);
+            }
+        }
+    }, [isOpen, initialData]);
+
+    // Handlers matching calculator inputs
+
     const handleHouseYearChange = (val: number) => {
         setHouseYear(val);
         const p = getPeriodFromYear(val);
         setPeriod(p);
+        recalculateFengShui(p, facingAngle, annualYear);
+    };
+
+    const handlePeriodChange = (val: number) => {
+        setPeriod(val);
+        recalculateFengShui(val, facingAngle, annualYear);
+    };
+
+    const handleFacingAngleChange = (val: number) => {
+        setFacingAngle(val);
+        recalculateFengShui(period, val, annualYear);
+    };
+
+    const handleAnnualYearChange = (val: number) => {
+        setAnnualYear(val);
+        recalculateFengShui(period, facingAngle, val);
     };
 
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -229,6 +257,13 @@ export const ProjectConfigModal: React.FC<ProjectConfigModalProps> = ({
                         />
 
                         <div className="space-y-6 flex flex-col">
+                            {initialData && (
+                                <div className="p-3 bg-yellow-900/30 border border-yellow-700/50 rounded-lg text-sm text-yellow-200/90">
+                                    <p className="font-semibold mb-1">Warning: Overwrite Risk</p>
+                                    <p>Adjusting the calculator inputs below (Year, Period, Direction) will recalculate the chart and overwrite any manual customizations you have made.</p>
+                                </div>
+                            )}
+
                             <FengShuiConfig
                                 houseYear={houseYear}
                                 period={period}
@@ -239,9 +274,9 @@ export const ProjectConfigModal: React.FC<ProjectConfigModalProps> = ({
                                 purpleStar={purpleStar}
                                 currentYear={currentYear}
                                 onHouseYearChange={handleHouseYearChange}
-                                onPeriodChange={setPeriod}
-                                onFacingAngleChange={setFacingAngle}
-                                onAnnualYearChange={setAnnualYear}
+                                onPeriodChange={handlePeriodChange}
+                                onFacingAngleChange={handleFacingAngleChange}
+                                onAnnualYearChange={handleAnnualYearChange}
                             />
 
                             <ChartPreview

@@ -16,79 +16,14 @@ export const MOUNTAINS_24 = [
     '午', '丁', '未', '坤', '申', '庚', '酉', '辛', '戌', '乾', '亥', '壬'
 ];
 
-// Mapping of Mountain Index to Trigram (Palace) Index [0-8]
-// 0:SE, 1:S, 2:SW, 3:E, 4:Center, 5:W, 6:NE, 7:N, 8:NW
-// Mountain indices: 0(Zi, N), 1(Gui, N), ... 23(Ren, N)
-// N (Kan): 23, 0, 1 -> Index 7
-// NE (Gen): 2, 3, 4 -> Index 6
-// E (Zhen): 5, 6, 7 -> Index 3
-// SE (Xun): 8, 9, 10 -> Index 0
-// S (Li): 11, 12, 13 -> Index 1
-// SW (Kun): 14, 15, 16 -> Index 2
-// W (Dui): 17, 18, 19 -> Index 5
-// NW (Qian): 20, 21, 22 -> Index 8
-const MOUNTAIN_TO_FLYSTAR_INDEX = [
-    7, 7, // Zi, Gui
-    6, 6, 6, // Chou, Gen, Yin
-    3, 3, 3, // Jia, Mao, Yi
-    0, 0, 0, // Chen, Xun, Si
-    1, 1, 1, // Bing
-    1, 1, // Wu, Ding
-    2, 2, 2, // Wei, Kun, Shen
-    5, 5, 5, // Geng, You, Xin
-    8, 8, 8, // Xu, Qian, Hai
-    7 // Ren
-];
-
-// Mapping Mountain Index to its original Trigram Lo Shu Number (1-9)
-// N(1), NE(8), E(3), SE(4), S(9), SW(2), W(7), NW(6)
-const MOUNTAIN_TO_LOSHU = [
-    1, 1, // Zi, Gui
-    8, 8, 8, // Chou, Gen, Yin
-    3, 3, 3, // Jia, Mao, Yi
-    4, 4, 4, // Chen, Xun, Si
-    9, 9, 9, // Bing, Wu, Ding
-    2, 2, 2, // Wei, Kun, Shen
-    7, 7, 7, // Geng, You, Xin
-    6, 6, 6, // Xu, Qian, Hai
-    1 // Ren
-];
-
-// Yin/Yang polarity of the 24 Mountains
-// True = Yang (Forward), False = Yin (Backward)
-// Indices based on MOUNTAINS_24 standard order (Zi, Gui, etc.)
-// Check: Zi(Tian,-), Gui(Ren,-), Chou(Di,-), Gen(Tian,+), Yin(Ren,+), Jia(Di,+) ...
-const MOUNTAIN_POLARITY = [
-    false, false, // Zi(Yin), Gui(Yin)
-    false, true, true, // Chou(Yin), Gen(Yang), Yin(Yang)
-    true, false, false, // Jia(Yang), Mao(Yin), Yi(Yin)
-    false, true, true, // Chen(Yin), Xun(Yang), Si(Yang)
-    true, // Bing(Yang)
-    false, false, // Wu(Yin), Ding(Yin)
-    false, true, true, // Wei(Yin), Kun(Yang), Shen(Yang)
-    true, false, false, // Geng(Yang), You(Yin), Xin(Yin)
-    false, true, true, // Xu(Yin), Qian(Yang), Hai(Yang)
-    true // Ren(Yang)
-];
-
-// Replacement Star Map (Ti Gua)
-// Maps Mountain Index to the Replacement Star Number
-const REPLACEMENT_MAP = [
-    1, 1, // Zi, Gui -> 1
-    7, 7, 9, // Chou, Gen -> 7, Yin -> 9
-    1, 2, 2, // Jia -> 1, Mao, Yi -> 2
-    6, 6, 6, // Chen, Xun, Si -> 6
-    7, 9, 9, // Bing -> 7, Wu, Ding -> 9
-    2, 2, 1, // Wei, Kun -> 2, Shen -> 1
-    9, 7, 7, // Geng -> 9, You, Xin -> 7
-    6, 6, 6, // Xu, Qian, Hai -> 6
-    2 // Ren -> 2
-];
-
 export const DIGIT_TO_CHINESE = [
     '零', '一', '二', '三', '四', '五', '六', '七', '八', '九'
 ];
-
+export function getPurpleStarFromYear(year: number): number {
+    let star = (11 - (year % 9)) % 9;
+    if (star === 0) star = 9;
+    return star;
+};
 export function genFengShui(
     blacksStart: number = 0,
     redsStart: number = 0,
@@ -120,8 +55,8 @@ export function genFengShui(
 function genFlyStarSeq(
     start: number,
     reversed: boolean = false,
-): Number[] {
-    let out, offset;
+): number[] {
+    let out: number[], offset;
     let center;
 
     if (!reversed) {
@@ -154,12 +89,12 @@ export function genFullFlyStarSeq(
 
     let offset = currYear - calcDate.getFullYear();
     if (isNaN(offset)) offset = 0; // Fallback
-
+    console.log('getting purple for year', fengShuiData.purples.start - offset)
     return {
         blacks: genFlyStarSeq(fengShuiData.blacks.start),
         reds: genFlyStarSeq(fengShuiData.reds.start, fengShuiData.reds.reversed),
         blues: genFlyStarSeq(fengShuiData.blues.start, fengShuiData.blues.reversed),
-        purples: genFlyStarSeq(fengShuiData.purples.start + offset)
+        purples: genFlyStarSeq(fengShuiData.purples.start - offset)
     }
 }
 
@@ -184,38 +119,160 @@ export function getPeriodFromYear(
     return (Math.floor(offset / 20) % 9) + 1;
 }
 
+export function getYuanFromPeriod(
+    period: number
+): number {
+    // ((( period -1 ) % 9 +1 -1) /3).floor
+    return Math.floor(((period - 1) % 9) / 3);
+}
+
+
 export function getMountainIndex(angle: number): number {
     return Math.floor((normalizeAngle(angle) + 7.5) / 15) % 24;
 }
 
+interface YuanLongYinYang {
+    long: 'sky' | 'earth' | 'human';
+    yinYang: 'yin' | 'yang';
+}
+
+function getYuanLongFromMountainIndex(index: number): YuanLongYinYang {
+
+    // 天元龍：乾坤艮巽（陽），子午卯酉（陰）；
+    // 地元龍：甲庚壬丙（陽），辰戌丑未（陰）；
+    // 人元龍：寅申巳亥（陽），癸丁乙辛（陰）。
+    // export const MOUNTAINS_24 = [
+    //     '子', '癸', '丑', '艮', '寅', '甲', '卯', '乙', '辰', '巽', '巳', '丙',
+    //     '午', '丁', '未', '坤', '申', '庚', '酉', '辛', '戌', '乾', '亥', '壬'
+    // ];
+    const skys = [21, 15, 3, 9, 0, 12, 6, 18];
+    const earths = [5, 17, 23, 11, 8, 20, 2, 14];
+    const humans = [4, 16, 10, 22, 1, 13, 7, 19];
+    let longIndex = 0;
+
+    if (skys.includes(index)) {
+        longIndex = skys.indexOf(index);
+        return {
+            long: 'sky',
+            yinYang: (longIndex > 3) ? 'yin' : 'yang'
+        };
+    }
+    if (earths.includes(index)) {
+        longIndex = earths.indexOf(index);
+        return {
+            long: 'earth',
+            yinYang: (longIndex > 3) ? 'yin' : 'yang'
+        };
+    }
+    if (humans.includes(index)) {
+        longIndex = humans.indexOf(index);
+        return {
+            long: 'human',
+            yinYang: (longIndex > 3) ? 'yin' : 'yang'
+        };
+    }
+    throw new Error(`Invalid mountain index: ${index}`);
+
+}
+
+
 function checkJian(angle: number, mainIndex: number): number | null {
     // 24 mountains, each 15 degrees.
-    // Center of mountain[0] (Zi) is 0 deg.
-    // Center of mountain[k] is k*15 deg?
-    // Map: 0->0, 1->15, 23->345 (-15).
-    // Normalize logic:
-    // If index is 23 (Ren), center is 345.
-    // diff = angle - 345.
+    // centered at 0, 15, 30, ..., 345
+    // so it is center +-7.5 degrees
+    // center +- 4.5 is considered main
+    // center +- 7.5 is considered jian (sub)
+    // if within jian range but outside main range, return jian index
+    // otherwise return null
+    // jian index is the closest mountain index apart from mainIndex
+    // i.e. for main index 12, (坐子向午), jian indices are either 11 or 13
+    // decide by which is closer to the angle
+    // full example: 186 degrees -> main index 12, jian is 13 because 195 is closer to 186 than 165
 
-    // Proper way to get center angle of an index mapping to my array:
-    // array: Zi(0), Gui(1)...
-    // Zi is N2 (0 deg). Gui is N3 (15 deg).
-    let centerAngle = mainIndex * 15;
-    if (mainIndex === 23) centerAngle = 345;
-    else if (mainIndex === 0 && angle > 300) centerAngle = 360; // wrap wrap
+    // Use shortest angular difference from the mountain center to handle wraparounds
+    const norm = normalizeAngle(angle);
+    const center = normalizeAngle(mainIndex * 15);
 
-    let diff = normalizeAngle(angle - centerAngle);
+    let diff = norm - center;
+    // shift to (-180, 180]
     if (diff > 180) diff -= 360;
+    if (diff <= -180) diff += 360;
 
-    // "Middle 9 degrees" means +/- 4.5
-    if (Math.abs(diff) <= 4.5) return null;
+    const absDiff = Math.abs(diff);
 
-    // It is Jian.
-    // > 4.5 means clockwise to next
-    // < -4.5 means counter-clock to prev
-    const offset = (diff > 0) ? 1 : -1;
-    return (mainIndex + offset + 24) % 24;
+    // within main facing range
+    if (absDiff <= 4.5) return null;
+
+    // outside jian range
+    if (absDiff > 7.5) return null;
+
+    // within jian (sub) range: pick neighbor index toward the angle
+    const dir = diff > 0 ? 1 : -1;
+    const jianIndex = (mainIndex + dir + 24) % 24;
+    return jianIndex;
+
 }
+
+function getSectorFromAngle(angle: number): number {
+    // Map angle one of 8 sectors, expect normalized angle [0, 360)
+    // Each sector is 45 degrees, centered at 0, 45, 90, ..., 315
+    // So we offset by 22.5 degrees, then integer divide by 45
+    // Finally mod 8 to wrap around
+    // N = 0, NE = 1, E = 2, SE = 3, S = 4, SW = 5, W = 6, NW = 7
+    return Math.floor((normalizeAngle(angle) + 22.5) / 45) % 8;
+}
+
+const SECTOR_TO_FLYSTAR_INDEX = [
+    { mountain: 1, water: 7 }, // N
+    { mountain: 2, water: 6 }, // NE
+    { mountain: 5, water: 3 }, // E
+    { mountain: 8, water: 0 }, // SE
+    { mountain: 7, water: 1 }, // S
+    { mountain: 6, water: 2 }, // SW
+    { mountain: 3, water: 5 }, // W
+    { mountain: 0, water: 8 }  // NW
+];
+
+// 24 Mountains to Replacement Star (Ti Gua) Map
+// 0:Zi->1, 1:Gui->1, 2:Chou->7, 3:Gen->7, 4:Yin->9, 5:Jia->1, ...
+const REPLACEMENT_STARS = [
+    1, 1, 7, 7, 9, 1, 2, 2, 6, 6, 6, 7,
+    9, 9, 2, 2, 1, 9, 7, 7, 6, 6, 6, 2
+];
+
+// Mountain Index to Gua Index (0:Kan, 1:Gen, 2:Zhen, 3:Xun, 4:Li, 5:Kun, 6:Dui, 7:Qian)
+// 23(Ren)->Kan(0), 0(Zi)->Kan(0), 1(Gui)->Kan(0)
+const GUA_INDICES = [
+    0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4,
+    4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 7, 0
+];
+
+// Star (1-9) to Gua Index (0-7). 5 is -1.
+const STAR_TO_GUA = [-1, 0, 5, 2, 3, -1, 7, 6, 1, 4];
+
+// Fly Star Sequence Index to Gua Index
+// 0:SE(Xun), 1:S(Li), 2:SW(Kun), 3:E(Zhen), 4:C, 5:W(Dui), 6:NE(Gen), 7:N(Kan), 8:NW(Qian)
+const LOC_INDEX_TO_GUA = [3, 4, 5, 2, -1, 6, 1, 0, 7];
+
+// Gua Index to Mountains [Earth, Sky, Human]
+const GUA_MOUNTAINS = [
+    [23, 0, 1],   // Kan
+    [2, 3, 4],    // Gen
+    [5, 6, 7],    // Zhen
+    [8, 9, 10],   // Xun
+    [11, 12, 13], // Li
+    [14, 15, 16], // Kun
+    [17, 18, 19], // Dui
+    [20, 21, 22]  // Qian
+];
+
+function getTrigramMountain(guaIndex: number, dragon: 'sky' | 'earth' | 'human'): number {
+    const mountains = GUA_MOUNTAINS[guaIndex];
+    if (dragon === 'earth') return mountains[0];
+    if (dragon === 'sky') return mountains[1];
+    return mountains[2]; // human
+}
+
 
 export function getMountainFacingFromAngle(
     facingAngle: number,
@@ -224,149 +281,106 @@ export function getMountainFacingFromAngle(
 
     // Normalize angle to [0, 360)
     let angle = normalizeAngle(facingAngle);
+    let mainIndex = getMountainIndex(angle);
+    let sector = getSectorFromAngle(angle);
+    let blackFlystars = genFlyStarSeq(period); // Period Chart (Yun Pan)
 
-    // 1. Determine Main Facing and Sitting Mountains
-    const facingIndex = getMountainIndex(angle);
-    const sittingAngle = (angle + 180) % 360;
-    const sittingIndex = getMountainIndex(sittingAngle);
+    // Get mountain and water star starting number first
+    // These come from the Period Chart's stars at Mountain and Facing positions
+    let mountainStarLoc = SECTOR_TO_FLYSTAR_INDEX[sector].mountain;
+    let waterStarLoc = SECTOR_TO_FLYSTAR_INDEX[sector].water;
 
-    const mainFacing = MOUNTAINS_24[facingIndex];
+    let baseMountainStar = blackFlystars[mountainStarLoc];
+    let baseWaterStar = blackFlystars[waterStarLoc];
 
-    // 2. Check for Jian (Sub facing)
-    const jianIndex = checkJian(angle, facingIndex);
-    const subFacing = jianIndex !== null ? MOUNTAINS_24[jianIndex] : null;
+    // Handle main (正向) and sub facing (兼向) (if any)
+    let mainFacing = MOUNTAINS_24[mainIndex];
+    let subFacing: string | null = null;
 
-    // 3. Generate Period Chart (Earth Plate)
-    // Center star is period.
-    const periodSeq = genFlyStarSeq(period, false);
+    // check for sub-facing (兼向)
+    const jianIndex = checkJian(angle, mainIndex);
 
-    // Get Flying Star Index for Sitting and Facing
-    const sittingLocIndex = MOUNTAIN_TO_FLYSTAR_INDEX[sittingIndex];
-    const facingLocIndex = MOUNTAIN_TO_FLYSTAR_INDEX[facingIndex];
+    let isReplacement = false;
 
-    let mountainStar = periodSeq[sittingLocIndex] as number;
-    let waterStar = periodSeq[facingLocIndex] as number;
-
-    // 4. Determine if Replacement (Ti Gua) is needed
-    // Condition: Jian exists AND (Different Trigram OR (Same Trigram but Diff Polarity))
-    let useReplacement = false;
     if (jianIndex !== null) {
-        const mainGua = MOUNTAIN_TO_LOSHU[facingIndex];
-        const jianGua = MOUNTAIN_TO_LOSHU[jianIndex];
+        subFacing = MOUNTAINS_24[jianIndex];
 
-        if (mainGua !== jianGua) {
-            useReplacement = true; // Out of Gua, always replace
+        // Determine if Replacement (Ti Gua) is needed
+        // Rule 1: Out of Gua (Different Trigram) -> Replace
+        if (GUA_INDICES[mainIndex] !== GUA_INDICES[jianIndex]) {
+            isReplacement = true;
         } else {
-            // Same Gua, check polarity match
-            if (MOUNTAIN_POLARITY[facingIndex] !== MOUNTAIN_POLARITY[jianIndex]) {
-                useReplacement = true; // Yin-Yang mixed, replace
+            // Rule 2: Same Gua, Different Yin/Yang -> Replace
+            // Get Yin/Yang of main and jian
+            const mainYy = getYuanLongFromMountainIndex(mainIndex).yinYang;
+            const jianYy = getYuanLongFromMountainIndex(jianIndex).yinYang;
+            if (mainYy !== jianYy) {
+                isReplacement = true;
             }
         }
     }
 
-    if (useReplacement) {
-        // Substitute the stars
-        // We use the 24-mountain of the *original* star location to find the replacement?
-        // NO.
-        // We look at the Period Star Number (e.g. 4)
-        // We look at the Original Palace of that Star (SE).
-        // We find the specific mountain in SE that corresponds to the Yuan Long of the *Sitting/Facing*.
-        // Then we check the Replacement map for THAT mountain.
+    // Helper to calculate Star and Reversal
+    const calcStar = (baseStar: number, locIndex: number, houseDragon: 'sky' | 'earth' | 'human'): { star: number, reversed: boolean } => {
+        let finalStar = baseStar;
 
-        // Helper to find specific mountain for a Star Number and a Yuan Long
-        const findMountainForStar = (star: number, yuanLongIndex: number /* 0,1,2 */) => {
-            // Star number maps to a Trigram (Lo Shu).
-            // Star 1 -> Kan. Mountains: Ren(23, Di), Zi(0, Tian), Gui(1, Ren).
-            // We need to pick one based on yuanLongIndex.
-            // My yuanLongIndex: 0=Tian, 1=Ren, 2=Di.
-            // Map based on loop:
-            // If star=1. Zi(0)=Tian, Gui(1)=Ren, Ren(23)=Di.
-            // Warning: Order in MOUNTAIN_TO_LOSHU is sequential.
-            // Let's iterate MOUNTAIN_TO_LOSHU to find range for Star.
-            // Then pick based on Yuan Long.
+        // 1. Determine Home Gua of the Star
+        let guaIndex = STAR_TO_GUA[baseStar];
 
-            // Since indices are 0..23.
-            // Zi(0, Tian), Gui(1, Ren), Chou(2, Di), Gen(3, Tian)...
-            // So:
-            // if matches star, check index % 3.
-            // For star=1 (Kan), indices are 23, 0, 1.
-            // 23%3=2 (Di). 0%3=0 (Tian). 1%3=1 (Ren).
-            // Correct.
-            // Exception: 5. 5 has no mountains.
-            // If star is 5, we use the PERIOD number? No.
-            // If 5, we use the *Period Number*'s mountains? No.
-            // If star is 5, no replacement? Or use Period?
-            // Standard: "If 5, use the Period Number".
-            let targetStar = star;
-            if (targetStar === 5) targetStar = period;
+        // Handle Star 5 (Wu Huang)
+        // If Star is 5, it adopts the nature of the Palace it is currently in (in the Period Chart)
+        if (baseStar === 5) {
+            guaIndex = LOC_INDEX_TO_GUA[locIndex];
+        }
 
-            for (let i = 0; i < 24; i++) {
-                if (MOUNTAIN_TO_LOSHU[i] === targetStar) {
-                    // Found the Gua.
-                    // Now check Yuan Long.
-                    if (i % 3 === yuanLongIndex) {
-                        return i;
-                    }
-                }
-            }
-            return 0; // Fallback
+        // 2. Find the specific mountain in that Gua corresponding to house's Dragon
+        const targetMountain = getTrigramMountain(guaIndex, houseDragon);
+
+        // 3. Apply Replacement if needed
+        if (isReplacement) {
+            // Lookup replacement
+            // REPLACEMENT_STARS is 1-based star number. 
+            // If the mountain maps to a specific Replacement Star, use it.
+            // If the mapping implies "No Change" (e.g. standard distribution), REPLACEMENT_STARS table logic handles it?
+            // The table I implemented covers all 24 mountains, mapping them to 1,2,6,7,9.
+            // But some mountains map to their original numbers (e.g. Zi->1). 
+            // Which means the REPLACEMENT_STARS array is the "Replacement Chart". 
+            // We just use the value from it.
+            finalStar = REPLACEMENT_STARS[targetMountain];
+        }
+
+        // 4. Determine Reversals (Yin/Yang)
+        // Use the Yin/Yang of the Mountain mapped to the Final Star
+        // Wait, "Use original mountain's Yin/Yang" (from text).
+        // "Using 6 to replace... 6 entering center... Yin/Yang decided by Si mountain (Original)"
+        // Si mountain was 'targetMountain' found in Step 2.
+        // So check Yin/Yang of targetMountain.
+        const yinYang = getYuanLongFromMountainIndex(targetMountain).yinYang;
+
+        return {
+            star: finalStar,
+            reversed: yinYang === 'yin' // Yang -> Forward (false), Yin -> Reverse (true)
         };
-
-        const sittingYuanLong = sittingIndex % 3;
-        const facingYuanLong = facingIndex % 3;
-
-        const mntRefIdx = findMountainForStar(mountainStar, sittingYuanLong);
-        mountainStar = REPLACEMENT_MAP[mntRefIdx];
-
-        const wtrRefIdx = findMountainForStar(waterStar, facingYuanLong);
-        waterStar = REPLACEMENT_MAP[wtrRefIdx];
-    }
-
-    // 5. Determine Flight Direction
-    // Identify the "Base Mountain" polarity to fly forward/backward
-    // MOUNTAIN STAR:
-    // Get the *Original Palace* of the Mountain Star Number. 
-    // (If 5, use Period's Palace? No, if 5, use Palace where it is *Sitting*? i.e. The Base Star of that sector?)
-    // Standard rule: 5 follows the Palace of the location it is at.
-    // e.g. If Mountain Star is 5, and it is at Sitting (N). N is Kan (1). Use Kan.
-    // Find the Yuan Long mountain of that Palace.
-
-    const getFlightPolarity = (star: number, locationIndex: number, yuanLong: number) => {
-        let checkStar = star;
-        if (checkStar === 5) {
-            // Use the Lo Shu number of the location
-            checkStar = MOUNTAIN_TO_LOSHU[locationIndex];
-        }
-
-        // Find the mountain for this star matching the yuan long
-        // Note: locationIndex is the *physical* mountain index (0-23).
-        // checkStar is the number (1-9).
-        // yuanLong is the type (0,1,2).
-
-        let refIndex = -1;
-        for (let i = 0; i < 24; i++) {
-            if (MOUNTAIN_TO_LOSHU[i] === checkStar) {
-                if (i % 3 === yuanLong) {
-                    refIndex = i;
-                    break;
-                }
-            }
-        }
-
-        if (refIndex === -1) return true; // Default Yang
-        return MOUNTAIN_POLARITY[refIndex];
     };
 
-    const mountainReversed = !getFlightPolarity(mountainStar, sittingIndex, sittingIndex % 3);
-    const waterReversed = !getFlightPolarity(waterStar, facingIndex, facingIndex % 3);
+    // Calculate Mountain Star
+    // Sitting Dragon (House Sitting)
+    const oppositeIndex = (mainIndex + 12) % 24;
+    const sittingDragon = getYuanLongFromMountainIndex(oppositeIndex).long;
+    const mRes = calcStar(baseMountainStar, mountainStarLoc, sittingDragon);
+
+    // Calculate Water Star
+    // Facing Dragon (House Facing)
+    const facingDragon = getYuanLongFromMountainIndex(mainIndex).long;
+    const wRes = calcStar(baseWaterStar, waterStarLoc, facingDragon);
 
     return {
         mainFacing,
         subFacing,
-        mountainStar,
-        mountainReversed,
-        waterStar,
-        waterReversed
+        mountainStar: mRes.star,
+        mountainReversed: mRes.reversed,
+        waterStar: wRes.star,
+        waterReversed: wRes.reversed
     };
 
 }
