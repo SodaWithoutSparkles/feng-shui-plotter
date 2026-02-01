@@ -18,7 +18,7 @@ export const toolsHelpSection: HelpSection = {
                     </li>
                     <li><span className="text-gray-100 font-semibold">矩形 (Rectangle):</span> 繪製矩形形狀。按下修飾鍵以鎖定為正方形。</li>
                     <li><span className="text-gray-100 font-semibold">橢圓 (Ellipse):</span> 繪製橢圓類。按下修飾鍵以鎖定為圓形。</li>
-                    <li><span className="text-gray-100 font-semibold">直線 (Line):</span> 繪製直線段。</li>
+                    <li><span className="text-gray-100 font-semibold">直線 (Line):</span> 繪製線段。拖曳時按 Space 可新增額外線段。</li>
                     <li><span className="text-gray-100 font-semibold">箭頭 (Arrow):</span> 繪製箭頭。拖曳時按 Space 可新增額外線段。</li>
                     <li><span className="text-gray-100 font-semibold">註解 (Callout):</span> 放置帶箭頭的文字框。按下並拖曳以繪畫文字框，按 Space 切換到箭頭，再按 Space 新增額外箭段。</li>
                     <li><span className="text-gray-100 font-semibold">星形 (Star):</span> 繪製可調大小的五角星。</li>
@@ -30,7 +30,7 @@ export const toolsHelpSection: HelpSection = {
             <div className="space-y-2">
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400">修飾鍵與快速鍵</h4>
                 <ul className="list-disc pl-5 space-y-1 text-gray-300">
-                    <li><span className="text-gray-100 font-semibold">約束 (Constrain):</span> 按住已配置的修飾鍵 (預設 Ctrl) 以繪製正方/圓或將直線/箭頭鎖定為水平/垂直。</li>
+                    <li><span className="text-gray-100 font-semibold">約束 (Constrain):</span> 按住已配置的修飾鍵 (預設 Ctrl) 以繪製正方/圓或將直線/箭頭鎖定為 45° 倍數。</li>
                     <li><span className="text-gray-100 font-semibold">取消 (Cancel):</span> 按取消鍵 (預設 Esc) 以中止繪製或文字編輯。</li>
                     <li><span className="text-gray-100 font-semibold">刪除 (Delete):</span> Delete 鍵刪除選中的物件。</li>
                     <li><span className="text-gray-100 font-semibold">圖層順序:</span> 使用 <code className="bg-gray-700 px-1 rounded text-xs">]</code> 上移一層，使用 <code className="bg-gray-700 px-1 rounded text-xs">[</code> 下移一層。</li>

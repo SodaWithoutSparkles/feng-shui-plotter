@@ -14,6 +14,7 @@ export const objectsHelpSection: HelpSection = {
                 <ul className="list-disc pl-5 space-y-1 text-gray-300">
                     <li><span className="text-gray-100 font-semibold">單選:</span> 使用選取工具 (箭頭游標) 點擊物件，或使用右側面板中的物件列表選取。</li>
                     <li><span className="text-gray-100 font-semibold">加選/減選:</span> 按住 Ctrl 鍵並點擊物件或物件列表，可將其加入目前的選取範圍，或從中移除。</li>
+                    <li><span className="text-gray-100 font-semibold">全選:</span> 在右側物件列表中按下 Ctrl + A 可選取所有物件。</li>
                 </ul>
             </div>
 

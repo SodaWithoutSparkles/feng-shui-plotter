@@ -267,6 +267,23 @@ export const createCanvasSlice: StoreSlice = (set) => ({
             colors: nextColors
         };
     }),
+    selectAllItems: () => set((state) => {
+        if (state.objects.length === 0) return {};
+
+        const nextSelectedIds = state.objects.map((item) => item.id);
+        const anchorId = state.selectedIds[0] ?? nextSelectedIds[0];
+        const anchorItem = state.objects.find((item) => item.id === anchorId);
+        const snapshot = state.selectionColorSnapshot ?? state.colors;
+        const nextColors = anchorItem
+            ? { ...state.colors, stroke: anchorItem.stroke, fill: anchorItem.fill }
+            : state.colors;
+
+        return {
+            selectedIds: nextSelectedIds,
+            selectionColorSnapshot: snapshot,
+            colors: nextColors
+        };
+    }),
     clearSelection: () => set((state) => ({
         selectedIds: [],
         colors: state.selectionColorSnapshot ?? state.colors,

@@ -195,8 +195,14 @@ export const FloorplanCanvas: React.FC<{ readOnly?: boolean }> = ({ readOnly = f
         const img = new Image();
         img.crossOrigin = 'anonymous';
         img.onload = () => {
+            const isExternal = src.startsWith('http://') || src.startsWith('https://');
+            const maxWidth = dimensions.width * 0.5;
+            const maxHeight = dimensions.height * 0.5;
             const maxSize = 400;
-            const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+
+            const scale = isExternal
+                ? Math.min(1, maxWidth / img.width, maxHeight / img.height)
+                : Math.min(1, maxSize / Math.max(img.width, img.height));
             const width = Math.round(img.width * scale);
             const height = Math.round(img.height * scale);
 

@@ -14,6 +14,7 @@ export const objectsHelpSection: HelpSection = {
                 <ul className="list-disc pl-5 space-y-1 text-gray-300">
                     <li><span className="text-gray-100 font-semibold">Single Select:</span> Click an object with the Select tool (arrow cursor), or select it from the Objects list in the right panel.</li>
                     <li><span className="text-gray-100 font-semibold">Add/Remove Select:</span> Hold Ctrl and click objects (on canvas or in list) to add or remove them from the selection.</li>
+                    <li><span className="text-gray-100 font-semibold">Select All:</span> Press Ctrl + A in the Objects list to select all objects.</li>
                 </ul>
             </div>
 

@@ -15,7 +15,7 @@ export const toolsHelpSection: HelpSection = {
                     <li><span className="text-gray-100 font-semibold">Select:</span> Select and move objects. Ctrl+Click to add/remove from selection.</li>
                     <li><span className="text-gray-100 font-semibold">Rectangle:</span> Draw rectangular shapes. Hold modifier key to constrain to a square.</li>
                     <li><span className="text-gray-100 font-semibold">Ellipse:</span> Draw ellipses. Hold modifier key to constrain to a circle.</li>
-                    <li><span className="text-gray-100 font-semibold">Line:</span> Draw straight lines.</li>
+                    <li><span className="text-gray-100 font-semibold">Line:</span> Draw lines. Press Space while dragging to add segments.</li>
                     <li><span className="text-gray-100 font-semibold">Arrow:</span> Draw arrows. Press Space while dragging to add segments.</li>
                     <li><span className="text-gray-100 font-semibold">Callout:</span> Place text boxes with arrows. Drag to draw box, press Space for arrow, press Space again for more segments.</li>
                     <li><span className="text-gray-100 font-semibold">Star:</span> Draw resizable 5-pointed stars.</li>
@@ -27,7 +27,7 @@ export const toolsHelpSection: HelpSection = {
             <div className="space-y-2">
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Modifiers & Shortcuts</h4>
                 <ul className="list-disc pl-5 space-y-1 text-gray-300">
-                    <li><span className="text-gray-100 font-semibold">Constrain:</span> Hold the configured modifier (default Ctrl) to square/circle or horizontal/vertical axis.</li>
+                    <li><span className="text-gray-100 font-semibold">Constrain:</span> Hold the configured modifier (default Ctrl) to square/circle or snap lines/arrows to 45° increments.</li>
                     <li><span className="text-gray-100 font-semibold">Cancel:</span> Press Cancel key (default Esc) to abort drawing or text editing.</li>
                     <li><span className="text-gray-100 font-semibold">Delete:</span> Delete selected objects.</li>
                     <li><span className="text-gray-100 font-semibold">Layer Order:</span> Use <code className="bg-gray-700 px-1 rounded text-xs">]</code> to move up, <code className="bg-gray-700 px-1 rounded text-xs">[</code> to move down.</li>

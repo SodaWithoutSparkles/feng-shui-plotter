@@ -63,6 +63,7 @@ export interface AppState {
     selectedIds: string[];
     selectItem: (id: string | null) => void;
     toggleSelectItem: (id: string) => void;
+    selectAllItems: () => void;
     clearSelection: () => void;
 
     // History (Undo/Redo)

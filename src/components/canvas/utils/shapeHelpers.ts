@@ -143,6 +143,23 @@ export const updateShapeWhileDrawing = (
     isModifierPressed: boolean,
     isPolylineMode: boolean
 ): CanvasItem => {
+    void isPolylineMode;
+    const constrainTo45 = (start: { x: number; y: number }, end: { x: number; y: number }) => {
+        const dx = end.x - start.x;
+        const dy = end.y - start.y;
+        if (dx === 0 && dy === 0) return end;
+
+        const angle = Math.atan2(dy, dx);
+        const snap = Math.PI / 4;
+        const snappedAngle = Math.round(angle / snap) * snap;
+        const distance = Math.hypot(dx, dy);
+
+        return {
+            x: start.x + Math.cos(snappedAngle) * distance,
+            y: start.y + Math.sin(snappedAngle) * distance
+        };
+    };
+
     switch (currentShape.type) {
         case 'rectangle':
         case 'text': {
@@ -175,57 +192,46 @@ export const updateShapeWhileDrawing = (
 
         case 'line': {
             const lineShape = currentShape as Extract<CanvasItem, { type: 'line' }>;
-            let endX = localPos.x;
-            let endY = localPos.y;
+            const points = lineShape.points ?? [];
+            const startPoint = points.length > 1
+                ? points[points.length - 2]
+                : points[0] ?? localPos;
 
-            if (isModifierPressed && lineShape.points.length > 0) {
-                const startPoint = lineShape.points[0];
-                const dx = Math.abs(endX - startPoint.x);
-                const dy = Math.abs(endY - startPoint.y);
-
-                if (dx > dy) {
-                    endY = startPoint.y;
-                } else {
-                    endX = startPoint.x;
-                }
+            let nextEnd = { x: localPos.x, y: localPos.y };
+            if (isModifierPressed && points.length > 0) {
+                nextEnd = constrainTo45(startPoint, nextEnd);
             }
+
+            const nextPoints = points.length <= 1
+                ? [startPoint, nextEnd]
+                : [...points.slice(0, -1), nextEnd];
 
             return {
                 ...lineShape,
-                points: [lineShape.points[0], { x: endX, y: endY }]
+                points: nextPoints
             };
         }
 
         case 'arrow': {
             const arrowShape = currentShape as Extract<CanvasItem, { type: 'arrow' }>;
-            let endX = localPos.x;
-            let endY = localPos.y;
+            const points = arrowShape.points ?? [];
+            const startPoint = points.length > 1
+                ? points[points.length - 2]
+                : points[0] ?? localPos;
 
-            if (isModifierPressed && arrowShape.points.length > 0) {
-                const startPoint = arrowShape.points[0];
-                const dx = Math.abs(endX - startPoint.x);
-                const dy = Math.abs(endY - startPoint.y);
-
-                if (dx > dy) {
-                    endY = startPoint.y;
-                } else {
-                    endX = startPoint.x;
-                }
+            let nextEnd = { x: localPos.x, y: localPos.y };
+            if (isModifierPressed && points.length > 0) {
+                nextEnd = constrainTo45(startPoint, nextEnd);
             }
 
-            if (isPolylineMode) {
-                return {
-                    ...arrowShape,
-                    points: [...arrowShape.points, { x: endX, y: endY }]
-                };
-            } else {
-                const newPoints = [...arrowShape.points];
-                newPoints[newPoints.length - 1] = { x: endX, y: endY };
-                return {
-                    ...arrowShape,
-                    points: newPoints
-                };
-            }
+            const nextPoints = points.length <= 1
+                ? [startPoint, nextEnd]
+                : [...points.slice(0, -1), nextEnd];
+
+            return {
+                ...arrowShape,
+                points: nextPoints
+            };
         }
 
         case 'star': {

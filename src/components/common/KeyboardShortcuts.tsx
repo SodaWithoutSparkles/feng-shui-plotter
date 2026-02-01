@@ -7,6 +7,9 @@ export const KeyboardShortcuts = () => {
     const cloneSelected = useStore((state) => state.cloneSelected);
     const deleteSelected = useStore((state) => state.deleteSelected);
     const moveSelectedLayer = useStore((state) => state.moveSelectedLayer);
+    const selectAllItems = useStore((state) => state.selectAllItems);
+    const selectedIds = useStore((state) => state.selectedIds);
+    const objects = useStore((state) => state.objects);
     const setActiveTool = useStore((state) => state.setActiveTool);
     const setDropperActive = useStore((state) => state.setDropperActive);
     const keyboardShortcuts = useStore((state) => state.keyboardShortcuts);
@@ -41,6 +44,15 @@ export const KeyboardShortcuts = () => {
             if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
                 e.preventDefault();
                 cloneSelected();
+                return;
+            }
+
+            // Ctrl/Cmd + A - Select all (when there is already a selection)
+            if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
+                if (selectedIds.length > 0 && objects.length > 0) {
+                    e.preventDefault();
+                    selectAllItems();
+                }
                 return;
             }
 
@@ -91,7 +103,7 @@ export const KeyboardShortcuts = () => {
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [undo, redo, cloneSelected, deleteSelected, moveSelectedLayer, setActiveTool, setDropperActive, keyboardShortcuts]);
+    }, [undo, redo, cloneSelected, deleteSelected, moveSelectedLayer, selectAllItems, selectedIds.length, objects.length, setActiveTool, setDropperActive, keyboardShortcuts]);
 
     return null;
 };

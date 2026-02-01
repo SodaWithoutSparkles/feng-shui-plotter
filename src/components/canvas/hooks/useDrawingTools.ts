@@ -30,8 +30,25 @@ export const useDrawingTools = (
             if (e.key !== ' ') return;
             if (!isDrawing) return;
 
-            if (activeTool === 'arrow') {
+            const anchor = lastPointerRef.current;
+            if (!anchor) return;
+
+            if (activeTool === 'arrow' || activeTool === 'line') {
                 e.preventDefault();
+                setCurrentShapes((prev) => {
+                    const shape = prev[0];
+                    if (!shape || (shape.type !== 'arrow' && shape.type !== 'line')) return prev;
+
+                    const points = shape.points ?? [];
+                    const nextPoints = points.length === 0
+                        ? [{ x: anchor.x, y: anchor.y }, { x: anchor.x, y: anchor.y }]
+                        : [...points, { x: anchor.x, y: anchor.y }];
+
+                    return [{
+                        ...shape,
+                        points: nextPoints
+                    }];
+                });
                 setIsPolylineMode(true);
                 return;
             }
@@ -39,9 +56,6 @@ export const useDrawingTools = (
             if (activeTool === 'callout') {
                 e.preventDefault();
                 if (calloutPhase === 'box') {
-                    const anchor = lastPointerRef.current;
-                    if (!anchor) return;
-
                     setCurrentShapes((prev) => {
                         const textShape = prev.find((shape) => shape.type === 'text');
                         const updatedText = textShape
@@ -57,6 +71,24 @@ export const useDrawingTools = (
 
                     setCalloutPhase('arrow');
                 } else {
+                    setCurrentShapes((prev) => {
+                        const textShape = prev.find((shape) => shape.type === 'text');
+                        const arrowShape = prev.find((shape) => shape.type === 'arrow');
+                        if (!arrowShape) return prev;
+
+                        const points = arrowShape.points ?? [];
+                        const nextPoints = points.length === 0
+                            ? [{ x: anchor.x, y: anchor.y }, { x: anchor.x, y: anchor.y }]
+                            : [...points, { x: anchor.x, y: anchor.y }];
+
+                        const nextShapes: CanvasItem[] = [];
+                        if (textShape) nextShapes.push(textShape);
+                        nextShapes.push({
+                            ...arrowShape,
+                            points: nextPoints
+                        });
+                        return nextShapes;
+                    });
                     setIsPolylineMode(true);
                 }
             }
